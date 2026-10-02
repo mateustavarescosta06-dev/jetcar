@@ -112,10 +112,37 @@ const COMPOSITE = /* glsl */ `
 uniform sampler2D tScene; uniform sampler2D tBloom;
 uniform float uBloom; uniform float uExposure; uniform float uVignette; uniform float uGrain; uniform float uTime;
 uniform float uWhite; uniform float uBlack; uniform vec2 uRes; uniform float uChroma;
-uniform float uLens; uniform float uLensX; uniform float uLensBig;
+uniform float uLens; uniform float uLensX; uniform float uLensBig; uniform float uFoam; uniform float uFoamY;
 varying vec2 vUv;
 ${COLOR}
 ${SAFE}
+float fh(vec2 p) { vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
+float fn(vec2 p) { vec2 i = floor(p), f = fract(p); vec2 u = f * f * (3.0 - 2.0 * f); return mix(mix(fh(i), fh(i + vec2(1.0, 0.0)), u.x), mix(fh(i + vec2(0.0, 1.0)), fh(i + vec2(1.0, 1.0)), u.x), u.y); }
+float ffbm(vec2 p) { float s = 0.0, a = 0.5; for (int i = 0; i < 5; i++) { s += a * fn(p); p = p * 2.03 + 17.1; a *= 0.5; } return s; }
+// Espuma da lavagem na lente: massa branca fora de foco que se espalha a partir de manchas, com
+// bolhas de vários tamanhos nas bordas (não uma nuvem). Devolve a cobertura e a cor (sRGB).
+vec2 vor(vec2 q) {
+  vec2 iq = floor(q), fq = fract(q);
+  float d1 = 9.0, id = 0.0;
+  for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) {
+    vec2 g = vec2(float(i), float(j));
+    float d = length(g + vec2(fh(iq + g), fh(iq + g + 5.3)) - fq) / (0.6 + 0.4 * fh(iq + g + 11.7));
+    if (d < d1) { d1 = d; id = fh(iq + g + 2.1); }
+  }
+  return vec2(d1, id);
+}
+float lensFoam(vec2 uv, out vec3 fc) {
+  vec2 p = vec2(uv.x * uRes.x / uRes.y, uv.y + uFoamY);
+  float n = ffbm(p * 1.6) * 0.7 + ffbm(p * 4.0 + 7.3) * 0.3;
+  vec2 b1 = vor(p * 7.0), b2 = vor(p * 16.0 + 3.3), b3 = vor(p * 34.0 + 9.1);
+  float t = n - 0.75 * (1.0 - uFoam) + (b2.x - 0.5) * 0.06 + (b3.x - 0.5) * 0.03;
+  float m = smoothstep(-0.008, 0.012, t);
+  float thick = smoothstep(0.0, 0.3, t);
+  float dome = (1.0 - smoothstep(0.55, 0.95, b1.x)) * 0.5 + (1.0 - smoothstep(0.55, 0.95, b2.x)) * 0.35 + (1.0 - smoothstep(0.5, 0.95, b3.x)) * 0.15;
+  float shade = 0.84 + 0.1 * ffbm(p * 3.0 + 1.7) + 0.06 * dome;
+  fc = mix(vec3(0.72, 0.75, 0.79), vec3(0.95, 0.955, 0.96), thick) * shade + pow(max(1.0 - b2.x * 1.8, 0.0), 8.0) * step(0.85, b2.y) * 0.15;
+  return m * (0.72 + 0.28 * thick);
+}
 float sq2(float x) { return x * x; }
 vec2 lhash(vec2 p) { vec3 p3 = fract(vec3(p.xyx) * vec3(0.1031, 0.1030, 0.0973)); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.xx + p3.yz) * p3.zy); }
 // Água passando na frente da lente: gotas (células) que refratam a imagem, numa faixa que
@@ -179,13 +206,14 @@ void main() {
   c = mix(c, vec3(1.0), uWhite);
   c *= 1.0 - uBlack;
   vec3 s = linearToSrgb(c);
+  if (uFoam > 0.0) { vec3 fc; float fm = lensFoam(vUv, fc); s = mix(s, fc, fm); }
   float g = hash(vUv * uRes + fract(uTime * 13.17) * 517.0) - 0.5;
   s += g * uGrain * (0.6 + 0.4 * (1.0 - s));
   gl_FragColor = vec4(s, 1.0);
 }`;
 
 /** Parâmetros de pós-processamento de cada quadro (as cenas ajustam). */
-const POST = { exposure: 1, bloom: 0.6, threshold: 1.0, knee: 0.6, vignette: 0.55, grain: 0.035, white: 0, black: 0, chroma: 0, dof: 0, lens: 0, lensX: 0.5, lensBig: 0 };
+const POST = { exposure: 1, bloom: 0.6, threshold: 1.0, knee: 0.6, vignette: 0.55, grain: 0.035, white: 0, black: 0, chroma: 0, dof: 0, lens: 0, lensX: 0.5, lensBig: 0, foam: 0, foamY: 0 };
 export const post = { ...POST };
 /** Volta aos valores padrão (cada cena ajusta só o que usa). */
 export function resetPost() { Object.assign(post, POST); }
@@ -219,7 +247,7 @@ export class Engine {
     this.mComp = mat(COMPOSITE, {
       tScene: { value: null }, tBloom: { value: null }, uBloom: { value: 0.6 }, uExposure: { value: 1 }, uVignette: { value: 0.5 },
       uGrain: { value: 0.03 }, uTime: { value: 0 }, uWhite: { value: 0 }, uBlack: { value: 0 }, uRes: { value: new THREE.Vector2(1, 1) }, uChroma: { value: 0 },
-      uLens: { value: 0 }, uLensX: { value: 0.5 }, uLensBig: { value: 0 },
+      uLens: { value: 0 }, uLensX: { value: 0.5 }, uLensBig: { value: 0 }, uFoam: { value: 0 }, uFoamY: { value: 0 },
     });
     this.mDofDown = mat(DOF_DOWN, { tSrc: { value: null }, uTexel: { value: new THREE.Vector2() } });
     this.mDofBlur = mat(DOF_BLUR, { tSrc: { value: null }, uTexel: { value: new THREE.Vector2() }, uRadius: { value: 8 }, uTaps: { value: quality.dofTaps || 24 } });
@@ -318,6 +346,8 @@ export class Engine {
     u.uLens.value = post.lens;
     u.uLensX.value = post.lensX;
     u.uLensBig.value = post.lensBig;
+    u.uFoam.value = post.foam;
+    u.uFoamY.value = post.foamY;
     this.pass(this.mComp, null);
   }
 

@@ -203,11 +203,12 @@ export class FilmShot {
     U.uFocus.value = 0.25;
     U.uDollyC.value.set(0.5, 0.55);
     U.uDolly.value = 0;
+    U.uSpin.value = 0;
     U.uDof.value = 0;
 
     // ——— Luz ———
     let exposure = 1, reveal = 1, ambient = 1, glint = 0, flare = 0, gate = 0, fixtures = 0, fixX = 0, typeA = 0;
-    let lift = 0, sweepI = 0, sweepX = 0;
+    let lift = 0, sweepI = 0, sweepX = 0, foam = 0;
     const lineI = [0, 0, 0], lineX = [0, 0, 0];
     if (u < H) {
       // escuridão → linha de luz → luzes do estúdio acendem
@@ -227,12 +228,13 @@ export class FilmShot {
       sweepX = lerp(-2.6, 2.6, smoother(st));
     } else if (u < C.lavagem.end) {
       const t = span(u, C.lavagem.start, C.lavagem.end);
-      // mergulho na pintura escura: aproximação com profundidade e a luz some
+      // mergulho na pintura enquanto a espuma da lavagem cobre a lente (o estúdio a enxágua)
       const dive = smooth(span(t, 0.8, 1));
       U.uDolly.value = dive * 2.4;
       U.uDollyC.value.set(0.42, 0.66);
-      exposure = 1 - smooth(span(t, 0.84, 0.985));
+      exposure = 1 - smooth(span(t, 0.88, 0.995)) * 0.6;
       glint = 0.3;
+      foam = smooth(span(t, 0.7, 0.975));
     } else {
       const t = span(u, C.final.start, C.final.end);
       // escuro → reflexos na pintura → recuo com as luminárias acendendo → carro inteiro →
@@ -247,8 +249,11 @@ export class FilmShot {
       fixX = lerp(-0.05, 1.05, smooth(span(t, 0.33, 0.56)));
       // o portão (atrás da câmera) sobe: a luz do dia sobe pelo carro e acende o letreiro
       gate = span(t, 0.66, 0.86);
-      U.uDolly.value = smooth(span(t, 0.66, 0.97)) * 0.25;
-      U.uDollyC.value.set(0.5, 0.5);
+      // e o carro sai: as rodas começam a girar e ele avança na direção da luz (da câmera)
+      const go = smooth(span(t, 0.86, 0.985));
+      U.uSpin.value = smooth(span(t, 0.84, 0.95)) * 2.6;
+      U.uDolly.value = smooth(span(t, 0.66, 0.86)) * 0.25 + go * go * 0.9;
+      U.uDollyC.value.set(0.42, 0.66);
       this.drawType(t > 0.5 ? 'JETCAR' : '');
       typeA = env(t, [0.56, 0.62, 0.9, 0.95]);
       // em pé o letreiro cabe na parte visível do quadro; deitado ocupa a largura toda
@@ -338,6 +343,8 @@ export class FilmShot {
     post.grain = view.mobile ? 0.03 : 0.04;
     // o branco só chega no auge (as luzes estouram antes, não é uma névoa por cima da imagem)
     post.white = smooth(span(flash, 0.86, 1)) * 0.96;
+    post.foam = foam;
+    post.foamY = foam * 0.05;
     post.black = 0;
     post.chroma = 0;
   }

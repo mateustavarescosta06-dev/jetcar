@@ -144,6 +144,7 @@ uniform float uFixtures; uniform float uFixtureX;
 uniform float uFlare;
 uniform sampler2D tType; uniform vec4 uTypeRect; uniform float uTypeDepth; uniform float uTypeAlpha; uniform vec3 uTypeColor; uniform float uTypeLit;
 uniform float uDof; uniform vec2 uRes; uniform int uSteps; uniform float uTime;
+uniform vec4 uWheelA; uniform vec4 uWheelB; uniform float uSpin; // rodas: centro.xy e semieixos no quadro
 varying vec2 vUv;
 ${COLOR}
 ${NOISE}
@@ -152,6 +153,22 @@ vec2 colorUV(vec2 c) { return vec2(c.x, clamp(c.y, 0.0005, 0.9995) * uColorH); }
 vec2 depthUV(vec2 c) { return vec2(clamp(c.x, 0.001, 0.999) * 0.5, uColorH + clamp(c.y, 0.002, 0.998) * (1.0 - uColorH)); }
 float depthAt(vec2 c) { return mix(texture2D(tA, depthUV(c)).r, texture2D(tB, depthUV(c)).r, uMix); }
 float depthSoft(vec2 c) { return mix(texture2D(tA, depthUV(c), 2.5).r, texture2D(tB, depthUV(c), 2.5).r, uMix); }
+
+// Roda girando: dentro da elipse do aro, a cor é a média de amostras giradas em torno do
+// cubo (no plano da roda, que o quadro vê como elipse). Os raios viram um disco borrado.
+vec3 spinBlur(vec4 W, vec2 c, vec3 col) {
+  vec2 q = (c - W.xy) / W.zw;
+  float r = length(q);
+  if (r > 1.0) return col;
+  vec3 acc = vec3(0.0);
+  for (int k = -6; k <= 6; k++) {
+    float a = float(k) / 6.0 * uSpin * 0.5;
+    float ca = cos(a), sa = sin(a);
+    vec2 cs = W.xy + vec2(q.x * ca - q.y * sa, q.x * sa + q.y * ca) * W.zw;
+    acc += srgbToLinear(mix(texture2D(tA, colorUV(cs)).rgb, texture2D(tB, colorUV(cs)).rgb, uMix));
+  }
+  return mix(col, acc / 13.0, 1.0 - smoothstep(0.9, 1.0, r));
+}
 
 // Paralaxe 2,5D: encontra o ponto de origem cuja projeção deslocada cai neste pixel.
 vec2 warp(vec2 c, out float d) {
@@ -176,6 +193,7 @@ void main() {
   vec3 colA = texture2D(tA, colorUV(c), lod).rgb;
   vec3 colB = texture2D(tB, colorUV(c), lod).rgb;
   vec3 col = srgbToLinear(mix(colA, colB, uMix));
+  if (uSpin > 0.0) { col = spinBlur(uWheelA, c, col); col = spinBlur(uWheelB, c, col); }
   float L = sqrt(luma(col));
 
   // Luzes do estúdio acendendo: primeiro o que é mais claro (as próprias luminárias).
@@ -256,6 +274,7 @@ export function filmMaterial(steps = 4) {
       uFlare: { value: 0 },
       tType: { value: null }, uTypeRect: { value: new THREE.Vector4(0, 0, 1, 1) }, uTypeDepth: { value: 0.3 }, uTypeAlpha: { value: 0 }, uTypeColor: { value: new THREE.Color(1, 1, 1) }, uTypeLit: { value: 0 },
       uDof: { value: 0 }, uRes: { value: new THREE.Vector2(1, 1) }, uSteps: { value: steps }, uTime: { value: 0 },
+      uWheelA: { value: new THREE.Vector4(0.326, 0.76, 0.047, 0.143) }, uWheelB: { value: new THREE.Vector4(0.099, 0.701, 0.03, 0.118) }, uSpin: { value: 0 },
     },
     depthWrite: true,
   });

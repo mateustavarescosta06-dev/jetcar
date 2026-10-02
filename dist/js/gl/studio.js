@@ -611,3 +611,60 @@ export function typePlane(text, shared, { h = 1.4, color = 0.05 } = {}) {
   mesh.frustumCulled = false;
   return mesh;
 }
+
+// ——— Fibra de carbono (acabamento do painel, logo atrás do para-brisa) ———
+// Trama sarja 2×2: cada mecha é um feixe de fibras numa direção; o brilho das fibras segue o
+// modelo de Kajiya-Kay (acende quando o meio-vetor fica perpendicular à fibra), então as
+// mechas trocam de brilho em xadrez conforme a luz anda. Por cima, a resina com verniz.
+export function carbonMaterial(lights, shared) {
+  return new THREE.ShaderMaterial({
+    vertexShader: VERT,
+    fragmentShader: /* glsl */ `
+      uniform vec3 uCam; uniform vec2 uTows; uniform float uDim;
+      varying vec3 vW; varying vec3 vN; varying vec2 vUv;
+      ${BARS}
+      ${DOF}
+      // brilho de fibra para as barras de luz: amostra o ponto de cada barra mais perto do pixel
+      float fiber(vec3 T, vec3 n, vec3 v, vec3 p) {
+        float acc = 0.0;
+        for (int i = 0; i < MAX_BARS; i++) {
+          if (i >= uBarN) break;
+          vec3 c = uBarC[i].xyz; vec3 a = uBarA[i].xyz; float l = uBarA[i].w;
+          vec3 q = c + clamp(dot(p - c, a), -l, l) * a;
+          vec3 L = normalize(q - p);
+          vec3 H = normalize(L + v);
+          float th = dot(T, H);
+          float s = pow(max(1.0 - th * th, 0.0), 160.0);
+          acc += s * max(dot(n, L), 0.0) * dot(uBarI[i].rgb, vec3(0.333)) / (1.0 + dot(q - p, q - p));
+        }
+        return acc;
+      }
+      void main() {
+        vec3 n = normalize(vN);
+        vec3 v = normalize(uCam - vW);
+        if (dot(n, v) < 0.0) n = -n;
+        vec2 g = vUv * uTows;
+        vec2 cell = floor(g), f = fract(g);
+        // sarja 2×2: a mecha de cima alterna a cada duas células, deslocando uma por linha
+        float warp = step(mod(cell.x + cell.y, 4.0), 1.5);
+        // direção das fibras no espaço do mundo (u → x, v → z neste painel)
+        vec3 Tu = normalize(vec3(1.0, 0.0, 0.0) - n * n.x);
+        vec3 Tv = normalize(vec3(0.0, 0.0, 1.0) - n * n.z);
+        vec3 T = mix(Tv, Tu, warp);
+        // perfil arredondado de cada mecha (atravessando as fibras) e o sobe-desce da trama
+        float across = warp > 0.5 ? f.y : f.x;
+        float along = warp > 0.5 ? f.x : f.y;
+        float bulge = sin(across * 3.14159) * (0.75 + 0.25 * sin(along * 3.14159));
+        vec3 nb = normalize(n + (warp > 0.5 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0)) * (across - 0.5) * 0.5);
+        float fib = fiber(T, nb, v, vW) * bulge;
+        vec3 base = vec3(0.006, 0.0062, 0.0068) * (0.6 + 0.4 * bulge);
+        // resina com verniz por cima: reflexo nítido das barras
+        vec3 r = reflect(-v, n);
+        float F = fresnel(max(dot(n, v), 0.0), 0.045);
+        vec3 coat = (barsRadiance(vW, r, 0.002) + studioAmbient(r)) * F;
+        vec3 col = base + vec3(0.2, 0.205, 0.215) * fib + coat;
+        gl_FragColor = vec4(col * uDim, sharpness());
+      }`,
+    uniforms: { ...lights.uniforms, ...shared, uTows: { value: new THREE.Vector2(84, 220) }, uDim: { value: 1 } },
+  });
+}

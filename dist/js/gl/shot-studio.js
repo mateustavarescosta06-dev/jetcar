@@ -10,7 +10,7 @@ import { C, at } from '../chapters.js';
 import { post } from './engine.js';
 import {
   hoodY, hoodN, hoodGeometry, swirlTexture, StudioLights, sharedUniforms, paintMaterial, dropGeometry, dropMaterial,
-  polisher, slabGeometry, layerMaterial, glassMaterial, interiorMesh, backdrop, typePlane,
+  polisher, slabGeometry, layerMaterial, glassMaterial, interiorMesh, backdrop, typePlane, carbonMaterial,
 } from './studio.js';
 
 /** Trilha de câmera: posição e alvo interpolados por curvas monótonas (sem paradas nas chaves). */
@@ -125,6 +125,17 @@ export class StudioShot {
     this.interior.rotation.y = Math.PI / 2;
     this.scene.add(this.interior);
 
+    // acabamento de fibra de carbono no painel, logo depois do para-brisa (a câmera passa rente)
+    const cg = new THREE.PlaneGeometry(0.42, 1.1, 48, 72);
+    cg.rotateX(-Math.PI / 2);
+    const cp = cg.attributes.position;
+    for (let i = 0; i < cp.count; i++) { const x = cp.getX(i) / 0.21; cp.setY(i, -0.05 * x * x); }
+    cg.computeVertexNormals();
+    this.carbon = new THREE.Mesh(cg, carbonMaterial(this.lights, this.shared));
+    this.carbon.position.set(-2.27, 0.19, 0.0);
+    this.carbon.visible = false;
+    this.scene.add(this.carbon);
+
     // números grandes no fundo, além da frente do capô
     this.nums = ['02', '03', '04'].map(t => {
       const m = typePlane(t, this.shared, { h: 1.5, color: 0.06 });
@@ -181,7 +192,10 @@ export class StudioShot {
       k('interior', 0.22, S(0.05, 0.27, 0.5), S(-0.35, 0, 0.0)),
       k('interior', 0.34, S(-0.85, 0.28, 0.16), S(-1.55, 0.03, 0.0)),
       k('interior', 0.46, [-1.55, 0.31, 0.05], [-2.4, 0.3, 0.05]),
-      k('interior', 0.56, [-1.98, 0.305, 0.04], [-3.0, 0.28, 0.12]),
+      k('interior', 0.56, [-1.98, 0.305, 0.04], [-2.6, 0.22, 0.06]),
+      // rente ao carbono do painel, depois sobe e revela o interior
+      k('interior', 0.62, [-2.13, 0.25, 0.03], [-2.31, 0.19, 0.07]),
+      k('interior', 0.69, [-2.15, 0.245, -0.07], [-2.33, 0.19, -0.03]),
       k('interior', 0.78, [-2.1, 0.31, -0.02], [-3.0, 0.27, 0.2]),
       k('interior', 1.0, [-2.22, 0.32, -0.12], [-3.0, 0.26, 0.24]),
     ]);
@@ -255,10 +269,14 @@ export class StudioShot {
     if (inL) { sweepI = env(tL, [0.84, 0.88, 0.96, 1.0]); sweepX = lerp(-0.3, 1.5, smooth(span(tL, 0.84, 1.0))); }
     // no PPF uma luz passa por cima das gotas, de trás para a frente
     if (inP) { sweepI = env(tP, [0.34, 0.44, 0.78, 0.9]) * 0.8; sweepX = lerp(2.2, -0.7, smooth(span(tP, 0.34, 0.9))); }
-    if (inI) {
+    if (inI && tI < 0.54) {
       // no interior, a barra fica sobre o para-brisa: o reflexo dela no vidro some quando a câmera chega perto
       const g = env(tI, [0.18, 0.3, 0.46, 0.54]);
       L.set(4, [-2.35, 1.3, 0.05], [0, 0, 1], 0.18, 1.1, [0.9 * g, 0.89 * g, 0.88 * g], 0.35, false);
+    } else if (inI) {
+      // depois do vidro, uma luz estreita anda sobre o carbono: as mechas trocam de brilho
+      const g = env(tI, [0.54, 0.58, 0.72, 0.8]);
+      L.set(4, [-2.28, 0.6, lerp(-0.45, 0.45, smooth(span(tI, 0.55, 0.76)))], [1, 0, 0], 0.012, 0.32, [5 * g, 4.9 * g, 4.8 * g], 0.003, false);
     } else L.set(4, [sweepX, 0.62, 0.05], [0, 0, 1], 0.018, 1.4, [14 * sweepI, 13.8 * sweepI, 13.3 * sweepI], 0.003, sweepI > 0.01);
     // luz da vista explodida: do lado oposto à câmera, na altura dela (reflete no topo das placas)
     const keyA = inL ? smooth(span(tL, 0.12, 0.3)) * (1 - smooth(span(tL, 0.86, 0.98))) : 0;
@@ -371,10 +389,11 @@ export class StudioShot {
     IU.uLight.value = inI ? env(tI, [0.6, 0.66, 0.84, 0.9]) : 0;
     IU.uLightX.value = lerp(-0.1, 1.1, span(tI, 0.6, 0.9));
     this.hood.visible = !(inI && tI > 0.62);
+    this.carbon.visible = inI && tI > 0.5 && tI < 0.86;
 
     // ——— Exposição: entra do preto, sai no preto ———
+    // entra pela espuma que cobriu a lente no fim da lavagem (a água enxágua), sai no preto
     let exposure = 1;
-    if (inC) exposure = smooth(span(tC, 0, 0.08));
     if (inI) exposure = 1 - smooth(span(tI, 0.92, 0.995));
     post.exposure = exposure;
     post.black = exposure <= 0.0005 ? 1 : 0;
@@ -389,6 +408,8 @@ export class StudioShot {
     // água atravessando a lente no começo da correção (da direita para a esquerda)
     post.lens = inC ? env(tC, [0.02, 0.07, 0.16, 0.26]) : 0;
     post.lensX = lerp(1.25, -0.25, span(tC, 0.02, 0.26));
+    post.foam = inC ? 1 - smooth(span(tC, 0.03, 0.2)) : 0;
+    post.foamY = inC ? 0.05 + smooth(span(tC, 0.0, 0.22)) * 0.7 : 0;
   }
 
   /** Ao sair do estúdio, some com o que é DOM (rótulos). */
