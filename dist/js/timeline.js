@@ -23,12 +23,12 @@ export const S = {};
 export const T = {};
 /** Rótulos da moldura por cena (a partir de `from`). */
 export const FRAME_META = [
-  { key: 'wash', name: 'Lavagem técnica', icon: 'i-wash', count: '01 / 05', hint: ['Passe o cursor pela espuma', 'Toque nas bolhas'] },
-  { key: 'polish', name: 'Polimento', icon: 'i-polish', count: '02 / 05', hint: ['Mova o cursor e guie o reflexo', 'Toque e guie o reflexo'] },
-  { key: 'ceramic', name: 'Ceramic Coating', icon: 'i-ceramic', count: '03 / 05', hint: ['Passe o cursor pela superfície', 'Toque na superfície'] },
-  { key: 'layers', name: 'Proteção da pintura', icon: 'i-layers', count: 'Camadas', hint: ['Mova o cursor e gire as camadas', 'Escolha Ceramic ou PPF'] },
-  { key: 'ppf', name: 'PPF', icon: 'i-ppf', count: '04 / 05', hint: ['Mova o cursor e veja a película', 'Toque e veja a película'] },
-  { key: 'interior', name: 'Higienização', icon: 'i-seat', count: '05 / 05', hint: ['Passe o cursor e desembace o vidro', 'Desembace com o dedo'] },
+  { key: 'wash', name: 'Lavagem técnica', count: 'Fig. 1', hint: ['Passe o cursor sobre a espuma', 'Toque nas bolhas'] },
+  { key: 'polish', name: 'Polimento', count: 'Fig. 2', hint: ['Mova o cursor e o reflexo acompanha', 'Toque e arraste o reflexo'] },
+  { key: 'ceramic', name: 'Ceramic Coating', count: 'Fig. 3', hint: ['Passe o cursor sobre a pintura', 'Toque na pintura'] },
+  { key: 'layers', name: 'Camadas da pintura', count: 'Fig. 4', hint: ['Mova o cursor para girar as camadas', 'Troque entre Ceramic e PPF no texto'] },
+  { key: 'ppf', name: 'PPF', count: 'Fig. 5', hint: ['Passe o cursor e veja a película', 'Toque e veja a película'] },
+  { key: 'interior', name: 'Higienização', count: 'Fig. 6', hint: ['Passe o cursor para desembaçar', 'Passe o dedo para desembaçar'] },
 ];
 
 /** Recalcula S e T. `starts`: início de cada bloco; `end`: fim do último; `sheet`: quando a seção clara cobre o palco. */
@@ -43,7 +43,6 @@ export function buildTimeline(starts, end, sheet) {
       fade: [0.22, 0.85],
       pull: [0.22, s.marca + 0.75],
       hold: [s.marca + 0.75, s.portal - 0.05],
-      ui: [s.marca + 0.6, s.marca + 0.95, s.portal - 0.2, s.portal + 0.1],
       portal: [s.portal - 0.05, s.portal + 0.72],
     },
     // O farol vira a moldura dos serviços.
@@ -70,11 +69,11 @@ export function buildTimeline(starts, end, sheet) {
 }
 
 export const SERVICES = [
-  { id: 'lavagem', name: 'Lavagem técnica', img: 'assets/wash.webp', description: 'A base do cuidado automotivo: uma limpeza voltada à carroceria, às rodas e aos detalhes externos.', points: ['Conte à equipe como você usa o veículo e quais áreas precisam de atenção.', 'A avaliação do carro orienta o cuidado e o acabamento.'] },
-  { id: 'polimento', name: 'Polimento', img: 'assets/polish.webp', description: 'Um tratamento do acabamento da pintura para realçar o brilho e trabalhar imperfeições superficiais, conforme a avaliação do veículo.', points: ['A condição da pintura determina a abordagem do tratamento.', 'Converse sobre o resultado esperado antes de definir o serviço.'] },
-  { id: 'ceramic', name: 'Ceramic Coating', img: 'assets/ceramic.webp', description: 'Um revestimento cerâmico aplicado ao acabamento. A preparação da superfície faz parte da definição do tratamento.', points: ['A equipe orienta sobre a indicação para o seu carro.', 'Consulte os cuidados de manutenção após a aplicação.'] },
-  { id: 'ppf', name: 'PPF', img: 'assets/ppf.webp', description: 'Paint Protection Film: uma película transparente de proteção aplicada sobre a pintura.', points: ['A cobertura pode ser discutida por áreas do veículo.', 'Peça orientação sobre aplicação, acabamento e cuidados posteriores.'] },
-  { id: 'higienizacao', name: 'Higienização', img: 'assets/interior.webp', description: 'Uma atenção dedicada ao interior: bancos, superfícies e os detalhes do ambiente interno.', points: ['Informe o tipo de revestimento e os pontos que exigem atenção.', 'A equipe avalia as necessidades do interior antes de definir o serviço.'] },
+  { id: 'lavagem', name: 'Lavagem técnica', img: 'assets/wash.webp', description: 'A limpeza completa da parte de fora do carro: carroceria, rodas e detalhes, com produtos e etapas pensados para a pintura.', points: ['Conte como você usa o carro e o que mais te incomoda na limpeza.', 'Se depois vier polimento ou proteção, a lavagem costuma ser o primeiro passo.'] },
+  { id: 'polimento', name: 'Polimento', img: 'assets/polish.webp', description: 'O polimento trabalha o verniz, a camada de fora da pintura, para recuperar o brilho e diminuir marcas leves.', points: ['Quanto dá para melhorar depende do estado da pintura, por isso a avaliação vem antes.', 'Diga o que te incomoda: brilho apagado, riscos finos ou manchas.'] },
+  { id: 'ceramic', name: 'Ceramic Coating', img: 'assets/ceramic.webp', description: 'Um revestimento cerâmico aplicado sobre a pintura depois que ela é preparada.', points: ['A equipe diz se faz sentido para o seu carro, do jeito que ele está hoje.', 'Pergunte como fica a manutenção depois da aplicação.'] },
+  { id: 'ppf', name: 'PPF', img: 'assets/ppf.webp', description: 'Paint Protection Film: uma película transparente aplicada por cima da pintura, nas partes do carro que você combinar com a equipe.', points: ['As áreas cobertas são definidas junto com você.', 'Pergunte sobre o acabamento e os cuidados depois da aplicação.'] },
+  { id: 'higienizacao', name: 'Higienização', img: 'assets/interior.webp', description: 'Limpeza do interior do carro: bancos, superfícies e os cantos que a gente toca todo dia.', points: ['Conte se os bancos são de couro, tecido ou outro material.', 'Diga também se tem alguma mancha ou cheiro que te incomoda.'] },
 ];
 
 // Fotos (ilustrativas) e o ponto que deve permanecer visível quando a moldura recorta.

@@ -1,6 +1,6 @@
 {
   "name": "jetcar-landing",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "private": true,
   "type": "module",
   "description": "Site da JETCAR com transições contínuas guiadas pela rolagem",

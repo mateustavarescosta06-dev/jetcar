@@ -1,4 +1,4 @@
-"""Ferramenta de desenvolvimento: converte palavras em contornos vetoriais (Geist variável).
+"""Ferramenta de desenvolvimento: converte palavras em contornos vetoriais (Barlow Condensed).
 
 Gera dist/js/type-data.js com um path por letra, já com o espaçamento real da fonte
 (kerning via HarfBuzz), para recortar o filme dentro das letras no canvas.
@@ -17,15 +17,16 @@ from fontTools.ttLib import TTFont
 from fontTools.varLib import instancer
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-FONT = os.path.join(ROOT, "dist/assets/fonts/geist-latin-var.woff2")
+FONT = os.path.join(ROOT, "dist/assets/fonts/barlow-condensed-800-italic.woff2")
 WORDS = {
-    "BOA VIAGEM": {"wght": 900},
+    "BOA VIAGEM": {},
 }
 
 
 def static_instance(axes):
     font = TTFont(FONT)
-    static = instancer.instantiateVariableFont(font, axes)
+    # Fonte variável: fixa os eixos pedidos. Fonte estática: usa como está.
+    static = instancer.instantiateVariableFont(font, axes) if "fvar" in font and axes else font
     buf = io.BytesIO()
     static.flavor = None
     static.save(buf)
@@ -65,5 +66,5 @@ for word, axes in WORDS.items():
     print(word, out[word]["width"], out[word]["cap"], len(glyphs))
 
 with open(os.path.join(ROOT, "dist/js/type-data.js"), "w", encoding="utf-8") as f:
-    f.write("// Gerado por scripts/trace-type.py (Geist, OFL). Não editar à mão.\n")
+    f.write("// Gerado por scripts/trace-type.py (Barlow Condensed ExtraBold Italic, OFL). Não editar à mão.\n")
     f.write("export const TYPE = " + json.dumps(out, ensure_ascii=False, separators=(",", ":")) + ";\n")

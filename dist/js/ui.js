@@ -1,8 +1,9 @@
 // Interface do site: menu, progresso, diálogo dos serviços, controle das camadas,
 // escolha do serviço e mensagem pronta para o Instagram.
-import { $, $$, view, state, css, f } from './core.js';
+import { $, $$, view, state, css, f, lerp } from './core.js';
 import { S, T, SERVICES } from './timeline.js';
 import { focusCard } from './scenes.js';
+import { paperAt } from './matte.js';
 
 let jumpFn = () => {};
 export function bindJump(fn) { jumpFn = fn; }
@@ -29,7 +30,9 @@ toggle.addEventListener('click', () => setMenu(menu.hidden));
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !menu.hidden) setMenu(false); });
 addEventListener('resize', () => { if (!menu.hidden && innerWidth > 1080) setMenu(false); });
 
-let solid = null, active = null;
+let solid = null, active = null, darkNav = null, lastMix = -1;
+const intro = $('.blk-intro');
+const mixRGB = (a, b, t) => a.map((v, i) => Math.round(lerp(v, b[i], t))).join(',');
 function sectionAt(u) {
   if (u >= T.sheet - 0.6) return 'duvidas';
   if (u >= S.local - 0.7) return 'local';
@@ -58,6 +61,19 @@ seg.addEventListener('keydown', e => {
 export function renderUi(u) {
   const isSolid = window.scrollY > 24;
   if (isSolid !== solid) { solid = isSolid; nav.classList.toggle('is-solid', isSolid); }
+  // A página "acende" em papel quando o farol vira a moldura. O menu troca de tema junto:
+  // escuro sobre o vídeo e o logo, claro sobre o papel e escuro de novo sobre as dúvidas.
+  const sheetTop = (T.sheet - state.target) * view.unit;
+  const dark = paperAt(u, view.w * 0.5, view.nav * 0.5) < 0.5 || sheetTop <= view.nav * 0.5;
+  if (dark !== darkNav) { darkNav = dark; nav.classList.toggle('on-dark', dark); nav.classList.toggle('on-paper', !dark); }
+  // No computador o texto de Serviços chega ainda no escuro: a cor dele acompanha a luz que passa por ele.
+  const mix = view.portrait ? 1 : paperAt(u, view.w * 0.2, view.svh * 0.55);
+  if (intro && Math.abs(mix - lastMix) > 0.002) {
+    lastMix = mix;
+    css(intro, '--fg', `rgb(${mixRGB([255, 255, 255], [18, 18, 18], mix)})`);
+    css(intro, '--fg-2', `rgb(${mixRGB([189, 187, 181], [78, 76, 71], mix)})`);
+    css(intro, '--rule-c', `rgba(${mixRGB([255, 255, 255], [18, 18, 18], mix)},${f(lerp(0.2, 0.16, mix), 3)})`);
+  }
   css(progress, 'transform', `scaleX(${f(Math.min(1, window.scrollY / (view.scrollMax || 1)), 4)})`);
   const id = sectionAt(u);
   if (id !== active) {
@@ -99,12 +115,7 @@ motionButton.addEventListener('click', () => setReduce(!state.reduce, true));
 // ——— Diálogo dos serviços ———
 const serviceDialog = $('#service-dialog');
 let detailIndex = 0;
-function check(text) {
-  const row = document.createElement('div');
-  row.innerHTML = '<svg aria-hidden="true"><use href="#i-check"/></svg>';
-  row.append(Object.assign(document.createElement('span'), { textContent: text }));
-  return row;
-}
+const point = text => Object.assign(document.createElement('li'), { textContent: text });
 for (const b of $$('[data-detail]')) b.addEventListener('click', () => {
   detailIndex = Number(b.dataset.detail);
   const s = SERVICES[detailIndex];
@@ -113,7 +124,8 @@ for (const b of $$('[data-detail]')) b.addEventListener('click', () => {
   const img = $('.detail-img', serviceDialog);
   img.src = s.img;
   img.alt = `${s.name} (imagem ilustrativa)`;
-  $('#detail-points').replaceChildren(...s.points.map(check));
+  $('#detail-points').replaceChildren(...s.points.map(point));
+  $('.detail-num', serviceDialog).textContent = String(detailIndex + 1).padStart(2, '0');
   openDialog(serviceDialog);
 });
 $('#choose-service').addEventListener('click', () => {
@@ -157,6 +169,14 @@ document.addEventListener('jetcar:select', e => {
   select(e.detail);
   status.textContent = '';
 });
+
+// ——— Pedido de orçamento: a ficha leva a data de hoje ———
+const ticketDate = $('.ticket-date');
+if (ticketDate) {
+  const now = new Date();
+  ticketDate.dateTime = now.toISOString().slice(0, 10);
+  ticketDate.textContent = now.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/\./g, '').replace(/ de /g, ' ');
+}
 
 // ——— Mensagem ———
 const form = $('#contact-form'), fields = $('.fields', form), result = $('.result', form);

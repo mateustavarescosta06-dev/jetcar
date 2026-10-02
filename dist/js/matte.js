@@ -7,7 +7,8 @@ import { TYPE } from './type-data.js';
 
 const canvas = $('.matte');
 const ctx = canvas.getContext('2d');
-const INK = '#09090a'; // igual ao fundo da página: quando a máscara some, nada muda de cor
+const INK = '#0d0d0d'; // abertura: preto, como o fim do vídeo
+const PAPER = '#ecebe6'; // final: o papel da página, recortado pelas letras
 
 const parts = LOGO.parts.map(p => ({ ...p, path: new Path2D(p.d) }));
 const emblem = parts.filter(p => p.kind === 'emblem');
@@ -69,10 +70,21 @@ export function portalCircle(u) {
   return { x: c.px + (ring.cx - c.cx) * c.s, y: c.py + (ring.cy - c.cy) * c.s, r: ring.inner * c.s };
 }
 
-/** Caixa do logo em repouso, para os rótulos técnicos ao redor dele. */
-export function logoBox() {
-  const r = logoRest();
-  return { x: r.x - logoCenter.x * r.s, y: r.y - logoCenter.y * r.s, w: LOGO.w * r.s, h: LOGO.h * r.s };
+/** Luz que acende a página depois do mergulho: círculo com borda suave a partir do centro da moldura. */
+function lightCircle(u) {
+  const [m0, m1] = T.frame.morph;
+  if (u < m0) return null;
+  const t = inOut(span(u, m0, lerp(m0, m1, 0.9)));
+  const far = Math.max(Math.hypot(F.cx, F.cy), Math.hypot(view.w - F.cx, F.cy), Math.hypot(F.cx, view.h - F.cy), Math.hypot(view.w - F.cx, view.h - F.cy));
+  const feather = Math.min(view.w, view.h) * 0.45;
+  return { r: lerp(portalRadius() * 0.9, far + feather, t), feather };
+}
+
+/** Quanto de papel já aparece no ponto (x, y): 0 = escuro, 1 = papel. Usado para o texto e o menu. */
+export function paperAt(u, x, y) {
+  const light = lightCircle(u);
+  if (!light) return 0;
+  return smooth(clamp((light.r - Math.hypot(x - F.cx, y - F.cy)) / light.feather));
 }
 
 function setT(s, cx, cy, px, py, dx = 0, dy = 0, sx = 1) {
@@ -104,17 +116,24 @@ function drawBrand(u) {
   const c = camera(u);
   const reduce = state.reduce;
   const [d0, d1] = T.brand.portal, [m0, m1] = T.frame.morph;
-  // Tinta: entra sobre o filme no início e sai depois do mergulho, revelando o fundo da página.
-  const ink = smooth(span(u, T.brand.fade[0], T.brand.fade[1])) * (1 - smooth(span(u, m0, lerp(m0, m1, 0.7))));
+  // Tinta: entra sobre o filme no início. Depois do mergulho, a luz se espalha a partir da
+  // moldura e revela o papel da página (um círculo de borda suave que cresce).
+  const ink = smooth(span(u, T.brand.fade[0], T.brand.fade[1]));
   // Recortes (filme): somem na segunda metade do mergulho.
   const holes = reduce ? 1 - smooth(span(u, T.brand.hold[1] - 0.1, d0 + 0.35)) : 1 - smooth(span(u, lerp(d0, d1, 0.45), d1));
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.globalCompositeOperation = 'copy';
   ctx.globalAlpha = ink;
-  ctx.fillStyle = INK;
+  const light = lightCircle(u);
+  if (light) {
+    const g = ctx.createRadialGradient(F.cx, F.cy, Math.max(0, light.r - light.feather), F.cx, F.cy, Math.max(1, light.r));
+    g.addColorStop(0, 'rgba(13,13,13,0)');
+    g.addColorStop(1, INK);
+    ctx.fillStyle = g;
+  } else ctx.fillStyle = INK;
   ctx.fillRect(0, 0, view.w, view.h);
   ctx.globalAlpha = 1;
-  if (holes <= 0.002 || ink <= 0.002) { ctx.globalCompositeOperation = 'source-over'; return; }
+  if (holes <= 0.002 || ink <= 0.002 || light) { ctx.globalCompositeOperation = 'source-over'; return; }
   ctx.globalCompositeOperation = 'destination-out';
 
   const hold = smooth(span(u, T.brand.pull[1] - 0.25, T.brand.hold[0] + 0.15)) * (1 - span(u, d0, d0 + 0.3));
@@ -217,7 +236,7 @@ function drawPlace(u) {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.globalCompositeOperation = 'copy';
   ctx.globalAlpha = 1;
-  ctx.fillStyle = INK;
+  ctx.fillStyle = PAPER;
   ctx.fillRect(0, 0, view.w, view.h);
   ctx.globalCompositeOperation = 'destination-out';
 
@@ -251,10 +270,11 @@ function drawPlace(u) {
   }
   ctx.globalAlpha = 1;
   ctx.globalCompositeOperation = 'source-over';
-  glaze(lettersAlpha * (1 - band * 0.6));
+  glaze(lettersAlpha * (1 - band * 0.6) * 0.6);
   if (lettersAlpha > 0.01) {
-    ctx.strokeStyle = '#fff';
-    ctx.globalAlpha = 0.3 * lettersAlpha;
+    // Contorno fino em tinta: as letras parecem impressas no papel.
+    ctx.strokeStyle = '#121212';
+    ctx.globalAlpha = 0.35 * lettersAlpha;
     for (const [m, g] of strokes) { ctx.setTransform(...m); ctx.lineWidth = 1 / (m[0] / dpr); ctx.stroke(g.path); }
   }
   ctx.globalAlpha = 1;

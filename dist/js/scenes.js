@@ -4,7 +4,7 @@ import { $, $$, view, frame as F, state, pointer, clamp, lerp, span, smooth, inO
 import { T, IMAGES, FRAME_META } from './timeline.js';
 import { P, zoom } from './media.js';
 import { hive, buildHive, cellFlip } from './hex.js';
-import { placeGeometry, portalCircle, portalRadius, logoBox } from './matte.js';
+import { placeGeometry, portalCircle, portalRadius } from './matte.js';
 
 const frameEl = $('.frame');
 const L = {
@@ -21,11 +21,11 @@ const el = {
   door: $('.door', L.ppf), ppf: $('.door img', L.ppf), sheet: $('.film-sheet', L.ppf), shade: $('.door-shade', L.ppf), spec: $('.spec', L.ppf),
   cards: $$('.card', L.ring), ringHint: $('.ring-hint', L.ring),
 };
+// Legenda da moldura (fica fora dela, como numa revista).
 const ui = {
-  root: $('.frame-ui'), name: $('.fchip-name span'), icon: $('.fchip-name use'), count: $('.fchip-count'), hint: $('.fchip-hint span'),
-  chips: $$('.fchip'),
+  root: $('.frame-cap'), name: $('.cap-name'), count: $('.cap-fig'), hint: $('.cap-hint span'),
+  parts: $$('.cap-main, .cap-hint'),
 };
-const brandUi = $('.brand-ui');
 const G = { guardMix: 0 }; // geometria calculada no resize
 const touchQuery = matchMedia('(hover: none)');
 
@@ -87,16 +87,16 @@ export function layoutScenes() {
     css(img, 'width', `${f(r.w)}px`); css(img, 'height', `${f(r.h)}px`); css(img, 'left', `${f(r.x)}px`); css(img, 'top', `${f(r.y)}px`);
   });
   G.cardRect = { x: G.rcx - G.cw / 2, y: G.rcy - G.ch / 2, w: G.cw, h: G.ch };
+  // Borda de papel do cartão (proporcional ao tamanho) e a área da foto dentro dela.
+  G.edge = Math.round(clamp(G.cw * 0.035, 5, 8));
+  G.edgeB = Math.round(clamp(G.cw * 0.17, 26, 40));
+  css(L.ring, '--card-edge', `${G.edge}px`);
+  css(L.ring, '--card-edge-b', `${G.edgeB}px`);
+  css(L.ring, '--card-font', `${f(clamp(G.cw * 0.075, 11, 16), 1)}px`);
+  G.cardPhoto = { x: G.cardRect.x + G.edge, y: G.cardRect.y + G.edge, w: G.cw - G.edge * 2, h: G.ch - G.edge - G.edgeB };
   el.ringHint._w = 0;
   const im = IMAGES.interior, ir = cover(im.w, im.h, G.cw, G.ch, im.fx, im.fy);
   G.interiorCard = { x: G.cardRect.x + ir.x, y: G.cardRect.y + ir.y, w: ir.w, h: ir.h };
-
-  // Rótulos técnicos em volta do logo.
-  if (brandUi) {
-    const b = logoBox(), padX = Math.max(14, b.w * 0.03), padY = Math.max(14, b.h * 0.08);
-    css(brandUi, '--bx', `${f(b.x - padX)}px`); css(brandUi, '--by', `${f(b.y - padY)}px`);
-    css(brandUi, '--bw', `${f(b.w + padX * 2)}px`); css(brandUi, '--bh', `${f(b.h + padY * 2)}px`);
-  }
 }
 
 function buildCells() {
@@ -148,7 +148,7 @@ function frameState(u) {
   }
   if (u < k0) return { rect: F, radius: F.r, alpha: 1 };
   const c = inOut(span(u, k0, k1));
-  return { rect: lerpRect(F, G.cardRect, c), radius: lerp(F.r, 18, c), alpha: 1 };
+  return { rect: lerpRect(F, G.cardPhoto, c), radius: lerp(F.r, 1, c), alpha: 1 };
 }
 
 function frameScene(u) {
@@ -230,7 +230,8 @@ function stack(u, dt) {
   const ex = reduce ? 1 : inOut(span(u, e0, e1)) * (1 - inOut(span(u, c0, c0 + 0.5)));
   const holdP = env(u, [e0, e1, c0 - 0.2, c0 + 0.1]) * (reduce ? 0 : 1);
   const light = smooth(span(u, t0 + 0.1, t1)) * (1 - smooth(span(u, c0, c0 + 0.42)));
-  css(L.stack, 'backgroundColor', `rgb(${Math.round(lerp(9, 236, light))},${Math.round(lerp(9, 234, light))},${Math.round(lerp(10, 229, light))})`);
+  // Estúdio claro, um tom acima do papel da página.
+  css(L.stack, 'backgroundColor', `rgb(${Math.round(lerp(12, 247, light))},${Math.round(lerp(12, 246, light))},${Math.round(lerp(13, 242, light))})`);
   if (reduce) layerOpacity(L.stack, env(u, [t0, t0 + 0.4, c1 - 0.4, c1]));
 
   const kC = zoom.ceramic(t0), rc = zoomRect(P.ceramic, kC, F.cx, F.cy), rp = P.ppf;
@@ -402,6 +403,8 @@ function ringScene(u, dt) {
     if (!shade) { shade = card._shade = document.createElement('i'); shade.className = 'shade'; card.append(shade); }
     opacity(shade, clamp(Math.abs(phi) / 80) * 0.55 * (1 - flat));
     card.classList.toggle('is-selected', state.selected === j);
+    // O cartão do interior chega sem borda (é a própria foto encolhendo) e ganha a borda de papel.
+    css(card, '--edge', j === 4 && !reduce ? f(smooth(span(u, k1, k1 + 0.16)), 3).toString() : '1');
   });
   const hint = env(u, T.contact.hint) * (1 - flat);
   opacity(el.ringHint, hint);
@@ -447,15 +450,14 @@ function setupRing() {
 }
 setupRing();
 
-// ——— Rótulos da moldura e do logo ———
+// ——— Legenda da moldura ———
 let metaIndex = -1, swapTimer = 0;
 function applyMeta(i) {
   const m = FRAME_META[i];
   ui.name.textContent = m.name;
-  ui.icon.setAttribute('href', `#${m.icon}`);
   ui.count.textContent = m.count;
   ui.hint.textContent = m.hint[touchQuery.matches ? 1 : 0];
-  for (const c of ui.chips) c.classList.remove('is-swap');
+  for (const c of ui.parts) c.classList.remove('is-swap');
 }
 function frameUi(u) {
   const show = !state.covered && u > T.frame.morph[1] - 0.12 && u < T.interior.card[0] - 0.04;
@@ -467,17 +469,10 @@ function frameUi(u) {
   metaIndex = i;
   clearTimeout(swapTimer);
   if (first || !show) { applyMeta(i); return; }
-  for (const c of ui.chips) c.classList.add('is-swap');
+  for (const c of ui.parts) c.classList.add('is-swap');
   swapTimer = setTimeout(() => applyMeta(metaIndex), 240);
 }
 touchQuery.addEventListener?.('change', () => { if (metaIndex >= 0) applyMeta(metaIndex); });
-
-function brandScene(u) {
-  if (!brandUi) return;
-  const a = state.covered ? 0 : env(u, T.brand.ui);
-  opacity(brandUi, a);
-  css(brandUi, 'visibility', a > 0.001 ? 'visible' : 'hidden');
-}
 
 // ——— Orquestração: cada camada liga um pouco antes, quase transparente, para o navegador
 // já ter tudo pintado no quadro em que ela assume a moldura (sem piscar). ———
@@ -506,7 +501,6 @@ export function renderScenes(u, dt) {
   run(interior, L.interior, u, dt, T.ppf.door[0] - 0.004, T.interior.card[1] + 0.004);
   run(ringScene, L.ring, u, dt, T.contact.gather[0], T.contact.flatten[1] + 0.02, 0.2);
   frameUi(u);
-  brandScene(u);
 }
 
 export { G as sceneGeometry };

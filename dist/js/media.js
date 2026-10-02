@@ -18,21 +18,22 @@ IMG.interiorSoft = loadImage('assets/interior-soft.webp');
 export function layoutFrame() {
   const { w, svh, nav } = view;
   const pad = w <= 760 ? 16 : clamp(w * 0.04, 18, 56);
+  // Abaixo da moldura fica a legenda (como numa revista), então sobra espaço para ela.
   let x, y, fw, fh;
   if (view.portrait) {
     x = pad;
-    y = nav + (view.mobile ? 4 : 12);
+    y = nav + (view.mobile ? 6 : 14);
     fw = w - pad * 2;
-    fh = Math.max(170, svh * (view.mobile ? (view.short ? 0.5 : 0.535) : 0.58) - y);
+    fh = Math.max(160, svh * (view.mobile ? (view.short ? 0.5 : 0.535) : 0.58) - y - (view.mobile ? 26 : 32));
   } else {
     const txt = Math.min(520, w * 0.4);
     const gap = clamp(w * 0.05, 28, 96);
     x = pad + txt + gap;
-    y = nav + (view.short ? 2 : 12);
+    y = nav + (view.short ? 4 : 16);
     fw = w - pad - x;
-    fh = svh - y - Math.max(16, pad * 0.62);
+    fh = svh - y - Math.max(16, pad * 0.62) - (view.short ? 26 : 34);
   }
-  const r = view.mobile ? 20 : clamp(Math.min(fw, fh) * 0.04, 18, 30);
+  const r = 3;
   Object.assign(F, { x, y, w: fw, h: fh, cx: x + fw / 2, cy: y + fh / 2, r, diag: Math.hypot(fw, fh) });
   css(stage, '--fx', `${f(x)}px`);
   css(stage, '--fy', `${f(y)}px`);

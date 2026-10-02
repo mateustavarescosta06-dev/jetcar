@@ -9,7 +9,7 @@ Site completo e interativo para @jetcarbv. As primeiras referências (gravaçõe
 - mais elementos de site além de imagem + texto; nada de listas em tópicos; mais detalhes;
 - tudo que era amarelo agora é **vermelho**, com gradientes bem leves e botões modernos.
 
-A referência mais recente (site de produto com vistas explodidas em fundo de estúdio claro, rótulos técnicos em mono, títulos grandes e enxutos) guia o tom visual.
+Depois da v3 o usuário disse que ainda tinha "muita cara de site feito com IA". A v4 tira os clichês desse visual (fundo escuro com brilhos, vidro, pílulas, rótulos em mono, ícones em quadradinhos, travessões no texto) e assume uma direção editorial de automobilismo: tipografia condensada de placa de estrada, páginas de papel claro, vermelho chapado, números de corrida, fichas e legendas como numa revista, textos em voz humana e local. Não voltar a esse visual genérico.
 
 ## Requisitos preservados
 
@@ -31,19 +31,23 @@ O conteúdo é um site normal que rola de forma nativa (`.flow`); atrás dele, u
 - `dist/index.html`: menu (links, progresso, menu de celular), palco (filme, máscara do logo, rótulos técnicos do logo, moldura com as cenas e chips, arco de cartões) e o conteúdo: hero, serviços, um bloco por serviço, camadas com controle Ceramic/PPF, agendamento (passos, formulário), localização, dúvidas (seção clara que sobe por cima do palco) e rodapé.
 - `dist/experience.js`: ponto de entrada. Mede onde cada bloco começa e recalcula a linha do tempo (também via ResizeObserver), suaviza a rolagem (~60 ms), ponteiro/toque, âncoras (rolagem suave por perto, cortina em saltos longos), blocos altos demais rolam sem prender (`.pin-flow`), palco para de desenhar quando a seção de dúvidas o cobre.
 - `dist/js/timeline.js`: **a linha do tempo**. `BLOCKS` define a altura mínima de cada bloco; `buildTimeline()` deriva todos os intervalos (`T`) dos inícios medidos (`S`). Ajuste ritmo e pausas de leitura aqui. Também guarda os rótulos da moldura, serviços e pontos focais das fotos.
-- `dist/js/media.js`: geometria da moldura (à direita do texto no computador; em cima, com o texto em cartões embaixo, em telas em pé), fotos com `cover()` e ponto focal, filme (fonte por orientação, autoplay com botão de fallback).
-- `dist/js/matte.js`: canvas sobre o vídeo. Recua de dentro das letras até o logo inteiro (filme dentro das letras), mergulha no farol do emblema até o círculo inscrito na moldura; no fim, fenda de cinema → BOA VIAGEM com o filme dentro.
-- `dist/js/scenes.js`: recorte da moldura (farol → círculo → cartão arredondado → cartão do arco) e cenas em DOM/CSS 3D dentro dela: lavagem; polimento (imagem → disco que gira com texto orbital); colmeia que gira até o Ceramic Coating; vista explodida das camadas em estúdio claro com rótulos projetados; PPF com película e porta que abre; interior que encolhe até o cartão da frente do arco de serviços (arrastar/tocar escolhe o serviço). Também os chips da moldura (nome, contagem, dica) e os rótulos do logo.
+- `dist/js/media.js`: geometria da moldura (à direita do texto no computador; em cima, com o texto numa folha de papel embaixo, em telas em pé; sempre com espaço para a legenda), fotos com `cover()` e ponto focal, filme (fonte por orientação, autoplay com botão de fallback).
+- `dist/js/matte.js`: canvas sobre o vídeo. Recua de dentro das letras até o logo inteiro (filme dentro das letras), mergulha no farol do emblema até o círculo inscrito na moldura e, a partir dela, uma luz de borda suave revela o papel da página (`paperAt()` diz quanto de papel há em cada ponto; o menu e o texto de Serviços usam isso para trocar de cor). No fim, o papel é recortado: fenda de cinema → BOA VIAGEM com o filme dentro.
+- `dist/js/scenes.js`: recorte da moldura (farol → círculo → foto retangular → área da foto no cartão do arco) e cenas em DOM/CSS 3D dentro dela: lavagem; polimento (imagem → disco que gira com texto orbital); colmeia que gira até o Ceramic Coating; vista explodida das camadas em estúdio claro com rótulos projetados; PPF com película e porta que abre; interior que encolhe até o cartão da frente do arco de serviços (fotos impressas com borda de papel; arrastar/tocar escolhe o serviço). Também a legenda da moldura ("Fig. N", nome, "Imagem ilustrativa", dica de interação).
 - `dist/js/fx.js`: canvas de efeitos do tamanho da moldura: espuma que reage e estoura ao toque, bolhas que viram janelas para o polimento, contornos da colmeia e vidro embaçado que se limpa com o dedo/cursor.
 - `dist/js/reveal.js`: revelações por tempo quando o conteúdo aparece (títulos sobem palavra por palavra), como em um site.
-- `dist/js/ui.js`: menu, progresso, link ativo, movimento reduzido (lembrado no aparelho), diálogo do serviço, controle das camadas, seleção de serviço (arco ⇄ campo), mensagem para copiar e abrir o Direct, proteção contra a rolagem do teclado no iPhone.
+- `dist/js/ui.js`: menu (tema escuro sobre vídeo/logo/dúvidas e claro sobre o papel), progresso, link ativo, movimento reduzido (lembrado no aparelho), diálogo do serviço, controle das camadas, seleção de serviço (arco ⇄ campo), ficha de pedido de orçamento com a data do dia, mensagem para copiar e abrir o Direct, proteção contra a rolagem do teclado no iPhone.
 - `dist/js/logo-data.js` e `dist/js/type-data.js`: gerados (não editar à mão).
 
 Regra das transições: o estado final de uma cena é o estado inicial da próxima (mesmo retângulo, mesma escala). Fotos usam `cover()` com ponto focal, compartilhado entre DOM e canvas.
 
-## Visual
+## Visual (v4)
 
-Fontes Geist e Geist Mono (OFL, `assets/fonts`, auto-hospedadas). Vermelho `#e5252d` com gradiente sutil nos botões primários (`--grad-red`), botões em pílula com ícone circular, chips em vidro, rótulos técnicos em mono. Fundo `#09090a`; a seção de dúvidas é clara (`--paper`).
+- Fontes: Barlow (texto) e Barlow Condensed 700/800 e 800 itálico (títulos, números, botões), OFL, auto-hospedadas em `assets/fonts`. Sem fonte mono.
+- Superfícies: vídeo e logo no preto (`--black`), conteúdo em papel claro (`--paper`), dúvidas em preto com fio vermelho no topo, rodapé vermelho. Granulação leve fixa sobre tudo (`body::after`).
+- Vermelho `#d7261e` chapado; gradiente bem leve só nos botões (`--grad-red`). Botões inclinados (paralelogramo via `::before` com `skewX`), links sublinhados. Cantos retos (3px).
+- Elementos: rótulo de seção com número em itálico vermelho sobre régua fina, número de corrida grande em cada serviço, ficha em linhas (`dl.facts`), índice numerado de serviços, legenda "Fig. N" fora da moldura, pedido de orçamento como ficha de papel, cartões do arco como fotos impressas.
+- Texto: frases diretas, "a gente", referências locais; sem travessões, sem slogans genéricos, sem inventar dados.
 
 ## Executar e verificar
 

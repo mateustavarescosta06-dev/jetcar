@@ -15,11 +15,11 @@ Abra http://localhost:3000. Não há dependências para instalar. Alternativa: `
 ## Estrutura
 
 - `dist/index.html`: conteúdo do site (menu, seções, formulário, diálogo, rodapé) e o palco visual.
-- `dist/style.css`: visual (Geist, vermelho com gradientes sutis), layouts por orientação e fallback sem JavaScript.
+- `dist/style.css`: visual (Barlow, papel claro, vermelho chapado, botões inclinados), layouts por orientação e fallback sem JavaScript.
 - `dist/experience.js`: ponto de entrada (medição dos blocos, rolagem suavizada, ponteiro, âncoras, quadro a quadro).
 - `dist/js/timeline.js`: blocos e linha do tempo — o lugar para ajustar ritmo e pausas de leitura.
 - `dist/js/media.js`, `matte.js`, `scenes.js`, `fx.js`, `reveal.js`, `ui.js`: moldura/fotos/filme, logo recortado, cenas 3D, efeitos interativos, revelações do conteúdo e interface.
-- `dist/assets/`: filmes, pôsteres, fotos, logo vetorial e fontes. São arquivos de origem versionados; não tratar `dist` como pasta descartável.
+- `dist/assets/`: filmes, pôsteres, fotos, logo vetorial e fontes (Barlow, OFL). São arquivos de origem versionados; não tratar `dist` como pasta descartável.
 - `scripts/`: servidor local (com suporte a Range), verificação e geradores (logo vetorial, contornos de texto, versões do filme).
 
 Detalhes de arquitetura, requisitos e decisões estão em `CLAUDE.md`.
