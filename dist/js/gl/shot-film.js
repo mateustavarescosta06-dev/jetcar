@@ -326,13 +326,18 @@ export class FilmShot {
       view.logoBase = (0.5 - this.tmpV.y * 0.5) * view.h;
     }
 
-    post.exposure = 1;
-    post.bloom = 0.55;
+    // farol → luz → branco → lavagem: ao atravessar o A, o farol estoura a exposição e a
+    // imagem volta já na lavagem
+    const flash = u < H ? env(p, [0.865, 0.902, 0.914, 0.945]) : 0;
+    if (flash > 0) U.uFlare.value = Math.max(U.uFlare.value, flash * 1.5);
+    post.exposure = 1 + flash * flash * flash * 46;
+    post.bloom = 0.55 + flash * 1.4;
     post.threshold = 0.95;
     post.knee = 0.5;
     post.vignette = 0.6;
     post.grain = view.mobile ? 0.03 : 0.04;
-    post.white = 0;
+    // o branco só chega no auge (as luzes estouram antes, não é uma névoa por cima da imagem)
+    post.white = smooth(span(flash, 0.86, 1)) * 0.96;
     post.black = 0;
     post.chroma = 0;
   }

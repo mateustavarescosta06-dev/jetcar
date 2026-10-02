@@ -150,7 +150,8 @@ float hash(vec2 p) { vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx
 // Curva de filme: linear até 0,8 e ombro suave acima (preserva o filme e segura as luzes).
 vec3 shoulder(vec3 x) {
   vec3 k = vec3(0.8);
-  vec3 over = max(x - k, 0.0);
+  // limitado: exp de números muito negativos dá lixo em alguns drivers (o farol ficava escuro)
+  vec3 over = clamp(x - k, 0.0, 4.0);
   return min(x, k) + (1.0 - k) * (1.0 - exp(-over / (1.0 - k)));
 }
 void main() {
