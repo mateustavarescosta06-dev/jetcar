@@ -81,7 +81,7 @@ export class FilmShot {
       [at('final', 0), 11.0], [at('final', 0.18), 12.0], [at('final', 0.55), 14.4], [at('final', 0.75), 14.95], [at('final', 1), 15.0],
     ]);
     // Enquadramento em telas em pé (x do ponto de interesse no quadro, por tempo do filme).
-    this.focusX = curve([[0, 0.5], [2, 0.52], [3.6, 0.46], [4.4, 0.36], [5.2, 0.5], [7, 0.55], [9, 0.62], [10.5, 0.45], [12.5, 0.45], [14, 0.5], [15, 0.5]]);
+    this.focusX = curve([[0, 0.5], [2, 0.52], [3.6, 0.46], [4.4, 0.36], [5.2, 0.5], [7, 0.55], [9, 0.62], [10.5, 0.45], [12.5, 0.45], [14, 0.47], [15, 0.42]]);
   }
 
   resize() {
