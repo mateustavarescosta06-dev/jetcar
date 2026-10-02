@@ -10,6 +10,7 @@ import { StudioShot } from './js/gl/shot-studio.js';
 import { MapShot } from './js/gl/shot-map.js';
 import { renderCaptions, captionHold } from './js/captions.js';
 import { renderUi, bindJump, setReduce, savedMotion, setMenu, cancelFreeze, ready, loading, bindSound } from './js/ui.js';
+import { setSound, renderSound } from './js/audio.js';
 
 const html = document.documentElement;
 const stage = $('.stage'), canvas = $('.gl'), track = $('.track');
@@ -44,7 +45,7 @@ try {
   v.poster = view.portrait ? 'assets/film-poster-portrait.webp' : 'assets/film-poster.webp';
   v.src = view.portrait ? 'assets/film-portrait.mp4' : 'assets/film-720.mp4';
   if (state.reduce) v.removeAttribute('autoplay');
-  stage.append(v);
+  stage.prepend(v);
   document.addEventListener('visibilitychange', () => { if (document.hidden) v.pause(); else if (!state.reduce) v.play().catch(() => {}); });
 }
 const shots = {};
@@ -111,7 +112,10 @@ function jump(el, { focus } = {}) {
   setMenu(false);
   const top = targetY(el);
   const settle = () => {
-    const f = focus || el.querySelector?.('h2, input') || el;
+    // capítulos do trilho: o foco vai para o título da legenda (o próximo Tab segue a página)
+    const ch = el.dataset?.ch;
+    const head = ch ? document.querySelector(`.cap[data-cap="${ch}"] h1, .cap[data-cap="${ch}"] h2`) : null;
+    const f = focus || head || el.querySelector?.('h2, input') || el;
     if (!f.matches('a, button, input, select, textarea, [tabindex]')) f.setAttribute('tabindex', '-1');
     f.focus({ preventScroll: true });
   };
@@ -134,6 +138,7 @@ function jump(el, { focus } = {}) {
   }, 340);
 }
 bindJump(jump);
+bindSound(setSound);
 for (const a of $$('a[href^="#"]')) a.addEventListener('click', e => {
   const id = a.getAttribute('href').slice(1);
   const target = id && document.getElementById(id);
@@ -163,7 +168,7 @@ addEventListener('pointermove', e => {
 
 // ——— Quadro a quadro ———
 let last = performance.now();
-let activeShot = null;
+let activeShot = null, lastActive = 0, skip = false;
 function shotFor(u) {
   const ch = chapterAt(u);
   return shots[ch.shot] || null;
@@ -189,9 +194,13 @@ function tick(now) {
   // O palco para quando o conteúdo final cobre a tela.
   const covered = y > pageY + view.h * 1.1;
   if (covered !== state.covered) { state.covered = covered; stage.style.visibility = covered ? 'hidden' : ''; }
-  if (engine && !covered && !document.hidden) {
+  // parado (sem rolar nem mexer o cursor) a cena só respira: desenha a 30 quadros por segundo
+  if (Math.abs(u - prev) > 1e-5 || now - pointer.at < 300) lastActive = now;
+  const idle = now - lastActive > 3000;
+  skip = idle ? !skip : false;
+  if (engine && !covered && !document.hidden && !skip) {
     // a troca de resolução acontece antes de desenhar (redimensionar limpa a tela)
-    adaptResolution(dt);
+    if (!idle) adaptResolution(dt);
     const shot = shotFor(Math.min(u, TOTAL - 0.001));
     if (shot !== activeShot) { activeShot?.leave?.(); activeShot = shot; }
     resetPost();
@@ -205,6 +214,7 @@ function tick(now) {
   }
   renderCaptions(u);
   renderUi(u, y, pageY);
+  renderSound();
   requestAnimationFrame(tick);
 }
 

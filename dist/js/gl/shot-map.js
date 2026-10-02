@@ -362,7 +362,9 @@ export class MapShot {
     const yaw = Math.atan2(cam.position.x - this.dest.x, cam.position.z - this.dest.z);
     this.beam.rotation.set(0, yaw, 0);
     this.blocks.material.uniforms.uGlow.value = arrive * 0.6;
-    this.destA = arrive;
+    // os rótulos saem antes de a seção de agendamento subir por cima do mapa
+    const away = 1 - smooth(span(t, 0.6, 0.68));
+    this.destA = arrive * away;
     this.startA = env(t, [0.14, 0.24, 0.5, 0.62]);
     this.labels(1);
 

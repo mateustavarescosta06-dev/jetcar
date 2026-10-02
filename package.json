@@ -1,9 +1,9 @@
 {
   "name": "jetcar-landing",
-  "version": "4.0.0",
+  "version": "5.0.0",
   "private": true,
   "type": "module",
-  "description": "Site da JETCAR com transições contínuas guiadas pela rolagem",
+  "description": "Site da JETCAR: um filme automotivo conduzido pela rolagem (WebGL)",
   "scripts": {
     "start": "node scripts/serve.cjs",
     "dev": "node scripts/serve.cjs",

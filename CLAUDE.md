@@ -2,69 +2,69 @@
 
 ## Objetivo do usuário
 
-Site completo e interativo para @jetcarbv. As primeiras referências (gravações enviadas pelo usuário) mostram um objeto que gira e se explode em peças com tipografia ao redor, e uma cena que muda de escala, aparece dentro de letras e leva à cena seguinte. O usuário gostou da iniciativa das transições, mas pediu (v3) que o resultado pareça **um site, não um vídeo**:
+Site completo e interativo para @jetcarbv. Histórico das direções:
 
-- transições mais naturais, mantendo a mesma essência (logo com o filme, farol, bolhas, disco, colmeia, camadas, porta, arco, BOA VIAGEM);
-- fontes, textos e posicionamento de site; imagens usadas de forma estratégica (em moldura, não em tela cheia o tempo todo);
-- mais elementos de site além de imagem + texto; nada de listas em tópicos; mais detalhes;
-- tudo que era amarelo agora é **vermelho**, com gradientes bem leves e botões modernos.
+- v3 (publicada em produção, https://jetcar-rho.vercel.app): site com conteúdo em fluxo e transições em moldura.
+- v4 (prévia): identidade editorial própria (Barlow, vermelho chapado), textos em voz humana.
+- v5 (atual): o usuário pediu para reformular profundamente. O "3D" anterior era transformação de CSS e foi rejeitado. Ele quer abrir o site e sentir que está controlando um filme automotivo: rolagem = linha do tempo, câmera virtual com profundidade real (dolly, órbita parcial, passagem lateral, primeiro/segundo plano, oclusão, foco), luz como interface (uma linha de luz revela o carro, o reflexo vira a próxima cena), materiais de pintura convincentes, serviços como capítulos de uma jornada única e um final cinematográfico. Teste de qualidade dele: "isso poderia estar num filme da Porsche, McLaren ou Lamborghini?".
 
-Depois da v3 o usuário disse que ainda tinha "muita cara de site feito com IA". A v4 tira os clichês desse visual (fundo escuro com brilhos, vidro, pílulas, rótulos em mono, ícones em quadradinhos, travessões no texto) e assume uma direção editorial de automobilismo: tipografia condensada de placa de estrada, páginas de papel claro, vermelho chapado, números de corrida, fichas e legendas como numa revista, textos em voz humana e local. Não voltar a esse visual genérico.
+Proibido (pedido explícito): cartões inclinados, "3D" de CSS, cubos aleatórios, objetos flutuando sem motivo, logo girando, giro de 360° no carro, partículas gratuitas, tipografia com perspectiva exagerada, elementos voando na direção da pessoa, paralaxe excessiva, lens flare barato, neon/cyberpunk/gamer/NFT.
 
 ## Requisitos preservados
 
-- Começar com o vídeo existente do Porsche 911 Turbo S (hero do site, em tela cheia).
-- Mostrar o filme em movimento dentro da marca JETCAR; a câmera mergulha no farol, que vira a moldura dos serviços.
-- O vídeo continua passando: houve reclamação quando uma versão congelava a reprodução ao vincular os frames à rolagem. A rolagem controla só os efeitos; o vídeo toca sozinho (pausa apenas quando está escondido, para poupar bateria).
-- Cinco serviços confirmados pelo perfil: Lavagem técnica, Polimento, Ceramic Coating, PPF, Higienização.
-- Local: link fornecido https://maps.apple/p/uRv~vCQ0G1zNn4, que o Apple Maps resolve para Rua José Trajano, Boa Viagem, Recife – PE (−8.12055, −34.89937). Rua e coordenadas vêm desse link; não acrescentar número, CEP ou complemento sem confirmação.
+- Começar com o filme do Porsche 911 Turbo S em tela cheia.
+- O filme aparece dentro das letras JETCAR; a câmera atravessa uma letra e o filme vira a próxima cena.
+- Na v5 o próprio filme é controlado pela rolagem (pedido da v5, substitui a regra antiga de "o vídeo continua passando"). Para não congelar, ele respira um pouco quando a rolagem para (`idleDrift` em `shot-film.js`). Sem WebGL, o vídeo volta a tocar em loop atrás do conteúdo.
+- Cinco serviços confirmados pelo perfil: Lavagem técnica, Correção de pintura (polimento), Ceramic Coating, PPF, Higienização.
+- Local: link https://maps.apple/p/uRv~vCQ0G1zNn4, que o Apple Maps resolve para Rua José Trajano, Boa Viagem, Recife – PE (−8.12055, −34.89937). Rua e coordenadas vêm desse link; não acrescentar número, CEP ou complemento sem confirmação.
 - Não inventar telefone, horários, preços, depoimentos, garantias, datas de fundação ou resultados de clientes.
 - Contato pelo Instagram https://www.instagram.com/jetcarbv/ (Direct: https://ig.me/m/jetcarbv). O perfil tem WhatsApp, mas o número não foi fornecido.
-- As fotografias de serviço e o vídeo foram gerados como ilustrações, não são trabalhos reais da empresa. A moldura mostra "Imagem ilustrativa"; o rodapé e o diálogo de serviço também avisam.
+- O filme e as fotos foram gerados como ilustrações, não são trabalhos reais da empresa; o rodapé avisa ("Fotos e vídeo ilustrativos").
 
-## Arquitetura atual (v3)
+## Arquitetura atual (v5)
 
-HTML/CSS/JavaScript puro em módulos ES, sem bundler nem dependências de execução. `dist/` é fonte mantida à mão, incluindo assets, e deve ser versionada.
+HTML/CSS/JavaScript em módulos ES, sem bundler nem etapa de build. `dist/` é fonte mantida à mão, incluindo assets e as bibliotecas em `dist/vendor` (Three.js r186 reduzido ao que o site usa, e Lenis), e deve ser versionada.
 
-O conteúdo é um site normal que rola de forma nativa (`.flow`); atrás dele, um palco preso (`.stage`, `position: sticky`, decorativo e `aria-hidden`) faz as transições. Cada seção de conteúdo é um bloco (`[data-blk]`) com altura mínima em "unidades" (1 unidade = 85svh) e um `.pin` fixo enquanto o bloco passa, então o texto sobe 1:1 como em qualquer site e as cenas trocam enquanto um texto sai e o próximo entra.
+Um único canvas WebGL fica num palco preso (`.stage`, sticky, 100lvh, `aria-hidden` no que é decorativo). Atrás dele, `.track` tem um `div.ch` por capítulo com a altura em telas; a posição da rolagem em telas (`state.u`) é a linha do tempo. Depois do trilho vem a página normal (agendamento, dúvidas, rodapé), que sobe por cima do palco.
 
-- `dist/index.html`: menu (links, progresso, menu de celular), palco (filme, máscara do logo, rótulos técnicos do logo, moldura com as cenas e chips, arco de cartões) e o conteúdo: hero, serviços, um bloco por serviço, camadas com controle Ceramic/PPF, agendamento (passos, formulário), localização, dúvidas (seção clara que sobe por cima do palco) e rodapé.
-- `dist/experience.js`: ponto de entrada. Mede onde cada bloco começa e recalcula a linha do tempo (também via ResizeObserver), suaviza a rolagem (~60 ms), ponteiro/toque, âncoras (rolagem suave por perto, cortina em saltos longos), blocos altos demais rolam sem prender (`.pin-flow`), palco para de desenhar quando a seção de dúvidas o cobre.
-- `dist/js/timeline.js`: **a linha do tempo**. `BLOCKS` define a altura mínima de cada bloco; `buildTimeline()` deriva todos os intervalos (`T`) dos inícios medidos (`S`). Ajuste ritmo e pausas de leitura aqui. Também guarda os rótulos da moldura, serviços e pontos focais das fotos.
-- `dist/js/media.js`: geometria da moldura (à direita do texto no computador; em cima, com o texto numa folha de papel embaixo, em telas em pé; sempre com espaço para a legenda), fotos com `cover()` e ponto focal, filme (fonte por orientação, autoplay com botão de fallback).
-- `dist/js/matte.js`: canvas sobre o vídeo. Recua de dentro das letras até o logo inteiro (filme dentro das letras), mergulha no farol do emblema até o círculo inscrito na moldura e, a partir dela, uma luz de borda suave revela o papel da página (`paperAt()` diz quanto de papel há em cada ponto; o menu e o texto de Serviços usam isso para trocar de cor). No fim, o papel é recortado: fenda de cinema → BOA VIAGEM com o filme dentro.
-- `dist/js/scenes.js`: recorte da moldura (farol → círculo → foto retangular → área da foto no cartão do arco) e cenas em DOM/CSS 3D dentro dela: lavagem; polimento (imagem → disco que gira com texto orbital); colmeia que gira até o Ceramic Coating; vista explodida das camadas em estúdio claro com rótulos projetados; PPF com película e porta que abre; interior que encolhe até o cartão da frente do arco de serviços (fotos impressas com borda de papel; arrastar/tocar escolhe o serviço). Também a legenda da moldura ("Fig. N", nome, "Imagem ilustrativa", dica de interação).
-- `dist/js/fx.js`: canvas de efeitos do tamanho da moldura: espuma que reage e estoura ao toque, bolhas que viram janelas para o polimento, contornos da colmeia e vidro embaçado que se limpa com o dedo/cursor.
-- `dist/js/reveal.js`: revelações por tempo quando o conteúdo aparece (títulos sobem palavra por palavra), como em um site.
-- `dist/js/ui.js`: menu (tema escuro sobre vídeo/logo/dúvidas e claro sobre o papel), progresso, link ativo, movimento reduzido (lembrado no aparelho), diálogo do serviço, controle das camadas, seleção de serviço (arco ⇄ campo), ficha de pedido de orçamento com a data do dia, mensagem para copiar e abrir o Direct, proteção contra a rolagem do teclado no iPhone.
-- `dist/js/logo-data.js` e `dist/js/type-data.js`: gerados (não editar à mão).
+- `dist/js/chapters.js`: **a linha do tempo**. Capítulos, duração de cada um em telas (`len`), ponto de leitura usado pelo menu (`hold`) e qual cena desenha cada um (`shot`). Ajuste ritmo aqui.
+- `dist/js/captions.js`: janelas das legendas em cada capítulo (entra, entrou, sai, saiu) e a claquete.
+- `dist/experience.js`: ponto de entrada. Medidas, alturas do trilho, Lenis (roda do mouse), âncoras (rolagem suave por perto, corte no preto em saltos longos), resolução dinâmica, 30 fps quando parado, troca de cena, som opcional, `?debug` (`window.__jetcar`).
+- `dist/js/gl/engine.js`: renderizador. Cena num alvo HDR (meio-float, MSAA), profundidade de campo (o alfa da cena guarda a nitidez do pixel), bloom de passos duplos, água na lente, curva de filme, vinheta e grão. `post` são os parâmetros por quadro (cada cena ajusta o que usa; `resetPost()` zera a cada quadro). `pickQuality()` define o perfil (celular: sem MSAA, menos bloom, menos amostras).
+- `dist/js/gl/glsl.js`: barras de luz analíticas (o reflexo é a menor distância entre o raio refletido e cada barra: reflexos nítidos que deslizam nas curvas), ruído, cor.
+- `dist/js/gl/film.js` e `shot-film.js`: o filme como sequência de quadros WebP (226 quadros, 15 fps) com o mapa de profundidade embutido em cada quadro. O shader faz paralaxe 2,5D, aproximação, faixas de luz que revelam o carro, luminárias acendendo, luz do portão (atrás da câmera) subindo pelo carro e tipografia entre o carro e o fundo. Capítulos: abertura, marca (logo), lavagem e final.
+- `dist/js/gl/logo.js`: o logo como parede de laca preta com as letras vazadas (extrusão com chanfro). A câmera recua de dentro do T e depois atravessa a perna do A; o filme continua atrás.
+- `dist/js/gl/studio.js` e `shot-studio.js`: estúdio 3D depois do mergulho na pintura. Capô paramétrico com vincos, pintura grafite com verniz, flocos metálicos e micro-riscos que só aparecem sob a luz de inspeção; a boina da politriz passa na frente da lente e deixa a pintura corrigida; luz que atravessa o verniz; gotas que se formam (a câmera entra numa delas); camadas da pintura em vista explodida com rótulos presos às bordas; gotas que escorrem (PPF); a película corre pelo capô; a câmera atravessa o para-brisa e entra no interior (foto com malha deslocada pela profundidade). Números grandes no fundo, fora de foco.
+- `dist/js/gl/shot-map.js`: mapa a partir de `assets/map.json` (OpenStreetMap). A linha de luz do chão do fim do filme vira a Avenida Boa Viagem; a rota acende até a Rua José Trajano enquanto a câmera sobe; feixe de luz no destino.
+- `dist/js/ui.js`: menu, progresso, link ativo, movimento reduzido (lembrado no aparelho), som, configurador de agendamento (carro → o que melhorar → mensagem pronta → Direct), proteção contra a rolagem do teclado no iPhone.
+- `dist/js/audio.js`: som ambiente opcional gerado no navegador (desligado por padrão).
+- `dist/js/logo-data.js`: gerado (não editar à mão).
 
-Regra das transições: o estado final de uma cena é o estado inicial da próxima (mesmo retângulo, mesma escala). Fotos usam `cover()` com ponto focal, compartilhado entre DOM e canvas.
+Regra das transições: cada corte acontece no preto, no branco ou por casamento de forma (linha de luz do chão → avenida), então só uma cena desenha por vez. O fim de uma cena é o começo da próxima.
 
-## Visual (v4)
+## Visual
 
-- Fontes: Barlow (texto) e Barlow Condensed 700/800 e 800 itálico (títulos, números, botões), OFL, auto-hospedadas em `assets/fonts`. Sem fonte mono.
-- Superfícies: vídeo e logo no preto (`--black`), conteúdo em papel claro (`--paper`), dúvidas em preto com fio vermelho no topo, rodapé vermelho. Granulação leve fixa sobre tudo (`body::after`).
-- Vermelho `#d7261e` chapado; gradiente bem leve só nos botões (`--grad-red`). Botões inclinados (paralelogramo via `::before` com `skewX`), links sublinhados. Cantos retos (3px).
-- Elementos: rótulo de seção com número em itálico vermelho sobre régua fina, número de corrida grande em cada serviço, ficha em linhas (`dl.facts`), índice numerado de serviços, legenda "Fig. N" fora da moldura, pedido de orçamento como ficha de papel, cartões do arco como fotos impressas.
-- Texto: frases diretas, "a gente", referências locais; sem travessões, sem slogans genéricos, sem inventar dados.
+Identidade da v4 sobre a jornada escura: Barlow (texto) e Barlow Condensed 700/800 e 800 itálico (títulos, números, botões), OFL, em `assets/fonts`. Vermelho `#d7261e` (`--red`), gradiente bem leve só nos botões; botões inclinados (paralelogramo via `::before`). Legendas como letreiros de filme no canto inferior esquerdo; números de capítulo em itálico vermelho; rótulos técnicos com fio e quadradinho vermelho. Texto direto, sem travessões, sem slogans genéricos, sem inventar dados.
 
 ## Executar e verificar
 
-`npm start` serve http://localhost:3000 (`?debug` expõe `window.__jetcar` para QA). `npm run check` valida a sintaxe de todos os scripts e se os arquivos referenciados existem.
+`npm start` serve http://localhost:3000 (`?debug` expõe `window.__jetcar`). `npm run check` valida a sintaxe de todos os scripts, os arquivos referenciados e os 226 quadros das duas sequências.
 
-QA da v3 feito com Playwright/Chromium em desktop 1280×720, 1440×900 e 1920×1080, iPhone 14 Pro, iPhone SE, iPad em pé e deitado e celular deitado: capturas por posição, gravações contínuas, medição de quadros com CPU 4× mais lenta e testes de interação (menu, âncoras, arco, formulário, diálogo, camadas, FAQ, teclado, link de pular, movimento reduzido, abrir com âncora, sem JavaScript). O Chromium de teste não decodifica H.264, então o QA usa cópias VP9 só em memória. Ainda falta conferir em Safari/iPhone real: autoplay (Modo Pouca Energia mostra o pôster e o botão), fluidez das cenas 3D e o teclado no formulário.
+QA da v5 com Playwright/Chromium usando WebGL por software (ANGLE/SwiftShader): capturas por capítulo em 1440×900 e iPhone 14 Pro, testes de interação (som, menu, âncoras, agendamento, logo, movimento reduzido, teclado). O renderizador por software é lento e não mede fluidez. Ainda falta conferir em aparelhos reais (Safari/iPhone e um Android médio): fluidez do estúdio e da profundidade de campo, quadros do filme ao rolar rápido, teclado no formulário.
 
 ## Assets e orçamento
 
-Vídeo master: `dist/assets/porsche-scroll.mp4`, 15 s em 1080p, custo já pago de 30 créditos no Higgsfield (limite autorizado naquela geração: 35). Não gerar novos vídeos ou gastar créditos sem uma nova autorização do usuário. As versões servidas (`film-1080.mp4`, `film-720.mp4`, `film-portrait.mp4` e pôsteres) saem do master com `scripts/encode-film.sh`, que apenas reencoda e dissolve 1 s do fim no começo para o loop não ter corte seco.
-
-Logo: `jetcar-mask.png` é a fonte; `scripts/trace-logo.cjs` gera `jetcar-logo.svg` e `js/logo-data.js`. `scripts/trace-type.py` gera os contornos de BOA VIAGEM em Geist 900 (requer fonttools, brotli e uharfbuzz só para regenerar). `poster.webp` e `finish.webp` são originais não usados no momento.
+- Vídeo master: `dist/assets/porsche-scroll.mp4`, 15 s em 1080p, custo já pago de 30 créditos no Higgsfield (limite autorizado naquela geração: 35). Não gerar novos vídeos nem gastar créditos sem nova autorização do usuário.
+- `dist/assets/film/d` e `film/m`: quadros com profundidade (Depth Anything V2 Small, ONNX), gerados com `scripts/frames/` (ver o README de lá).
+- `film-720.mp4`, `film-portrait.mp4` e pôsteres: fallback sem WebGL, gerados com `scripts/encode-film.sh`.
+- `interior.webp` + `interior-depth.webp`: foto ilustrativa do interior e a profundidade dela (`scripts/frames/depth_image.py`).
+- `map.json`: dados do OpenStreetMap (ODbL), gerados com `scripts/data/build_map.py`; a atribuição aparece no mapa e no rodapé.
+- Logo: `jetcar-mask.png` é a fonte; `scripts/trace-logo.cjs` gera `jetcar-logo.svg` e `js/logo-data.js`.
 
 ## Melhorias prioritárias
 
-1. Validar em iPhone real (Safari): fluidez, enquadramentos, autoplay e teclado do formulário.
-2. Integrar fotos reais, perfil, telefone/WhatsApp e dados comerciais quando o usuário enviar (o usuário avisou que mandará informações do perfil e outras imagens).
-3. Ajustar o ritmo em `timeline.js` e os textos conforme o retorno do usuário.
+1. Validar em aparelhos reais e ajustar o perfil de qualidade (resolução, amostras de foco, número de gotas) conforme a fluidez.
+2. Integrar fotos reais, perfil, telefone/WhatsApp e dados comerciais quando o usuário enviar.
+3. Ajustar ritmo (`chapters.js`, `captions.js`) e enquadramentos (`shot-*.js`) conforme o retorno do usuário.
 
-Preserve acessibilidade, teclado, preferência de redução de movimento e alternativas para autoplay bloqueado.
+Preserve acessibilidade, teclado, preferência de redução de movimento e os fallbacks (sem WebGL: vídeo em loop e conteúdo empilhado; sem JavaScript: conteúdo empilhado com pôster).
