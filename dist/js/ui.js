@@ -7,13 +7,20 @@ import { setSound } from './audio.js';
 const bar = $('.bar');
 const laneLinks = $$('.lane a');
 const laneLit = $('.lane-lit');
+const barTrace = $('.bar-trace');
+const menuBays = $$('.menu-links a').slice(0, 5);
+const traceStops = $$('.bar-trace b');
 const menuToggle = $('.bar-menu');
 const menu = $('#menu');
 const html = document.documentElement;
 
+let lenisRef = null;
 export function setMenu(open) {
   if (open === !menu.hidden) return;
   menu.hidden = !open;
+  // a página atrás do menu sai do Tab e da árvore de acessibilidade, e não rola
+  for (const el of $$('main, body > footer')) el.inert = open;
+  if (open) lenisRef?.stop(); else lenisRef?.start();
   menuToggle.setAttribute('aria-expanded', String(open));
   $('.sr-only', menuToggle).textContent = open ? 'Fechar menu' : 'Abrir menu';
   $('use', menuToggle).setAttribute('href', open ? '#i-close' : '#i-menu');
@@ -26,9 +33,10 @@ export function setMenu(open) {
 const motionButton = $('.motion');
 export function setReduce(flag, remember = false) {
   state.reduce = flag;
+  state.flat = flag || html.classList.contains('no-gl');
   html.classList.toggle('reduced', flag);
+  // rótulo fixo; o estado fica no aria-pressed (e no quadradinho do botão)
   motionButton.setAttribute('aria-pressed', String(flag));
-  motionButton.textContent = flag ? 'Ativar movimento' : 'Reduzir movimento';
   if (remember) try { localStorage.setItem('jetcar-motion', flag ? 'reduce' : 'full'); } catch {}
 }
 export function savedMotion() {
@@ -97,7 +105,8 @@ async function copy(text) {
 // ——— Som ambiente opcional ———
 const soundButton = $('.bar-sound');
 
-export function initUi({ jump }) {
+export function initUi({ jump, lenis }) {
+  lenisRef = lenis || null;
   menuToggle.addEventListener('click', () => setMenu(menu.hidden));
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !menu.hidden) setMenu(false); });
   addEventListener('resize', () => { if (!menu.hidden && innerWidth > 1080) setMenu(false); });
@@ -109,7 +118,6 @@ export function initUi({ jump }) {
     const ok = await setSound(on);
     const really = on && ok !== false;
     soundButton.setAttribute('aria-pressed', String(really));
-    $('.sr-only', soundButton).textContent = really ? 'Desligar o som ambiente' : 'Ligar o som ambiente';
     $('use', soundButton).setAttribute('href', really ? '#i-sound' : '#i-mute');
   });
 
@@ -175,7 +183,9 @@ export function renderUi(y, acts, byId) {
   if (pr && yy >= pr.top) J = pr.raw < pr.split ? 2 + pr.raw / pr.split : 3 + (pr.raw - pr.split) / (1 - pr.split);
   if (it && yy >= it.top) J = 4 + it.raw;
   if (it && y > it.top + it.height - view.svh + 1) J = 5;
-  css(laneLit, 'transform', `scaleX(${f(clamp(J / 5), 4)})`);
+  const lit = f(clamp(J / 5), 4);
+  css(laneLit, 'transform', `scaleX(${lit})`);
+  barTrace?.style.setProperty('--lane', lit);
   // parada atual: -1 antes da lavagem, 5 depois do interior (todas percorridas, nenhuma atual)
   const on = yy < (w?.top ?? 0) - view.svh * 0.5 ? -1 : J >= 5 ? 5 : Math.min(4, Math.max(0, Math.ceil(J) - 1));
   if (on !== cur) {
@@ -183,6 +193,13 @@ export function renderUi(y, acts, byId) {
     laneLinks.forEach((a, i) => {
       a.classList.toggle('is-on', i === on);
       a.classList.toggle('is-past', i < on);
+      if (i === on) a.setAttribute('aria-current', 'step'); else a.removeAttribute('aria-current');
+    });
+    // celular: a linha embaixo da barra aparece a partir da lavagem; a baia atual fica marcada no menu
+    barTrace?.style.setProperty('--trace-a', on >= 0 ? '1' : '0');
+    traceStops.forEach((b, i) => { b.classList.toggle('is-on', i === on); b.classList.toggle('is-past', i < on); });
+    menuBays.forEach((a, i) => {
+      a.classList.toggle('is-on', i === on);
       if (i === on) a.setAttribute('aria-current', 'step'); else a.removeAttribute('aria-current');
     });
   }

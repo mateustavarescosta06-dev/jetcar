@@ -47,27 +47,53 @@ try {
 } catch (e) {
   html.classList.add('no-gl');
 }
+// sem WebGL a página fica parada como no movimento reduzido (pôsteres, conteúdo empilhado)
+state.flat = state.reduce || !engine;
 
 const KINDS = { hero: HeroAct, wash: WashAct, polish: PolishAct, protect: ProtectAct, interior: InteriorAct, route: RouteAct };
 const acts = $$('[data-act]').map(el => new (KINDS[el.dataset.act])(el, { engine, quality }));
 const byId = Object.fromEntries(acts.map(a => [a.id, a]));
 const glActs = engine ? acts.filter(a => a.gl) : [];
 if (!engine) for (const a of acts) a.gl = false;
+// contexto WebGL perdido e recuperado (comum no iPhone em segundo plano): desenha de novo
+canvas.addEventListener('webglcontextrestored', () => { needDraw = true; for (const a of glActs) dropSnap(a); });
+
+/** Compila os shaders de um ato logo depois de carregar, e não no primeiro quadro em que ele
+ *  aparece (no celular isso travaria a rolagem bem na entrada da cena). Objetos escondidos são
+ *  mostrados só durante a chamada, para entrarem na compilação. */
+function warm(a) {
+  const r = engine?.renderer;
+  if (!a.gl || !a.scene || !r) return null;
+  const run = compile => {
+    const hidden = [];
+    a.scene.traverse(o => { if (!o.visible) { hidden.push(o); o.visible = true; } });
+    const out = compile();
+    for (const o of hidden) o.visible = false;
+    return out;
+  };
+  // com a extensão a compilação corre em paralelo; sem ela, compila de uma vez num momento ocioso
+  if (r.extensions.has('KHR_parallel_shader_compile')) return run(() => r.compileAsync(a.scene, a.camera)).catch(() => {});
+  return new Promise(res => (window.requestIdleCallback || setTimeout)(() => { try { run(() => r.compile(a.scene, a.camera)); } catch {} res(); }, { timeout: 1500 }));
+}
 
 // ——— Layout ———
-let lastW = 0, lastH = 0, dynScale = 1;
+let lastW = 0, lastH = 0, dynScale = 1, needDraw = false;
 function layout(force = false) {
   measureView();
   for (const a of acts) a.setHeight();
   const y = scrollY;
   for (const a of acts) { a.measure(y); a.layout(); }
+  // movimento reduzido: palco mais alto que a tela (o canvas fica com a altura da tela e esfuma embaixo)
+  if (state.flat) for (const a of acts) a.stage?.classList.toggle('is-tall', a.stage.offsetHeight > view.h + 4);
   view.scrollMax = Math.max(1, html.scrollHeight - innerHeight);
   view.pageY = $('#resultado').getBoundingClientRect().top + y;
   // trechos em fluxo com fundo chapado (a barra fica sólida por cima deles)
   view.flat = $$('.order, .faq, .footer').map(el => { const r = el.getBoundingClientRect(); return [r.top + y, r.bottom + y]; });
-  if (engine && (force || view.w !== lastW || Math.abs(view.h - lastH) > 120)) {
+  // no celular a barra do navegador muda a altura o tempo todo: só redimensiona em mudanças grandes
+  if (engine && (force || view.w !== lastW || Math.abs(view.h - lastH) > (view.mobile ? 120 : 0))) {
     lastW = view.w; lastH = view.h;
     engine.resize(view.w, view.h, clamp(view.dpr, quality.minScale, quality.maxScale) * dynScale);
+    needDraw = true;   // mudar o tamanho apaga o canvas: desenha de novo mesmo com a página parada
     for (const a of glActs) { a.resize?.(engine.size.x, engine.size.y); dropSnap(a); }
   }
 }
@@ -75,7 +101,8 @@ function layout(force = false) {
 // Resolução dinâmica: se o aparelho não acompanha, desenha menos pixels.
 let slow = 0, fast = 0;
 function adapt(ms) {
-  if (ms > 26) { slow++; fast = 0; } else if (ms < 14) { fast++; slow = 0; } else { slow = Math.max(0, slow - 1); fast = 0; }
+  // abaixo de 25 quadros por segundo (um rAF limitado a 30 Hz, como no modo de economia do iPhone, não conta)
+  if (ms > 40) { slow++; fast = 0; } else if (ms < 14) { fast++; slow = 0; } else { slow = Math.max(0, slow - 1); fast = 0; }
   if (slow > 45 && dynScale > 0.55) { dynScale = Math.max(0.55, dynScale - 0.12); slow = 0; layout(true); }
   else if (fast > 240 && dynScale < 1) { dynScale = Math.min(1, dynScale + 0.08); fast = 0; layout(true); }
 }
@@ -140,9 +167,13 @@ for (const b of $$('[data-explore]')) b.addEventListener('click', e => {
   } });
 });
 // Foco do teclado dentro de um palco preso leva a rolagem até o ponto em que aquilo aparece.
+// foco pelo teclado leva o ato ao ponto onde o controle aparece; clique e toque não mexem a página
+let pointerAt = -1e9;
+addEventListener('pointerdown', () => { pointerAt = performance.now(); }, true);
 document.addEventListener('focusin', e => {
+  if (performance.now() - pointerAt < 800) return;
   const act = actOf(e.target);
-  if (!act || state.reduce || act.travel <= 0) return;
+  if (!act || state.flat || act.travel <= 0) return;
   const want = act.focusPoint?.(e.target);
   if (want == null) return;
   if (Math.abs(act.raw - want) > 0.08) { const y = act.scrollFor(want); if (lenis) lenis.scrollTo(y, { immediate: true, force: true }); else scrollTo(0, y); }
@@ -223,6 +254,7 @@ function tick(now) {
       // o ato que sai fica com a cópia do último quadro dele
       if (owner && owner.visible) { drawAct(owner, now); copyTo(owner); }
       owner = next;
+      lastActive = now;   // o palco novo precisa de um quadro mesmo com a página parada
       if (owner) {
         owner.slot.append(canvas);
         if (owner.snap) owner.snap.style.visibility = 'hidden';
@@ -235,7 +267,8 @@ function tick(now) {
       if (!a.visible) { if (a.snap) dropSnap(a); continue; }
       if (a.ready && a.snapKey !== a.key()) { drawAct(a, now); copyTo(a); extra = true; }
     }
-    const active = moved || settling || extra || now - pointer.at < 400 || (owner && owner.animating);
+    const active = moved || settling || extra || needDraw || now - pointer.at < 400 || (owner && owner.animating);
+    needDraw = false;
     if (active) lastActive = now;
     const idle = now - lastActive > 2500;
     skip = idle ? !skip : false;
@@ -251,7 +284,7 @@ function tick(now) {
 
 // ——— Início ———
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
-initUi({ jump, acts, byId });
+initUi({ jump, acts, byId, lenis });
 layout(true);
 addEventListener('resize', () => layout());
 addEventListener('orientationchange', () => setTimeout(() => layout(true), 250));
@@ -279,7 +312,9 @@ Promise.race([Promise.all([fontsReady, first]), new Promise(r => setTimeout(r, 7
   byId.hero?.start?.();
   // o resto carrega em segundo plano, na ordem da página
   const rest = acts.filter(a => a.id !== 'hero');
-  rest.reduce((pr, a) => pr.then(() => a.load().catch(err => console.warn(a.id, err))), Promise.resolve()).then(() => layout(true));
+  // cada ato tem até 12 s: um asset que não responde não segura os seguintes
+  const timeout = ms => new Promise((_, no) => setTimeout(() => no(new Error('timeout')), ms));
+  rest.reduce((pr, a) => pr.then(() => Promise.race([a.load().then(() => warm(a)), timeout(12000)]).catch(err => console.warn(a.id, err))), Promise.resolve()).then(() => layout(true));
 });
 document.fonts?.ready.then(() => layout(true));
 

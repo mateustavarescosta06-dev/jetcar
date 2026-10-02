@@ -33,6 +33,7 @@ export class WashAct extends Act {
     this.stage.addEventListener('pointerdown', e => { if (!e.target.closest('.card')) d = { x: e.clientX - this.drag.x * view.w * 0.3, y: e.clientY - this.drag.y * view.h * 0.3 }; });
     addEventListener('pointermove', e => { if (d) { this.drag.x = clamp((e.clientX - d.x) / (view.w * 0.3), -1, 1); this.drag.y = clamp((e.clientY - d.y) / (view.h * 0.3), -1, 1); this.dirty = true; } });
     addEventListener('pointerup', () => { d = null; });
+    addEventListener('pointercancel', () => { d = null; });
     if (engine) this.build(quality);
   }
 
@@ -91,13 +92,16 @@ export class WashAct extends Act {
         varying vec3 vW; varying vec3 vN; varying float vViewZ;
         void main() {
           vec4 w = modelMatrix * instanceMatrix * vec4(position, 1.0);
-          vN = normalize(mat3(modelMatrix) * mat3(instanceMatrix) * normal);
+          // gotas esticadas (escala não uniforme): a normal vai pela inversa da escala
+          mat3 m = mat3(instanceMatrix);
+          vec3 s2 = vec3(dot(m[0], m[0]), dot(m[1], m[1]), dot(m[2], m[2]));
+          vN = normalize(mat3(modelMatrix) * (m * (normal / s2)));
           vW = w.xyz;
           vec4 mv = viewMatrix * w; vViewZ = -mv.z;
           gl_Position = projectionMatrix * mv;
         }`,
       fragmentShader: /* glsl */ `
-        uniform vec3 uCam; uniform sampler2D tStill; uniform vec2 uFrameMin; uniform vec2 uFrameMax; uniform float uSrcAspect; uniform vec3 uBg; uniform float uFrameZ; uniform float uA;
+        uniform vec3 uCam; uniform sampler2D tStill; uniform vec2 uFrameMin; uniform vec2 uFrameMax; uniform float uSrcAspect; uniform vec3 uBg; uniform float uFrameZ;
         varying vec3 vW; varying vec3 vN;
         ${BARS}
         ${COLOR}
@@ -123,9 +127,11 @@ export class WashAct extends Act {
           vec3 col = bg * (1.0 - F) * 0.96 + refl * F;
           // a borda da gota pega a luz ambiente do galpão (fica legível contra o fundo escuro)
           col += vec3(0.5, 0.52, 0.56) * pow(clamp(1.0 - NdV, 0.0, 1.0), 3.0) * 0.08;
-          gl_FragColor = vec4(col * uA, sharpness());
+          // aparece pelo tamanho (o raio cresce com o congelamento), não escurecendo a cor:
+          // uma gota opaca escurecida vira um disco escuro sobre a moldura
+          gl_FragColor = vec4(col, sharpness());
         }`,
-      uniforms: { ...L, ...this.shared, tStill: U.tStill, uFrameMin: U.uFrameMin, uFrameMax: U.uFrameMax, uSrcAspect: U.uSrcAspect, uBg: U.uBg, uFrameZ: { value: ZF }, uA: { value: 1 } },
+      uniforms: { ...L, ...this.shared, tStill: U.tStill, uFrameMin: U.uFrameMin, uFrameMax: U.uFrameMax, uSrcAspect: U.uSrcAspect, uBg: U.uBg, uFrameZ: { value: ZF } },
     }), n);
     this.drops.frustumCulled = false;
     this.scene.add(this.drops);
@@ -136,7 +142,7 @@ export class WashAct extends Act {
   load() {
     if (!this.scene) return Promise.resolve();
     const sfx = view.portrait ? '-m' : '';
-    const still = new Promise(res => new THREE.TextureLoader().load(`assets/wash/freeze${sfx}.webp`, t => { t.colorSpace = THREE.NoColorSpace; t.minFilter = THREE.LinearFilter; t.generateMipmaps = false; res(t); }, undefined, () => res(null)));
+    const still = new Promise(res => new THREE.TextureLoader().load(`assets/wash/freeze${sfx}.webp`, t => { t.colorSpace = THREE.NoColorSpace; t.minFilter = THREE.LinearMipmapLinearFilter; t.generateMipmaps = true; res(t); }, undefined, () => res(null)));
     const v = document.createElement('video');
     v.muted = true; v.playsInline = true; v.preload = 'auto';
     v.setAttribute('muted', ''); v.setAttribute('playsinline', '');
@@ -154,24 +160,31 @@ export class WashAct extends Act {
     // iOS: a primeira interação libera a decodificação para buscar quadros
     const prime = () => { v.play().then(() => v.pause()).catch(() => {}); removeEventListener('touchstart', prime); };
     addEventListener('touchstart', prime, { passive: true });
-    return Promise.all([still, clip]).then(([st, vid]) => {
+    // cada quadro buscado é copiado para um canvas (textura estável em qualquer navegador)
+    const wire = vid => {
+      if (!vid || !vid.videoWidth || this.wired) return;
+      this.wired = true;
+      const cv = document.createElement('canvas');
+      cv.width = vid.videoWidth; cv.height = vid.videoHeight;
+      const g = cv.getContext('2d');
+      const tex = new THREE.CanvasTexture(cv);
+      tex.colorSpace = THREE.NoColorSpace;
+      tex.minFilter = THREE.LinearFilter; tex.generateMipmaps = false;
+      const grab = () => { g.drawImage(vid, 0, 0); tex.needsUpdate = true; this.dirty = true; this.frameKey = vid.currentTime; };
+      vid.addEventListener('seeked', grab);
+      grab();
+      this.U.tFrame.value = tex;
+      this.U.uSrcAspect.value = vid.videoWidth / vid.videoHeight;
+    };
+    // sem resposta do vídeo em 6 s (iPhone em economia de energia não pré-carrega), a cena usa a
+    // foto congelada; se o vídeo chegar depois, passa a usá-lo
+    const late = new Promise(res => setTimeout(() => res(null), 6000));
+    clip.then(wire);
+    return Promise.all([still, Promise.race([clip, late])]).then(([st, vid]) => {
       this.U.tStill.value = st;
-      if (vid && vid.videoWidth) {
-        // cada quadro buscado é copiado para um canvas (textura estável em qualquer navegador)
-        const cv = document.createElement('canvas');
-        cv.width = vid.videoWidth; cv.height = vid.videoHeight;
-        const g = cv.getContext('2d');
-        const tex = new THREE.CanvasTexture(cv);
-        tex.colorSpace = THREE.NoColorSpace;
-        tex.minFilter = THREE.LinearFilter; tex.generateMipmaps = false;
-        const grab = () => { g.drawImage(vid, 0, 0); tex.needsUpdate = true; this.dirty = true; this.frameKey = vid.currentTime; };
-        vid.addEventListener('seeked', grab);
-        grab();
-        this.U.tFrame.value = tex;
-        this.U.uSrcAspect.value = vid.videoWidth / vid.videoHeight;
-      } else {
-        this.U.tFrame.value = st;
-        this.U.uSrcAspect.value = view.portrait ? 1 : 1916 / 1080;
+      if (!this.wired) {
+        wire(vid);
+        if (!this.wired) { this.U.tFrame.value = st; this.U.uSrcAspect.value = view.portrait ? 1 : 1916 / 1080; }
       }
       this.ready = !!st;
     });
@@ -228,12 +241,17 @@ export class WashAct extends Act {
   }
 
   key() { return `${Math.round(this.p * 2000)}|${Math.round(this.drag.x * 100)}|${this.frameKey ?? 0}`; }
-  get animating() { return this.dirty || (this.video && this.video.seeking); }
+  get animating() { return this.dirty || this.tourAt != null || (this.video && this.video.seeking); }
 
   focusPoint(el) { return this.card.contains(el) ? this.hold : null; }
   /** Testes: o vídeo vai direto ao quadro do alvo. */
   settle() { this.vt = null; this.update(16); return new Promise(r => { const v = this.video; if (!v || !v.seeking) return r(); v.addEventListener('seeked', () => r(), { once: true }); }); }
-  explore(btn, { jump }) { jump(this.hold, this.card.querySelector('.card-add')); }
+  // Explorar: leva ao momento congelado e faz um giro curto em volta da água (sem giro no
+  // movimento reduzido); depois o ponteiro ou o arrastar continuam de onde o giro parou
+  explore(btn, { jump }) {
+    jump(this.hold, this.card.querySelector('.card-add'));
+    if (this.gl && !state.reduce) this.tourAt = performance.now() + 900;
+  }
 
   update(dt) {
     const p = this.p;
@@ -261,7 +279,13 @@ export class WashAct extends Act {
     U.uMix.value = frz;
     // câmera: parada durante o vídeo; no congelado ela avança e pode olhar em volta
     const look = smoother(span(p, FREEZE_P, 0.9));
-    const px = (state.reduce ? 0 : pointer.sx) * 0.6 + this.drag.x, py = (state.reduce ? 0 : pointer.sy) * 0.6 + this.drag.y;
+    let tx = 0, ty = 0;
+    if (this.tourAt != null) {
+      const t = (now - this.tourAt) / 2600;
+      if (t >= 1) this.tourAt = null;
+      else if (t > 0) { const e = Math.sin(Math.PI * t); tx = Math.sin(t * Math.PI * 2) * 0.9 * e; ty = -0.35 * e * e; }
+    }
+    const px = (state.reduce ? 0 : pointer.sx) * 0.6 + this.drag.x + tx, py = (state.reduce ? 0 : pointer.sy) * 0.6 + this.drag.y + ty;
     cam.position.set(px * 0.12 * frz + look * 0.06, -py * 0.07 * frz, -look * 0.35);
     this.tgt.set(lerp(0, 0.05, look) + px * 0.02, 0, ZF);
     cam.lookAt(this.tgt);
@@ -278,7 +302,6 @@ export class WashAct extends Act {
     // gotas: aparecem com o congelamento
     this.drops.visible = frz > 0.01;
     if (this.drops.visible) {
-      this.drops.material.uniforms.uA.value = frz;
       const D = this.dropData;
       for (let i = 0; i < D.length; i++) {
         const d = D[i];

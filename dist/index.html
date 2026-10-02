@@ -10,7 +10,11 @@
 <meta property="og:locale" content="pt_BR">
 <meta property="og:title" content="JETCAR · Estética automotiva em Boa Viagem">
 <meta property="og:description" content="Lavagem técnica, polimento, Ceramic Coating, PPF e higienização interna, em Boa Viagem, Recife.">
-<meta property="og:image" content="assets/og.jpg">
+<meta property="og:image" content="https://jetcar-rho.vercel.app/assets/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="https://jetcar-rho.vercel.app/">
+<link rel="canonical" href="https://jetcar-rho.vercel.app/">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M6 2h24l-4 28H2z' fill='%23d7261e'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-family='Arial' font-style='italic' font-weight='900' font-size='15' fill='white'%3EJC%3C/text%3E%3C/svg%3E">
 <link rel="preload" href="assets/fonts/barlow-400.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/barlow-condensed-800.woff2" as="font" type="font/woff2" crossorigin>
@@ -45,14 +49,16 @@
       <li><a href="#interior" data-bay="interior"><b>05</b><span>Interior</span></a></li>
     </ol>
   </nav>
+  <!-- Celular e tablet: a mesma linha, fina, embaixo da barra (a baia atual fica marcada no menu). -->
+  <i class="bar-trace" aria-hidden="true"><i></i><b></b><b></b><b></b><b></b><b></b></i>
   <div class="bar-actions">
     <a class="bar-link" href="#endereco">Endereço</a>
-    <button class="bar-icon bar-sound" type="button" aria-pressed="false"><span class="sr-only">Ligar o som ambiente</span><svg><use href="#i-mute"/></svg></button>
+    <button class="bar-icon bar-sound" type="button" aria-pressed="false"><span class="sr-only">Som ambiente</span><svg><use href="#i-mute"/></svg></button>
     <a class="btn btn-sm" href="#agendar"><span>Agendar</span></a>
     <button class="bar-icon bar-menu" type="button" aria-expanded="false" aria-controls="menu"><span class="sr-only">Abrir menu</span><svg><use href="#i-menu"/></svg></button>
   </div>
 </header>
-<div class="menu" id="menu" hidden>
+<div class="menu" id="menu" hidden data-lenis-prevent>
   <nav class="menu-links" aria-label="Menu">
     <a href="#lavagem"><b>01</b>Lavagem técnica</a>
     <a href="#polimento"><b>02</b>Polimento</a>
@@ -136,7 +142,7 @@
           <button class="card-explore" type="button" aria-pressed="false" data-explore="polish">Ver antes<svg><use href="#i-arrow"/></svg></button>
           <button class="card-add" type="button" aria-pressed="false" data-want="pintura">Incluir no pedido</button>
         </div>
-        <p class="card-hint" data-hint="polish">Mova o cursor para inclinar a luz.</p>
+        <p class="card-hint" data-hint="polish"><span class="hint-fine">Mova o cursor para inclinar a luz.</span><span class="hint-touch">Arraste na cena para inclinar a luz.</span></p>
       </article>
     </div>
   </section>
@@ -227,7 +233,7 @@
     <figure class="result-figure">
       <picture>
         <source media="(max-width: 760px)" srcset="assets/result-m.webp">
-        <img src="assets/result-d.webp" alt="Porsche 911 grafite pronto, molhado e brilhando no galpão escuro" width="3832" height="2160" loading="lazy" decoding="async">
+        <img src="assets/result-d.webp" alt="Porsche 911 grafite pronto, brilhando no galpão escuro" width="3200" height="1804" loading="lazy" decoding="async">
       </picture>
       <i class="result-trace" aria-hidden="true"></i>
     </figure>
@@ -243,7 +249,7 @@
   <section class="order" id="agendar" aria-labelledby="t-order">
     <div class="order-head">
       <h2 id="t-order">Monte o seu pedido</h2>
-      <p class="lead">Três respostas e a mensagem fica pronta para o Direct. Preço e prazo a equipe passa depois de ver o carro.</p>
+      <p class="lead">Duas respostas e a mensagem fica pronta para o Direct. Preço e prazo a equipe passa depois de ver o carro.</p>
     </div>
     <form class="config" id="config" novalidate>
       <fieldset class="step">
@@ -264,7 +270,7 @@
       </fieldset>
       <div class="step step-send">
         <p class="legend"><b>03</b>Agendar</p>
-        <p class="message" id="message-text" aria-live="polite"></p>
+        <p class="message" id="message-text"></p>
         <div class="step-actions">
           <a class="btn" id="send-message" href="https://ig.me/m/jetcarbv" target="_blank" rel="noopener noreferrer"><span>Agendar pelo Direct</span><svg><use href="#i-arrow-ur"/></svg></a>
           <button type="button" class="link" id="copy-message">Só copiar a mensagem</button>
@@ -308,14 +314,16 @@
       <details><summary><span class="q">Onde vocês ficam?</span><i aria-hidden="true"></i></summary><p>Na Rua José Trajano, em Boa Viagem, Recife. <a href="https://maps.apple/p/uRv~vCQ0G1zNn4" target="_blank" rel="noopener noreferrer">Abrir no mapa</a>.</p></details>
     </div>
   </section>
+</main>
 
   <footer class="footer">
+    <h2 class="sr-only">JETCAR: etapas, contato e endereço</h2>
     <div class="footer-top">
       <img class="footer-logo" src="assets/jetcar-logo.svg" alt="JETCAR Estética Automotiva" width="1354" height="652">
       <p class="footer-line">Estética automotiva em Boa Viagem, Recife</p>
     </div>
     <div class="footer-cols">
-      <div><h3>Etapas</h3><a href="#lavagem">01 Lavagem técnica</a><a href="#polimento">02 Polimento</a><a href="#ceramic">03 Ceramic Coating</a><a href="#ppf">04 PPF</a><a href="#interior">05 Higienização interna</a></div>
+      <div class="footer-steps"><h3>Etapas</h3><a href="#lavagem">01 Lavagem técnica</a><a href="#polimento">02 Polimento</a><a href="#ceramic">03 Ceramic Coating</a><a href="#ppf">04 PPF</a><a href="#interior">05 Higienização interna</a></div>
       <div><h3>Contato</h3><a href="https://www.instagram.com/jetcarbv/" target="_blank" rel="noopener noreferrer">Instagram @jetcarbv</a><a href="https://ig.me/m/jetcarbv" target="_blank" rel="noopener noreferrer">Direct</a><a href="#agendar">Agendar</a></div>
       <div><h3>Endereço</h3><p>Rua José Trajano<br>Boa Viagem, Recife, PE</p><a href="https://maps.apple/p/uRv~vCQ0G1zNn4" target="_blank" rel="noopener noreferrer">Abrir no mapa</a></div>
     </div>
@@ -324,7 +332,6 @@
       <span class="footer-tools"><button type="button" class="motion" aria-pressed="false">Reduzir movimento</button><a href="#inicio">Voltar ao topo<svg><use href="#i-up"/></svg></a></span>
     </div>
   </footer>
-</main>
 <i class="svh-probe" aria-hidden="true"></i>
 <i class="lvh-probe" aria-hidden="true"></i>
 <script type="module" src="app.js"></script>

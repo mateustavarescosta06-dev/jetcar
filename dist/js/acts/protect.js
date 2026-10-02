@@ -48,7 +48,9 @@ ${COLOR}
 vec2 cover(vec2 f) {
   float ra = uRes.x / uRes.y;
   vec2 s = ra > uAspect ? vec2(1.0, uAspect / ra) : vec2(ra / uAspect, 1.0);
-  return (f - 0.5) * s + vec2(0.5, 0.42);
+  // o centro desce um pouco (mais carro, menos teto), mas a janela nunca sai da foto
+  float cy = clamp(0.42, 0.5 * s.y, 1.0 - 0.5 * s.y);
+  return (f - 0.5) * s + vec2(0.5, cy);
 }
 void main() {
   vec2 f = gl_FragCoord.xy / uRes;
@@ -109,19 +111,29 @@ export class ProtectAct extends Act {
     // controles: o último a mexer vence (rolagem ou a pessoa)
     this.sepInput.addEventListener('input', () => { this.userS = this.sepInput.value / 100; this.userSAt = this.raw; this.dirty = true; });
     this.filmInput.addEventListener('input', () => { this.userF = this.filmInput.value / 100; this.userFAt = this.raw; this.dirty = true; });
+    // movimento reduzido: o foco num controle mostra o estado da cena que ele controla
+    this.sepInput.addEventListener('focus', () => { if (state.flat && this.gl) { this.forced = this.hold; this.dirty = true; } });
+    this.filmInput.addEventListener('focus', () => { if (state.flat && this.gl) { this.forced = 0.86; this.dirty = true; } });
+    // arrastar na cena: no mouse a separação é vertical; no toque tudo é horizontal (o gesto
+    // vertical continua rolando a página, o palco tem touch-action: pan-y)
     let drag = null;
     this.stage.addEventListener('pointerdown', e => {
       if (e.target.closest('.card, input, button, a')) return;
       const inFilm = this.raw > T.film[0] - 0.02;
-      drag = { x: e.clientX, y: e.clientY, s: this.s, f: this.f, film: inFilm };
+      drag = { x: e.clientX, y: e.clientY, s: this.s, f: this.f, film: inFilm, mouse: e.pointerType === 'mouse' };
     });
     addEventListener('pointermove', e => {
       if (!drag) return;
       if (drag.film) { this.userF = clamp(drag.f - (e.clientX - drag.x) / (view.w * 0.8)); this.userFAt = this.raw; }
-      else { this.userS = clamp(drag.s - (e.clientY - drag.y) / (view.h * 0.35)); this.userSAt = this.raw; }
+      else {
+        const d = drag.mouse ? -(e.clientY - drag.y) / (view.h * 0.35) : (e.clientX - drag.x) / (view.w * 0.6);
+        this.userS = clamp(drag.s + d); this.userSAt = this.raw;
+      }
       this.dirty = true;
     });
-    addEventListener('pointerup', () => { drag = null; });
+    const end = () => { drag = null; };
+    addEventListener('pointerup', end);
+    addEventListener('pointercancel', end);
     if (engine) this.build(quality);
   }
 
@@ -153,6 +165,7 @@ export class ProtectAct extends Act {
     }));
     sh.rotation.x = -Math.PI / 2;
     sh.position.y = 0.0005;
+    this.shadow = sh;
     this.scene.add(sh);
     // gotas no coating
     const R = rng(41);
@@ -180,7 +193,9 @@ export class ProtectAct extends Act {
         tImg: { value: null }, tMask: { value: null }, uHasMask: { value: 0 }, uRes: { value: new THREE.Vector2(1, 1) }, uAspect: { value: 1916 / 1080 }, uWipe: { value: -1 }, uWipeLine: { value: 0 },
         uFilm: { value: 2 }, uFilmOn: { value: 0 }, uExpo: { value: 1 }, uClimb: { value: 0 }, uTime: { value: 0 },
       },
-      depthTest: false, depthWrite: false,
+      // na fila transparente com renderOrder alto: desenha por último, por cima da sombra e das
+      // camadas transparentes (na fila opaca ela seria desenhada antes delas)
+      depthTest: false, depthWrite: false, transparent: true, blending: THREE.NoBlending,
     }));
     this.photo.frustumCulled = false;
     this.photo.renderOrder = 10;
@@ -190,7 +205,8 @@ export class ProtectAct extends Act {
 
   load() {
     if (!this.scene) return Promise.resolve();
-    const get = url => new Promise(res => new THREE.TextureLoader().load(url, t => { t.colorSpace = THREE.NoColorSpace; t.minFilter = THREE.LinearFilter; t.generateMipmaps = false; res(t); }, undefined, () => res(null)));
+    // mipmaps: a foto (3200 px) aparece menor que isso, e sem eles cintila quando a câmera mexe
+    const get = url => new Promise(res => new THREE.TextureLoader().load(url, t => { t.colorSpace = THREE.NoColorSpace; t.minFilter = THREE.LinearMipmapLinearFilter; t.generateMipmaps = true; res(t); }, undefined, () => res(null)));
     const sfx = view.portrait ? '-m' : '';
     return Promise.all([get(`assets/protect/front${sfx}.webp`), get(`assets/protect/front-mask${sfx}.webp`)]).then(([img, mask]) => {
       const U = this.photo.material.uniforms;
@@ -221,8 +237,10 @@ export class ProtectAct extends Act {
   }
   explore(btn, { jump }) {
     const ppf = btn.dataset.explore === 'ppf';
+    // sem WebGL não há cena: o botão só leva ao card
+    if (!this.gl) { jump(0, (ppf ? this.card4 : this.card3).querySelector('.card-add')); return; }
     // movimento reduzido: sem rolagem presa, o botão troca o estado da cena na hora
-    if (state.reduce) { this.forced = ppf ? 0.86 : this.hold; (ppf ? this.filmInput : this.sepInput).focus({ preventScroll: true }); this.dirty = true; return; }
+    if (state.flat) { this.forced = ppf ? 0.86 : this.hold; (ppf ? this.filmInput : this.sepInput).focus({ preventScroll: true }); this.dirty = true; return; }
     if (ppf) { this.userF = null; jump(0.81, this.filmInput); }
     else { this.userS = null; jump(this.hold, this.sepInput); }
   }
@@ -271,7 +289,7 @@ export class ProtectAct extends Act {
     this.card4.style.setProperty('--cx', `${Math.round(ride)}px`);
     this.card4.style.setProperty('--stack', stackK.toFixed(3));
     this.card4.style.setProperty('--pe', filmOn > 0.5 ? 'auto' : 'none');
-    this.card4.style.setProperty('--draw', stackK.toFixed(3));
+    this.card4.style.setProperty('--draw', state.flat ? '1' : stackK.toFixed(3));
     this.card4.style.setProperty('--head', Math.sin(Math.PI * stackK).toFixed(3));
     this.card4.style.opacity = filmOn.toFixed(3);
     this.card3.style.setProperty('--stack', stackK.toFixed(3));
@@ -364,7 +382,7 @@ export class ProtectAct extends Act {
       const yB = j < 4 ? this.layerY(j + 1) + crown(0, D / 2) : yA + 0.18;
       lineC = [0, lerp(yA, yB, 0.5 + (fr - 0.5) * 0.2), D / 2 + 0.01];
       lineI = 5 * env(k, [0, 0.06, 0.92, 1]) * s;
-      this.scanGap = clamp(4 - j, 0, 4);
+      this.scanGap = j;   // índice da camada logo abaixo da linha (0 = chapa, 4 = coating)
     } else if (p >= T.act[0] - 0.01 && p < T.act[1] + 0.03) {
       const k = span(p, T.act[0], T.act[1]);
       lineC = [lerp(-W * 0.7, W * 0.7, smoother(k)), topY + 0.45, 0];
@@ -415,6 +433,7 @@ export class ProtectAct extends Act {
     this.photo.visible = p >= T.wipe[0] && !!U.tImg.value;
     const stackVisible = p < T.wipe[1] + 0.005;
     for (const m of this.slabs) m.visible = stackVisible;
+    this.shadow.visible = stackVisible;
 
     this.num3.material.uniforms.uAlpha.value = env(p, [0.02, 0.12, T.close[0], T.close[1]]);
 

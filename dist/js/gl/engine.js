@@ -228,6 +228,13 @@ export class Engine {
     this.renderer.toneMapping = THREE.NoToneMapping;
     this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
     this.renderer.setClearColor(0x000000, 1);
+    // os alvos de render são meio-float: sem extensão para desenhar neles, tudo sairia preto.
+    // Melhor cair no modo sem WebGL (pôsteres) do que mostrar telas pretas.
+    const ext = this.renderer.extensions;
+    if (!ext.has('EXT_color_buffer_half_float') && !ext.has('EXT_color_buffer_float')) {
+      this.renderer.dispose();
+      throw new Error('render targets meio-float indisponíveis');
+    }
     this.size = new THREE.Vector2(1, 1);
     this.scale = 1;
     this.fsCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);

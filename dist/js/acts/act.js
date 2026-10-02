@@ -27,11 +27,13 @@ export class Act {
     this.lag = 70;          // suavização do progresso (ms)
   }
 
-  get span() { return state.reduce ? 0 : (view.mobile ? this.spanM : this.spanD); }
+  get span() { return state.flat ? 0 : (view.mobile ? this.spanM : this.spanD); }
 
   /** Altura da seção e posição (o app chama depois de cada mudança de layout). */
   setHeight() {
-    this.el.style.height = state.reduce || this.span === 0 ? '' : `${Math.round((this.span + 1) * view.svh)}px`;
+    // rolagem presa (span telas) + a altura do palco (lvh): o trecho preso do CSS sticky fica
+    // igual ao travel, também no celular, onde lvh > svh
+    this.el.style.height = state.flat || this.span === 0 ? '' : `${Math.round(this.span * view.svh + view.h)}px`;
   }
   measure(scrollY) {
     this.top = this.el.getBoundingClientRect().top + scrollY;
@@ -41,11 +43,11 @@ export class Act {
 
   /** Progresso alvo para uma posição de rolagem. */
   progressAt(y) {
-    if (state.reduce || this.travel <= 0) return this.forced ?? this.hold;
+    if (state.flat || this.travel <= 0) return this.forced ?? this.hold;
     return clamp((y - this.top) / this.travel);
   }
   /** Rolagem (px) que leva o ato até o progresso p. */
-  scrollFor(p) { return Math.round(this.top + (state.reduce ? 0 : p * this.travel)); }
+  scrollFor(p) { return Math.round(this.top + (state.flat ? 0 : p * this.travel)); }
   /** Ponto de leitura para âncoras (o id pode escolher outro ponto dentro do ato). */
   holdFor() { return this.hold; }
 
@@ -53,7 +55,7 @@ export class Act {
   track(y, dt) {
     const vh = view.h;
     let top;
-    if (state.reduce || this.travel <= 0) top = this.top - y;
+    if (state.flat || this.travel <= 0) top = this.top - y;
     else top = y < this.top ? this.top - y : y > this.top + this.travel ? this.top + this.travel - y : 0;
     const stageH = this.stage ? this.stage.offsetHeight || vh : vh;
     const a = Math.max(0, top), b = Math.min(vh, top + stageH);
@@ -62,7 +64,7 @@ export class Act {
     this.enter = clamp(1 - (this.top - y) / vh);
     this.leave = this.travel > 0 ? clamp((y - this.top - this.travel) / vh) : clamp((y - this.top) / vh);
     this.raw = this.progressAt(y);
-    if (state.reduce || state.jumping) this.p = this.raw;
+    if (state.flat || state.jumping) this.p = this.raw;
     else {
       this.p += (this.raw - this.p) * (1 - Math.exp(-dt / this.lag));
       if (Math.abs(this.raw - this.p) < 1e-4) this.p = this.raw;

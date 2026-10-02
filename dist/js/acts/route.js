@@ -33,7 +33,8 @@ export class RouteAct extends Act {
   layout() {
     if (!this.svg) return;
     // no celular a rota fica centrada na parte de cima (o texto ocupa a de baixo)
-    this.svg.setAttribute('viewBox', view.mobile ? '-420 -520 760 1180' : '-760 -560 1600 1000');
+    // celular: largura para a rota inteira, o nome da avenida, a costa e o nome da rua de destino
+    this.svg.setAttribute('viewBox', view.mobile ? '-240 -760 830 1800' : '-760 -560 1600 1000');
   }
 
   update() {

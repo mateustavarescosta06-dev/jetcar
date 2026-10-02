@@ -22,7 +22,6 @@ export class PolishAct extends Act {
     this.toggle.addEventListener('click', () => {
       this.before = !this.before;
       this.toggle.setAttribute('aria-pressed', String(this.before));
-      this.toggle.firstChild.textContent = this.before ? 'Ver depois' : 'Ver antes';
       this.dirty = true;
     });
     // no toque, arrastar na cena inclina a luz
@@ -31,6 +30,7 @@ export class PolishAct extends Act {
     this.stage.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse' && !e.target.closest('.card')) sx = e.clientX; });
     this.stage.addEventListener('pointermove', e => { if (sx != null) { this.drag = clamp((e.clientX - sx) / (view.w * 0.4), -1, 1); this.dirty = true; } });
     addEventListener('pointerup', () => { sx = null; });
+    addEventListener('pointercancel', () => { sx = null; });
     if (!engine) return;
     this.build(quality);
   }
@@ -69,7 +69,8 @@ export class PolishAct extends Act {
   }
 
   key() { return `${Math.round(this.p * 2000)}|${this.before}|${Math.round(this.drag * 50)}`; }
-  get animating() { return this.dirty || (this.p > 0.45 && this.p < 0.72); }
+  // só a boina girando anima no tempo (enquanto a politriz passa)
+  get animating() { return this.dirty || (this.p > 0.5 && this.p < 0.7); }
 
   explore(btn) { /* o próprio botão alterna antes/depois */ }
   focusPoint() { return this.hold; }
@@ -151,8 +152,9 @@ export class PolishAct extends Act {
       const x = -0.42, z = lerp(zA, zB, smooth(pp));
       this.pol.position.set(x, hoodY(x, z) + 0.012, z);
       this.pol.rotation.set(0, Math.PI * 0.55, 0);
-      this.pol.userData.pad.rotation.y += 0.14;
-      this.pol.userData.foam.uniforms.uSpin.value += 0.05;
+      // giro pelo relógio (igual em 60 e 120 Hz)
+      this.pol.userData.pad.rotation.y = now * 0.0084;
+      this.pol.userData.foam.uniforms.uSpin.value = now * 0.003;
     }
     // faixa corrigida: z acima de uPolishZ fica sem riscos (a boina andou de zA para zB)
     let polishZ = pp <= 0 ? 9 : pp >= 1 ? zB : lerp(zA, zB, smooth(pp));

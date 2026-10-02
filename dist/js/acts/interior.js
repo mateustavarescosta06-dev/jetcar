@@ -46,7 +46,8 @@ export class InteriorAct extends Act {
     });
   }
 
-  explore(btn, { jump }) { jump(this.hold, this.spots[0]); }
+  // sem WebGL os pontos ficam escondidos: o foco vai para o card
+  explore(btn, { jump }) { jump(this.hold, this.spots[0].offsetParent ? this.spots[0] : this.card.querySelector('.card-add')); }
   focusPoint(el) { return el.closest('.spot') || this.card.contains(el) ? this.hold : null; }
 
   layout() {

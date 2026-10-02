@@ -93,8 +93,44 @@ GOP padrão no Chromium.
   copiar, pedido aparecendo no endereço, menu com Escape, som, trilho levando ao PPF, sem
   rolagem horizontal, sem erros de página.
 - Revisão adversarial em quatro dimensões (execução, acessibilidade, brief, WebGL), cada achado
-  verificado por um segundo agente antes de corrigir. Resultado na seção abaixo.
+  conferido por um segundo agente que tentava refutá-lo. Resultado na seção abaixo.
 - `npm run check`.
+
+## Revisão adversarial
+
+44 achados: 41 confirmados e corrigidos, 3 refutados pelo segundo agente. A conferência também
+pegou uma regressão numa correção minha (o card revelado pelo foco do clique continuava aceso ao
+sair de cena), corrigida para reagir só ao foco do teclado.
+
+- **Sem WebGL** os atos guardavam a rolagem presa: âncoras passavam do ponto, a rota não
+  aparecia e os botões dos cards não respondiam ao clique. Agora a página fica parada
+  (`state.flat`) como no movimento reduzido.
+- **Movimento reduzido**: card 04 sem clique, controles invisíveis recebendo foco, card 03
+  escurecido, palco mais alto que o canvas. Corrigidos; no celular as camadas aparecem acima dos
+  cards.
+- **Acessibilidade**: rótulo dos botões de alternância mudando junto com `aria-pressed`, menu sem
+  prender o foco (a página atrás agora fica `inert`), anel de foco invisível no rodapé vermelho,
+  mensagem do pedido relida a cada tecla, rodapé dentro do `main`, contraste de títulos pequenos,
+  alvos de toque, `og:image` relativa.
+- **Execução**: o foco do clique fazia a página pular; o canvas não redesenhava ao trocar de
+  dono ou mudar de tamanho com a página parada; o vídeo da lavagem podia travar o carregamento
+  de tudo o que vinha depois (agora usa a foto se não responder em 6 s); arrastar no toque era
+  cancelado pela rolagem; resolução dinâmica caía para 55% em telas de 30 Hz; trecho preso do
+  CSS diferente do JS no celular.
+- **Brief**: a linha do Ceramic acendia o rótulo espelhado (Primer quando passava no verniz);
+  no celular o mapa cortava o começo da rota e a avenida; o Explorar do card 01 não explorava
+  (agora faz um giro curto em volta da água); a linha como navegação sumia até 1080 px (agora
+  uma linha fina com as cinco paradas embaixo da barra, a baia atual marcada no menu e o
+  registro do percurso no rodapé); texto alternativo e contagem de respostas errados.
+- **WebGL**: a foto do PPF era desenhada antes da sombra e das camadas transparentes (que
+  ficavam por cima dela); faixa borrada no pé da foto; gotas virando discos escuros durante o
+  congelamento e normais erradas nas gotas esticadas; fotos sem mipmaps cintilando; giro da
+  boina dependente da taxa de quadros; sem checagem de render target meio-float (agora cai para
+  os pôsteres em vez de tela preta); shaders compilados só na entrada de cada cena (agora logo
+  depois de carregar).
+- Refutados: texto de valor dos controles deslizantes (já existia), alvos de 44 px (passam no
+  nível AA; aumentados assim mesmo) e os cerca de 15 arrays curtos por quadro nas luzes (custo
+  desprezível; sem mudança).
 
 ## Não verificado
 

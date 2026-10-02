@@ -29,6 +29,7 @@ export const state = {
   now: 0,
   dt: 16,
   reduce: false,
+  flat: false,     // página parada: movimento reduzido ou sem WebGL (atos sem rolagem presa)
   covered: false, // o palco está coberto pelo conteúdo final
   quality: 'high',
   busy: false,

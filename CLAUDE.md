@@ -4,10 +4,10 @@
 
 Site completo e interativo para @jetcarbv. Histórico das direções:
 
-- v3 (publicada em produção, https://jetcar-rho.vercel.app): site com conteúdo em fluxo e transições em moldura.
+- v3: site com conteúdo em fluxo e transições em moldura.
 - v4 (prévia): identidade editorial própria (Barlow, vermelho chapado), textos em voz humana.
-- v5 (prévia): filme automotivo controlado pela rolagem em WebGL (um plano-sequência, logo atravessado pela câmera).
-- v6 (atual): o usuário pediu uma revisão profunda seguindo a skill scroll-craft (/nateherk-design). Problemas da v5 que ele apontou: parecia um vídeo controlado pela rolagem, alguns trechos de vídeo com qualidade ruim, "3D" que era transformação/paralaxe e serviços sem arquitetura de site. A v6 precisa ser claramente um WEBSITE: cenas distintas (nada de câmera contínua ou flythrough), pelo menos quatro famílias de dispositivo sem repetir em seguida, vídeo como uma ferramenta entre outras, alternância ASSISTIR/EXPLORAR, cada serviço com cena, card editorial, interação e transição próprios. Frase de teste dele: "É o site em que a luz da JETCAR percorre o carro e cada etapa do tratamento é revelada conforme você explora." O brief completo, a análise em 11 pontos, as auditorias e as referências estão em `scrollcraft/builds/jetcar-v6/`.
+- v5 (publicada em produção em https://jetcar-rho.vercel.app a partir da `main`): filme automotivo controlado pela rolagem em WebGL (um plano-sequência, logo atravessado pela câmera).
+- v6 (atual, no branch `claude/jetcar-cinematic-flow`, só prévia até o usuário aprovar a produção): o usuário pediu uma revisão profunda seguindo a skill scroll-craft (/nateherk-design). Problemas da v5 que ele apontou: parecia um vídeo controlado pela rolagem, alguns trechos de vídeo com qualidade ruim, "3D" que era transformação/paralaxe e serviços sem arquitetura de site. A v6 precisa ser claramente um WEBSITE: cenas distintas (nada de câmera contínua ou flythrough), pelo menos quatro famílias de dispositivo sem repetir em seguida, vídeo como uma ferramenta entre outras, alternância ASSISTIR/EXPLORAR, cada serviço com cena, card editorial, interação e transição próprios. Frase de teste dele: "É o site em que a luz da JETCAR percorre o carro e cada etapa do tratamento é revelada conforme você explora." O brief completo, a análise em 11 pontos, as auditorias e as referências estão em `scrollcraft/builds/jetcar-v6/`.
 
 Proibido (pedidos explícitos, v5 e v6): cartões inclinados, "3D" de CSS (rotateY/translateZ aleatórios), cubos, objetos flutuando sem motivo, logo girando, giro de 360° no carro, partículas gratuitas, tipografia com perspectiva exagerada, elementos voando na direção da pessoa, paralaxe excessiva, lens flare barato, neon/ciano/cyberpunk/gamer/NFT, vídeo ruim em tela cheia, vídeo fingindo ser 3D, texto rasterizado em vídeo, grade com os cinco serviços, cards de SaaS (vidro, blur, raio grande, sombra genérica, ícone no canto), o mesmo efeito cinco vezes, tilt/magnet/lanterna seguindo o cursor.
 
@@ -25,7 +25,7 @@ Proibido (pedidos explícitos, v5 e v6): cartões inclinados, "3D" de CSS (rotat
 
 HTML/CSS/JavaScript em módulos ES, sem bundler nem etapa de build. `dist/` é a pasta publicada e é fonte mantida à mão, incluindo assets e as bibliotecas em `dist/vendor` (Three.js r186 reduzido ao que o site usa, e Lenis). O vídeo master fica fora dela, em `source/`.
 
-A página é o corredor de uma oficina percorrido baia por baia. Cada ato é um `section[data-act]` com um palco preso (`.stage`, sticky, altura `--lvh`); o JS dá à seção a altura `(span + 1) × svh` e o progresso `p` do ato (0…1) é a rolagem dentro dele, suavizado. Entre e depois dos atos vem conteúdo em fluxo normal (resultado, pedido, dúvidas, rodapé). Todo texto, card e botão é HTML.
+A página é o corredor de uma oficina percorrido baia por baia. Cada ato é um `section[data-act]` com um palco preso (`.stage`, sticky, altura `--lvh`); o JS dá à seção a altura `span × svh + lvh` e o progresso `p` do ato (0…1) é a rolagem dentro dele, suavizado. Com movimento reduzido ou sem WebGL (`state.flat`) nada fica preso: cada ato vira uma composição parada no seu `data-hold`, com o conteúdo empilhado. Entre e depois dos atos vem conteúdo em fluxo normal (resultado, pedido, dúvidas, rodapé). Todo texto, card e botão é HTML.
 
 | Ato | Seção | Telas (desktop/celular) | Dispositivo | Card |
 |---|---|---|---|---|
@@ -45,7 +45,7 @@ A página é o corredor de uma oficina percorrido baia por baia. Cada ato é um 
 - `dist/js/gl/engine.js`: renderizador (alvo HDR, MSAA, profundidade de campo pelo alfa, bloom, curva de filme, vinheta, grão). `pickQuality()` define o perfil (celular: sem MSAA, menos bloom e amostras).
 - `dist/js/gl/glsl.js`: barras de luz analíticas (o reflexo é a menor distância entre o raio refletido e cada barra), ruído, cor.
 - `dist/js/gl/studio.js`: luzes de estúdio (`StudioLights.set`), materiais da pintura (verniz, flocos, micro-riscos revelados pela barra de inspeção `uInspBar`) e das camadas.
-- `dist/js/ui.js`: menu, trilho de luz (acende até a baia atual), barra sólida só sobre o conteúdo em fluxo, movimento reduzido (lembrado no aparelho), som, pedido (carro → o que melhorar: Lavagem, Pintura, Ceramic, PPF, Interior, Avaliação → mensagem pronta → Direct), "Incluir no pedido" dos cards, proteção contra a rolagem do teclado no iPhone.
+- `dist/js/ui.js`: menu (a página atrás fica `inert`), trilho de luz (acende até a baia atual; até 1080 px vira uma linha fina embaixo da barra e a baia atual fica marcada no menu), barra sólida só sobre o conteúdo em fluxo, movimento reduzido (lembrado no aparelho), som, pedido (carro → o que melhorar: Lavagem, Pintura, Ceramic, PPF, Interior, Avaliação → mensagem pronta → Direct), "Incluir no pedido" dos cards, proteção contra a rolagem do teclado no iPhone.
 - `dist/js/audio.js`: som ambiente opcional gerado no navegador (desligado por padrão).
 - `dist/js/logo-data.js`: gerado (não editar à mão); o hero usa as letras para o letreiro.
 
