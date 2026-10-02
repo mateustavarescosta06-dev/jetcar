@@ -81,7 +81,7 @@ export class StudioShot {
     this.runData = [];
     for (let i = 0; i < nR; i++) this.runData.push({ x: 0.2 + R() * 0.6, z: -0.33 + R() * 0.56, r: 0.0035 + R() ** 1.5 * 0.0055, b: R(), a: 0.5 + R() * 0.7 });
     this.scene.add(this.runners);
-    this.tmpM = new THREE.Matrix4(); this.tmpQ = new THREE.Quaternion(); this.tmpS = new THREE.Vector3(); this.tmpP = new THREE.Vector3(); this.tmpN = new THREE.Vector3();
+    this.tmpM = new THREE.Matrix4(); this.tmpQ = new THREE.Quaternion(); this.tmpQ2 = new THREE.Quaternion(); this.tmpS = new THREE.Vector3(); this.tmpP = new THREE.Vector3(); this.tmpN = new THREE.Vector3();
     this.up = new THREE.Vector3(0, 1, 0);
 
     // politriz
@@ -196,10 +196,12 @@ export class StudioShot {
   }
 
   /** Coloca uma gota na superfície do capô (alinhada à normal). */
-  place(mesh, i, x, z, r, stretch = 1) {
+  place(mesh, i, x, z, r, stretch = 1, dir = 0) {
     const y = hoodY(x, z);
     hoodN(x, z, this.tmpN);
     this.tmpQ.setFromUnitVectors(this.up, this.tmpN);
+    // gota alongada na direção em que escorre
+    if (stretch !== 1) this.tmpQ.multiply(this.tmpQ2.setFromAxisAngle(this.up, -dir));
     this.tmpP.set(x, y - r * 0.08, z);
     this.tmpS.set(r * stretch, r, r);
     this.tmpM.compose(this.tmpP, this.tmpQ, this.tmpS);
@@ -251,6 +253,8 @@ export class StudioShot {
     let sweepI = 0, sweepX = 0;
     if (inK) { sweepI = env(tK, [0.02, 0.08, 0.42, 0.5]); sweepX = lerp(-1.2, 2.6, smoother(span(tK, 0.02, 0.5))); }
     if (inL) { sweepI = env(tL, [0.84, 0.88, 0.96, 1.0]); sweepX = lerp(-0.3, 1.5, smooth(span(tL, 0.84, 1.0))); }
+    // no PPF uma luz passa por cima das gotas, de trás para a frente
+    if (inP) { sweepI = env(tP, [0.34, 0.44, 0.78, 0.9]) * 0.8; sweepX = lerp(2.2, -0.7, smooth(span(tP, 0.34, 0.9))); }
     if (inI) {
       // no interior, a barra fica sobre o para-brisa: o reflexo dela no vidro some quando a câmera chega perto
       const g = env(tI, [0.18, 0.3, 0.46, 0.54]);
@@ -344,9 +348,13 @@ export class StudioShot {
         const d = D[i];
         const g = smooth(span(form, d.b * 0.6, d.b * 0.6 + 0.4));
         const tr = Math.max(0, run - d.b * 0.25);
-        const x = d.x + 0.5 * d.a * tr * tr * 1.6;
+        // escorre morro abaixo (na direção em que o capô cai naquele ponto)
+        const e = 0.01, gx = (hoodY(d.x + e, d.z) - hoodY(d.x - e, d.z)) / (2 * e), gz = (hoodY(d.x, d.z + e) - hoodY(d.x, d.z - e)) / (2 * e);
+        const gl = Math.hypot(gx, gz) || 1;
+        const s = 0.5 * d.a * tr * tr * 1.6;
+        const x = d.x - (gx / gl) * s, z = d.z - (gz / gl) * s;
         const sp = Math.min(1, tr * 2);
-        this.place(this.runners, i, x, d.z, Math.max(1e-5, d.r * g), 1 + sp * 1.4);
+        this.place(this.runners, i, x, z, Math.max(1e-5, d.r * g), 1 + sp * 1.4, Math.atan2(-gz, -gx));
       }
       this.runners.instanceMatrix.needsUpdate = true;
     }
