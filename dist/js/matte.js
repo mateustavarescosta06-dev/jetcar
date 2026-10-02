@@ -26,7 +26,8 @@ const vIndex = glyphs.findIndex(g => g.ch === 'V');
 let dpr = 1, drawn = false;
 
 export function resizeMatte() {
-  dpr = Math.min(window.devicePixelRatio || 1, 2);
+  // 1,75x basta para bordas nítidas e poupa ~25% de pixels em telas 3x.
+  dpr = Math.min(window.devicePixelRatio || 1, 1.75);
   canvas.width = Math.round(view.w * dpr);
   canvas.height = Math.round(view.h * dpr);
   drawn = true; // força limpeza no próximo quadro
@@ -34,8 +35,8 @@ export function resizeMatte() {
 
 /** Logo em repouso: escala e âncora na tela. */
 export function logoRest() {
-  const width = view.mobile ? view.w * 0.84 : Math.min(view.w * 0.66, 1040, view.h * 1.3);
-  return { s: width / LOGO.w, x: view.cx, y: view.h * (view.mobile ? 0.43 : 0.45) };
+  const width = view.portrait ? view.w * (view.mobile ? 0.84 : 0.72) : Math.min(view.w * 0.66, 1040, view.h * (view.short ? 0.95 : 1.3));
+  return { s: width / LOGO.w, x: view.cx, y: view.h * (view.portrait ? 0.43 : view.short ? 0.4 : 0.45) };
 }
 
 /** Câmera do logo: ponto do logo (cx, cy) desenhado na posição de tela (px, py) com escala s. */
@@ -122,8 +123,13 @@ function drawBrand(u) {
   });
   ctx.globalAlpha = 1;
 
-  // Emblema em faixas que chegam da esquerda
-  for (let i = 0; i < SLICES; i++) {
+  // Emblema em faixas que chegam da esquerda (assentado: desenha de uma vez, sem recortes).
+  const settled = reduce || (c.pull >= 1 && stretch < 1.001);
+  if (settled) {
+    setT(c.s, c.cx, c.cy, c.px, c.py, ox, oy);
+    for (const p of emblem) ctx.fill(p.path);
+  }
+  for (let i = 0; i < SLICES && !settled; i++) {
     const order = (i * 7) % SLICES;
     const e = reduce ? 1 : out(span(c.pull, 0.38 + order * 0.025, 0.74 + order * 0.025));
     if (e <= 0) continue;
@@ -192,9 +198,10 @@ function boaLayout() {
   const lines = view.w / view.h < 1.1 ? [glyphs.slice(0, vIndex), glyphs.slice(vIndex)] : [glyphs];
   const widthOf = gs => gs[gs.length - 1].x + gs[gs.length - 1].adv - gs[0].x;
   const maxW = Math.max(...lines.map(widthOf));
-  const s = Math.min((view.w * (lines.length > 1 ? 0.86 : 0.88)) / maxW, (view.h * 0.3) / (boa.cap * lines.length));
+  const flatShort = view.short && !view.portrait;
+  const s = Math.min((view.w * (lines.length > 1 ? 0.86 : 0.88)) / maxW, (view.h * (flatShort ? 0.17 : 0.3)) / (boa.cap * lines.length));
   const lineH = boa.cap * s * 1.14;
-  const top = view.h * (view.mobile ? 0.36 : 0.4) - (lineH * lines.length) / 2;
+  const top = view.h * (view.portrait ? (view.short ? 0.3 : 0.36) : flatShort ? 0.3 : 0.4) - (lineH * lines.length) / 2;
   return { s, lines: lines.map((gs, i) => ({ gs, x0: gs[0].x, w: widthOf(gs), base: top + lineH * i + boa.cap * s })) };
 }
 
@@ -251,9 +258,9 @@ function drawPlace(u) {
   let logoT = null;
   if (fin > 0.002) {
     const rest = logoRest();
-    const s = rest.s * (view.mobile ? 0.82 : 0.62) * lerp(1.08, 1, fin);
+    const s = rest.s * (view.portrait ? (view.short ? 0.66 : 0.82) : view.short ? 0.46 : 0.62) * lerp(1.08, 1, fin);
     ctx.globalAlpha = fin;
-    logoT = [s, logoCenter.x, logoCenter.y, view.cx, view.h * (view.mobile ? 0.4 : 0.38)];
+    logoT = [s, logoCenter.x, logoCenter.y, view.cx, view.h * (view.portrait ? (view.short ? 0.3 : 0.38) : view.short ? 0.28 : 0.38)];
     setT(...logoT);
     for (const p of parts) ctx.fill(p.path);
   }

@@ -12,7 +12,9 @@ import { renderHud, bindJump, jumpToAct, setReduce, ready, cancelFreeze } from '
 const lvhProbe = Object.assign(document.createElement('i'), { className: 'lvh-probe' });
 document.body.append(lvhProbe);
 const unitProbe = $('.unit-probe');
-const curtain = Object.assign(document.createElement('i'), { className: 'curtain' });
+const curtain = Object.assign(document.createElement('div'), { className: 'curtain' });
+curtain.setAttribute('aria-hidden', 'true');
+for (let i = 0; i < 9; i++) curtain.append(document.createElement('i'));
 $('.overlay').append(curtain);
 
 let lastW = 0, lastH = 0, forceRender = true;
@@ -23,7 +25,8 @@ function resize(force = false) {
   // A barra do Safari aparecendo/sumindo muda só a altura visível: não refaz o palco.
   if (!force && w === lastW && Math.abs(h - lastH) < 160) { onScroll(); return; }
   lastW = w; lastH = h;
-  Object.assign(view, { w, h, cx: w / 2, cy: h / 2, diag: Math.hypot(w, h), dpr: Math.min(window.devicePixelRatio || 1, 2), mobile: w < 761, portrait: w / h < 1 });
+  // mobile: tamanhos de celular; portrait: composição vertical (celular e tablet em pé); short: telas baixas.
+  Object.assign(view, { w, h, cx: w / 2, cy: h / 2, diag: Math.hypot(w, h), dpr: Math.min(window.devicePixelRatio || 1, 2), mobile: w < 761, portrait: w / h < 0.9, short: h < 700 });
   placeImages();
   resizeMatte();
   layoutScenes();
@@ -47,14 +50,22 @@ function jump(u) {
     window.scrollTo({ top, behavior: state.reduce ? 'auto' : 'smooth' });
     return;
   }
-  // Saltos longos: cortina rápida em vez de atravessar todas as cenas.
+  // Saltos longos: linhas de velocidade cobrem a tela em vez de atravessar todas as cenas.
+  curtain.classList.remove('is-out');
   curtain.classList.add('is-on');
   setTimeout(() => {
     window.scrollTo({ top, behavior: 'auto' });
     state.target = state.u = clamp(u, 0, T.total);
     forceRender = true;
-    requestAnimationFrame(() => curtain.classList.remove('is-on'));
-  }, 260);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      curtain.classList.add('is-out');
+      setTimeout(() => {
+        curtain.classList.add('no-anim');
+        curtain.classList.remove('is-on', 'is-out');
+        requestAnimationFrame(() => curtain.classList.remove('no-anim'));
+      }, 420);
+    }));
+  }, 360);
 }
 
 // ——— Ponteiro e toque (sem bloquear a rolagem) ———

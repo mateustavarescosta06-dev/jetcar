@@ -12,7 +12,7 @@ export const outBack = t => 1 + 2.2 * (t - 1) ** 3 + 1.2 * (t - 1) ** 2;
 export const env = (u, [a, b, c, d]) => smooth(span(u, a, b)) * (1 - smooth(span(u, c, d)));
 
 /** Dimensões do palco. h é a altura "grande" (sem a barra do Safari), estável na rolagem. */
-export const view = { w: 1, h: 1, cx: 0.5, cy: 0.5, diag: 1, dpr: 1, mobile: false, portrait: false, unit: 1 };
+export const view = { w: 1, h: 1, cx: 0.5, cy: 0.5, diag: 1, dpr: 1, mobile: false, portrait: false, short: false, unit: 1 };
 /** Ponteiro/toque: x/y em px, nx/ny em -1…1, sx/sy suavizados. */
 export const pointer = { x: -9999, y: -9999, nx: 0, ny: 0, sx: 0, sy: 0, at: -1e9, touch: false, down: false, strokes: [], taps: [] };
 export const state = { target: 0, u: 0, vel: 0, reduce: false, now: 0, dt: 16, selected: -1, light: 0, motion: 1 };

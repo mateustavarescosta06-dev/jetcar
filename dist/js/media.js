@@ -78,7 +78,7 @@ export const filmVisible = u => u < T.brand.portal[1] + 0.02 || u > T.place.slit
 
 export function updateFilm(u) {
   const visible = filmVisible(u);
-  video.style.visibility = visible ? 'visible' : 'hidden';
+  css(video, 'visibility', visible ? 'visible' : 'hidden');
   // Paralaxe sutil do filme com o ponteiro (o recorte do logo continua cobrindo a tela).
   const k = state.reduce ? 0 : 1;
   const tx = -pointer.sx * 14 * k, ty = -pointer.sy * 10 * k;

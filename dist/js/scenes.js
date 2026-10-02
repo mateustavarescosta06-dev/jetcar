@@ -26,15 +26,15 @@ const zoomT = (key, k) => toRect(P[key], zoomRect(P[key], k, view.cx, view.cy));
 
 // ——— Layout ———
 export function layoutScenes() {
-  const m = view.mobile;
-  // Disco do polimento
-  G.dcx = m ? view.cx : view.w * 0.64;
-  G.dcy = m ? view.h * 0.335 : view.h * 0.5;
-  G.Rd = m ? Math.min(view.w * 0.4, view.h * 0.175) : Math.min(view.h * 0.33, view.w * 0.25);
+  const m = view.mobile, pt = view.portrait, sh = view.short;
+  // Disco do polimento: à direita do texto no desktop; em cima do texto em telas em pé.
+  G.dcx = pt ? view.cx : view.w * 0.64;
+  G.dcy = pt ? view.h * (sh ? 0.295 : 0.335) : view.h * 0.5;
+  G.Rd = pt ? Math.min(view.w * 0.4, view.h * (sh ? 0.145 : 0.175)) : Math.min(view.h * 0.33, view.w * 0.25);
   css(el.sheen, 'left', `${G.dcx - G.Rd}px`); css(el.sheen, 'top', `${G.dcy - G.Rd}px`);
   css(el.sheen, 'width', `${G.Rd * 2}px`); css(el.sheen, 'height', `${G.Rd * 2}px`);
   css(el.disc, 'transformOrigin', `${G.dcx}px ${G.dcy}px`);
-  G.orbitS = (G.Rd + (m ? 22 : 34)) / 0.44;
+  G.orbitS = (G.Rd + (m ? 20 : 34)) / 0.44;
   css(el.orbit, 'width', `${G.orbitS}px`); css(el.orbit, 'height', `${G.orbitS}px`);
 
   buildCells();
@@ -48,19 +48,19 @@ export function layoutScenes() {
     css(plane, 'width', `${G.pw}px`); css(plane, 'height', `${G.ph}px`);
     css(plane, 'left', `${-G.pw / 2}px`); css(plane, 'top', `${-G.ph / 2}px`);
   }
-  G.stackX = m ? view.w * 0.4 : view.w * 0.63;
-  G.stackY = m ? view.h * 0.35 : view.h * 0.5;
-  G.cardScale = (m ? view.w * 0.64 : Math.min(view.w * 0.4, view.h * 0.78)) / pc.w;
+  G.stackX = pt ? view.w * (m ? 0.4 : 0.44) : view.w * 0.63;
+  G.stackY = pt ? view.h * (sh ? 0.32 : 0.35) : view.h * 0.5;
+  G.cardScale = (pt ? view.w * (m ? 0.64 : 0.56) : Math.min(view.w * 0.36, view.h * 0.72)) / pc.w;
   G.persp = m ? 1100 : 1700;
   css(L.stack, 'perspective', `${G.persp}px`);
   for (const tag of el.tags) tag._w = 0;
 
   // Arco de serviços (cilindro visto de fora; o cartão em foco fica de frente)
-  G.cw = m ? Math.min(view.w * 0.38, view.h * 0.2) : clamp(view.w * 0.145, 180, 270);
+  G.cw = pt ? Math.min(view.w * (m ? 0.38 : 0.27), view.h * (sh ? 0.165 : 0.2)) : Math.min(clamp(view.w * 0.145, 180, 270), view.h * 0.34);
   G.ch = G.cw * 1.32;
-  G.rcx = m ? view.cx : view.w * 0.31;
-  G.rcy = m ? view.h * 0.33 : view.h * 0.53;
-  G.step = m ? 30 : 34;
+  G.rcx = pt ? view.cx : view.w * 0.31;
+  G.rcy = pt ? view.h * (sh ? 0.29 : 0.33) : view.h * 0.53;
+  G.step = pt ? 30 : 34;
   G.R = G.cw * 1.95;
   css(L.ring, 'perspectiveOrigin', `${G.rcx}px ${G.rcy}px`);
   el.cards.forEach((card, i) => {
@@ -202,16 +202,27 @@ function stack(u) {
   css(el.flap, 'transform', `rotate3d(1,1,0,${f(-150 * out(span(u, s0 + 0.1, s1 + 0.25)))}deg)`);
 
   const tagsOn = (reduce ? 1 : smooth(span(u, e0 + 0.3, e1 + 0.05))) * (1 - (reduce ? 0 : smooth(span(u, c0 - 0.05, c0 + 0.2))));
-  // Rótulos em 2D, presos ao canto de cada camada pela mesma projeção do CSS 3D.
-  const edgeX = (G.pw * G.k0) / 2, edgeY = -G.ph * G.k0 * 0.5;
-  for (const tag of el.tags) {
-    const z = Number(tag.dataset.z);
+  // Rótulos em 2D, presos ao canto mais à direita de cada camada (mesma projeção do CSS 3D).
+  const hw = (G.pw * G.k0) / 2, hh = (G.ph * G.k0) / 2;
+  let lastY = -1e9;
+  const placed = el.tags.map(tag => {
+    const z = Number(tag.dataset.z) * gap;
+    let best = null;
+    for (const [cx, cy] of [[hw, -hh], [hw, hh], [-hw, -hh], [-hw, hh]]) {
+      const p = project(cx, cy, z, X, Y, rx, rz, S, G.persp);
+      if (!best || p[0] > best[0]) best = p;
+    }
+    return { tag, x: best[0], y: best[1] };
+  }).sort((a, b) => a.y - b.y);
+  for (const p of placed) {
+    const { tag } = p;
     tag.classList.toggle('is-ppf', sw > 0.5);
     opacity(tag, tagsOn);
     if (tagsOn <= 0) continue;
-    const [sx, sy] = project(edgeX, edgeY, z * gap, X, Y, rx, rz, S, G.persp);
-    const x = Math.min(sx + 6, view.w - (tag._w || (tag._w = tag.offsetWidth || 150)) - 8);
-    css(tag, 'transform', `translate3d(${f(x)}px,${f(sy - 9)}px,0)`);
+    const y = Math.max(p.y, lastY + (view.mobile ? 26 : 38));
+    lastY = y;
+    const x = Math.min(p.x + 6, view.w - (tag._w || (tag._w = tag.offsetWidth || 150)) - 8);
+    css(tag, 'transform', `translate3d(${f(x)}px,${f(y - 9)}px,0)`);
   }
 }
 

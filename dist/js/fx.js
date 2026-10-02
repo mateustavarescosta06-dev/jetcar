@@ -150,6 +150,9 @@ function drawHex(u, dt) {
   const zoneLevel = touchZone ? env(u, [f1, f1 + 0.15, c3 - 0.1, c3 + 0.1]) : 0;
   const pre = smooth(span(u, f0 - 0.15, f0 + 0.1));
   ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(214,236,255,1)';
+  // Agrupa as células por intensidade: poucos traços por quadro em vez de um por célula.
+  const BUCKETS = 8, groups = Array.from({ length: BUCKETS }, () => []);
   let any = false;
   for (const c of hive.cells) {
     let a = 0;
@@ -166,12 +169,15 @@ function drawHex(u, dt) {
     }
     if (a < 0.01) continue;
     any = true;
-    ctx.globalAlpha = a;
-    ctx.strokeStyle = 'rgba(214,236,255,1)';
-    ctx.beginPath();
-    hexPath(ctx, c.x, c.y, hive.r * 0.985);
-    ctx.stroke();
+    groups[Math.min(BUCKETS - 1, Math.floor(a * BUCKETS))].push(c);
   }
+  groups.forEach((cells, i) => {
+    if (!cells.length) return;
+    ctx.globalAlpha = (i + 0.5) / BUCKETS;
+    ctx.beginPath();
+    for (const c of cells) hexPath(ctx, c.x, c.y, hive.r * 0.985);
+    ctx.stroke();
+  });
   ctx.globalAlpha = 1;
   return any || ripples.length > 0;
 }
@@ -262,7 +268,7 @@ function drawFog(u, dt) {
 }
 
 export function resizeFx() {
-  dpr = Math.min(window.devicePixelRatio || 1, 2);
+  dpr = Math.min(window.devicePixelRatio || 1, 1.5);
   canvas.width = Math.round(view.w * dpr);
   canvas.height = Math.round(view.h * dpr);
   seedFoam();
