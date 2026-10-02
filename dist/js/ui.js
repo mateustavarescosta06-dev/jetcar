@@ -1,59 +1,32 @@
-// Interface: menu, progresso, link ativo, movimento reduzido, som opcional e o configurador
-// de agendamento (monta a mensagem para o Direct do Instagram; nada é enviado pelo site).
-import { $, $$, view, state, css, f } from './core.js';
-import { chapterAt } from './chapters.js';
+// Interface: barra e trilho de luz, menu, movimento reduzido, som opcional, o pedido
+// (configurador: monta a mensagem para o Direct; nada é enviado pelo site) e os botões
+// "Incluir no pedido" dos cards, que marcam o mesmo serviço no pedido.
+import { $, $$, view, state, css, f, clamp } from './core.js';
+import { setSound } from './audio.js';
 
-let jumpFn = () => {};
-export function bindJump(fn) { jumpFn = fn; }
-
-// ——— Navegação ———
-const nav = $('.nav');
-const navLinks = $$('.nav-links a');
-const progress = $('.nav-progress i');
-const toggle = $('.nav-toggle');
+const bar = $('.bar');
+const laneLinks = $$('.lane a');
+const laneLit = $('.lane-lit');
+const menuToggle = $('.bar-menu');
 const menu = $('#menu');
+const html = document.documentElement;
 
 export function setMenu(open) {
   if (open === !menu.hidden) return;
   menu.hidden = !open;
-  toggle.setAttribute('aria-expanded', String(open));
-  $('.sr-only', toggle).textContent = open ? 'Fechar menu' : 'Abrir menu';
-  $('use', toggle).setAttribute('href', open ? '#i-close' : '#i-menu');
-  document.documentElement.classList.toggle('menu-open', open);
+  menuToggle.setAttribute('aria-expanded', String(open));
+  $('.sr-only', menuToggle).textContent = open ? 'Fechar menu' : 'Abrir menu';
+  $('use', menuToggle).setAttribute('href', open ? '#i-close' : '#i-menu');
+  html.classList.toggle('menu-open', open);
   if (open) $('a', menu)?.focus({ preventScroll: true });
-  else if (menu.contains(document.activeElement) || document.activeElement === document.body) toggle.focus({ preventScroll: true });
-}
-toggle.addEventListener('click', () => setMenu(menu.hidden));
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && !menu.hidden) setMenu(false); });
-addEventListener('resize', () => { if (!menu.hidden && innerWidth > 1080) setMenu(false); });
-
-const LINK_FOR = { lavagem: '#lavagem', correcao: '#lavagem', ceramic: '#lavagem', camadas: '#camadas', ppf: '#camadas', interior: '#interior', rota: '#rota' };
-let solid = null, page = null, active = null;
-
-/** Menu, progresso e link ativo a cada quadro. */
-export function renderUi(u, scrollY, pageY) {
-  const isSolid = scrollY > 24;
-  if (isSolid !== solid) { solid = isSolid; nav.classList.toggle('is-solid', isSolid); }
-  const isPage = scrollY > pageY - view.nav;
-  if (isPage !== page) { page = isPage; nav.classList.toggle('is-page', isPage); }
-  css(progress, 'transform', `scaleX(${f(Math.min(1, scrollY / (view.scrollMax || 1)), 4)})`);
-  const id = isPage ? (scrollY > (view.faqY || 1e9) - view.nav ? '#duvidas' : null) : LINK_FOR[chapterAt(u).id] ?? null;
-  if (id !== active) {
-    active = id;
-    for (const a of navLinks) {
-      const on = a.getAttribute('href') === id;
-      a.classList.toggle('is-active', on);
-      if (on) a.setAttribute('aria-current', 'true');
-      else a.removeAttribute('aria-current');
-    }
-  }
+  else if (menu.contains(document.activeElement) || document.activeElement === document.body) menuToggle.focus({ preventScroll: true });
 }
 
 // ——— Movimento reduzido ———
 const motionButton = $('.motion');
 export function setReduce(flag, remember = false) {
   state.reduce = flag;
-  document.documentElement.classList.toggle('reduced', flag);
+  html.classList.toggle('reduced', flag);
   motionButton.setAttribute('aria-pressed', String(flag));
   motionButton.textContent = flag ? 'Ativar movimento' : 'Reduzir movimento';
   if (remember) try { localStorage.setItem('jetcar-motion', flag ? 'reduce' : 'full'); } catch {}
@@ -61,53 +34,51 @@ export function setReduce(flag, remember = false) {
 export function savedMotion() {
   try { return localStorage.getItem('jetcar-motion'); } catch { return null; }
 }
-motionButton.addEventListener('click', () => setReduce(!state.reduce, true));
 
-// ——— Som ambiente opcional (desligado por padrão) ———
-const soundButton = $('.nav-sound');
-let soundFn = null;
-export function bindSound(fn) { soundFn = fn; }
-soundButton.addEventListener('click', async () => {
-  const on = soundButton.getAttribute('aria-pressed') !== 'true';
-  const ok = soundFn ? await soundFn(on) : false;
-  const really = on && ok !== false;
-  soundButton.setAttribute('aria-pressed', String(really));
-  $('.sr-only', soundButton).textContent = really ? 'Desligar o som ambiente' : 'Ligar o som ambiente';
-  $('use', soundButton).setAttribute('href', really ? '#i-sound' : '#i-mute');
-});
-
-// ——— Configurador de agendamento ———
+// ——— Pedido (configurador) ———
 const form = $('#config');
 const carInput = $('#car-model');
 const messageEl = $('#message-text');
 const status = $('#copy-status');
+const orderEl = $('[data-order]');
 const WANTS = {
-  pintura: 'correção de pintura (polimento)',
-  protecao: 'proteção da pintura (Ceramic Coating ou PPF)',
-  interior: 'higienização do interior',
   lavagem: 'lavagem técnica',
+  pintura: 'polimento e correção de pintura',
+  ceramic: 'Ceramic Coating',
+  ppf: 'PPF (película de proteção)',
+  interior: 'higienização interna',
 };
+const picked = () => $$('input[name="want"]:checked', form).map(i => i.value);
+const list = items => (items.length > 1 ? `${items.slice(0, -1).join(', ')} e ${items[items.length - 1]}` : items[0]);
 function buildMessage() {
   const car = carInput.value.trim();
-  const picked = $$('input[name="want"]:checked', form).map(i => i.value);
-  const services = picked.filter(v => WANTS[v]).map(v => WANTS[v]);
+  const wants = picked();
+  const services = wants.filter(v => WANTS[v]).map(v => WANTS[v]);
   const parts = ['Olá, JETCAR!'];
   if (car) parts.push(`Meu carro é um ${car}.`);
-  if (services.length) {
-    const list = services.length > 1 ? `${services.slice(0, -1).join(', ')} e ${services[services.length - 1]}` : services[0];
-    parts.push(`Tenho interesse em ${list}.`);
-  }
-  if (picked.includes('avaliacao') || !services.length) parts.push('Gostaria de uma avaliação para saber o que o carro precisa.');
+  if (services.length) parts.push(`Tenho interesse em ${list(services)}.`);
+  if (wants.includes('avaliacao') || !services.length) parts.push('Gostaria de uma avaliação para saber o que o carro precisa.');
   parts.push('Podem me passar o orçamento e a disponibilidade?');
   return parts.join(' ');
 }
-function refresh() { messageEl.textContent = buildMessage(); }
-form.addEventListener('input', refresh);
-form.addEventListener('change', refresh);
-form.addEventListener('submit', e => e.preventDefault());
-carInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('input[name="want"]', form)?.focus(); } });
-refresh();
-
+function refresh() {
+  messageEl.textContent = buildMessage();
+  const wants = picked();
+  // os cards mostram o que já está no pedido
+  for (const b of $$('.card-add')) b.setAttribute('aria-pressed', String(wants.includes(b.dataset.want)));
+  // o fim da rota leva o pedido junto
+  const car = carInput.value.trim();
+  const names = wants.filter(v => WANTS[v]).map(v => WANTS[v]);
+  if (orderEl) {
+    if (car || names.length) {
+      orderEl.hidden = false;
+      orderEl.innerHTML = '';
+      const b = document.createElement('b');
+      b.textContent = 'Seu pedido';
+      orderEl.append(b, document.createTextNode([car, names.length ? list(names) : 'avaliação'].filter(Boolean).join(' · ')));
+    } else orderEl.hidden = true;
+  }
+}
 async function copy(text) {
   try { await navigator.clipboard.writeText(text); return true; } catch {}
   try {
@@ -122,27 +93,100 @@ async function copy(text) {
     return ok;
   } catch { return false; }
 }
-$('#send-message').addEventListener('click', () => {
-  // A cópia começa dentro do gesto; o link abre o Direct do Instagram em seguida.
-  copy(buildMessage()).then(ok => { status.textContent = ok ? 'Mensagem copiada. É só colar no Direct.' : 'Copie o texto acima e cole no Direct.'; });
-});
-$('#copy-message').addEventListener('click', async () => {
-  const ok = await copy(buildMessage());
-  status.textContent = ok ? 'Mensagem copiada.' : 'Selecione o texto acima para copiar.';
-  if (!ok) { const r = document.createRange(); r.selectNodeContents(messageEl); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); }
-});
 
-// ——— Teclado do celular: ao focar um campo, o iOS rola a página; ignoramos por um instante ———
+// ——— Som ambiente opcional ———
+const soundButton = $('.bar-sound');
+
+export function initUi({ jump }) {
+  menuToggle.addEventListener('click', () => setMenu(menu.hidden));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !menu.hidden) setMenu(false); });
+  addEventListener('resize', () => { if (!menu.hidden && innerWidth > 1080) setMenu(false); });
+  motionButton.addEventListener('click', () => setReduce(!state.reduce, true));
+
+  soundButton?.addEventListener('click', async () => {
+
+    const on = soundButton.getAttribute('aria-pressed') !== 'true';
+    const ok = await setSound(on);
+    const really = on && ok !== false;
+    soundButton.setAttribute('aria-pressed', String(really));
+    $('.sr-only', soundButton).textContent = really ? 'Desligar o som ambiente' : 'Ligar o som ambiente';
+    $('use', soundButton).setAttribute('href', really ? '#i-sound' : '#i-mute');
+  });
+
+  form.addEventListener('input', refresh);
+  form.addEventListener('change', refresh);
+  form.addEventListener('submit', e => e.preventDefault());
+  carInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('input[name="want"]', form)?.focus(); } });
+  $('#send-message').addEventListener('click', () => {
+    // a cópia começa dentro do gesto; o link abre o Direct em seguida
+    copy(buildMessage()).then(ok => { status.textContent = ok ? 'Mensagem copiada. É só colar no Direct.' : 'Copie o texto acima e cole no Direct.'; });
+  });
+  $('#copy-message').addEventListener('click', async () => {
+    const ok = await copy(buildMessage());
+    status.textContent = ok ? 'Mensagem copiada.' : 'Selecione o texto acima para copiar.';
+    if (!ok) { const r = document.createRange(); r.selectNodeContents(messageEl); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); }
+  });
+  // "Incluir no pedido" nos cards marca o serviço no pedido (e desmarca)
+  for (const b of $$('.card-add')) b.addEventListener('click', () => {
+    const box = $(`input[name="want"][value="${b.dataset.want}"]`, form);
+    if (!box) return;
+    box.checked = !box.checked;
+    refresh();
+  });
+  refresh();
+
+  // resultado: a linha passa uma vez quando a foto aparece
+  const result = $('.result');
+  if (result && 'IntersectionObserver' in window) {
+    const io = new IntersectionObserver(es => { for (const e of es) if (e.isIntersecting) { result.classList.add('is-in'); io.disconnect(); } }, { threshold: 0.45 });
+    io.observe(result);
+  } else result?.classList.add('is-in');
+
+  // teclado do celular: ao focar um campo, o iOS rola a página; ignoramos por um instante
+  const touchOnly = matchMedia('(hover: none)');
+  document.addEventListener('focusin', e => { if (touchOnly.matches && e.target.matches('input:not([type="range"]), select, textarea')) freezeFor(800); });
+  addEventListener('touchmove', () => { if (state.frozenY != null) cancelFreeze(); }, { passive: true });
+}
+
 let freezeTimer = 0;
-const touchOnly = matchMedia('(hover: none)');
 function freezeFor(ms) {
-  if (state.frozenY == null) state.frozenY = window.scrollY;
+  if (state.frozenY == null) state.frozenY = scrollY;
   clearTimeout(freezeTimer);
   freezeTimer = setTimeout(() => { state.frozenY = null; }, ms);
 }
-document.addEventListener('focusin', e => { if (touchOnly.matches && e.target.matches('input, select, textarea')) freezeFor(800); });
 export function cancelFreeze() { clearTimeout(freezeTimer); state.frozenY = null; }
-addEventListener('touchmove', () => { if (state.frozenY != null) cancelFreeze(); }, { passive: true });
 
-export function ready() { document.documentElement.classList.add('is-ready'); }
-export function loading(p) { css($('.loader'), '--p', f(p, 3).toString()); }
+// ——— A cada quadro: sombra da barra e o trilho de luz ———
+// J vai de 0 a 5 ao longo das baias (lavagem 0–1, polimento 1–2, ceramic 2–3, PPF 3–4, interior 4–5).
+const ORDER = ['wash', 'polish', 'ceramic', 'ppf', 'interior'];
+let shade = null, page = null, cur = -2;
+export function renderUi(y, acts, byId) {
+  const isShade = y > 24;
+  if (isShade !== shade) { shade = isShade; bar.classList.toggle('is-shade', isShade); }
+  const line = y + view.nav;
+  const isPage = (view.flat || []).some(([a, b]) => line >= a && line < b);
+  if (isPage !== page) { page = isPage; bar.classList.toggle('is-page', isPage); }
+  let J = 0;
+  const w = byId.wash, po = byId.polish, pr = byId.protect, it = byId.interior;
+  // os topos têm fração de pixel (alturas em svh) e a rolagem para em pixel inteiro: 1 px de folga
+  const yy = y + 1;
+  if (w && yy >= w.top - view.svh * 0.5) J = w.raw;
+  if (po && yy >= po.top) J = 1 + po.raw;
+  if (pr && yy >= pr.top) J = pr.raw < pr.split ? 2 + pr.raw / pr.split : 3 + (pr.raw - pr.split) / (1 - pr.split);
+  if (it && yy >= it.top) J = 4 + it.raw;
+  if (it && y > it.top + it.height - view.svh + 1) J = 5;
+  css(laneLit, 'transform', `scaleX(${f(clamp(J / 5), 4)})`);
+  // parada atual: -1 antes da lavagem, 5 depois do interior (todas percorridas, nenhuma atual)
+  const on = yy < (w?.top ?? 0) - view.svh * 0.5 ? -1 : J >= 5 ? 5 : Math.min(4, Math.max(0, Math.ceil(J) - 1));
+  if (on !== cur) {
+    cur = on;
+    laneLinks.forEach((a, i) => {
+      a.classList.toggle('is-on', i === on);
+      a.classList.toggle('is-past', i < on);
+      if (i === on) a.setAttribute('aria-current', 'step'); else a.removeAttribute('aria-current');
+    });
+  }
+  return ORDER;
+}
+
+export function ready() { html.classList.add('is-ready'); }

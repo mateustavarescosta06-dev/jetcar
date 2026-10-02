@@ -115,7 +115,7 @@ export class StudioLights {
   }
 
   /** Barra i: centro c, eixo a (unitário), meia-largura hw, meio-comprimento hl, cor×intensidade. */
-  set(i, c, a, hw, hl, color, soft = 0.002, visible = true) {
+  set(i, c, a, hw, hl, color, soft = 0.002, visible = true, glow = 1) {
     const u = this.uniforms;
     u.uBarC.value[i].set(c[0], c[1], c[2], hw);
     u.uBarA.value[i].set(a[0], a[1], a[2], hl);
@@ -128,7 +128,7 @@ export class StudioLights {
     this._q.setFromUnitVectors(this._y, this._v);
     m.quaternion.copy(this._q);
     m.scale.set(hw * 2, hl * 2, hw * 2);
-    m.material.uniforms.uColor.value.setRGB(color[0], color[1], color[2]);
+    m.material.uniforms.uColor.value.setRGB(color[0] * glow, color[1] * glow, color[2] * glow);
   }
 
   count(n) {
@@ -195,7 +195,7 @@ export function paintMaterial(lights, shared, swirl) {
       uniform vec3 uCam;
       uniform vec3 uBase; uniform float uFlake; uniform float uRough; uniform float uCoat;
       uniform sampler2D tSwirl; uniform float uSwirlScale; uniform float uSwirl; uniform float uPolishZ;
-      uniform vec3 uInsp; uniform vec3 uInspC;
+      uniform vec3 uInsp; uniform vec3 uInspC; uniform float uInspBar; uniform float uInspSpread; uniform float uSwirlGain;
       uniform float uFilm; uniform float uFilmX;
       uniform float uDim; uniform float uFill;
       varying vec3 vW; varying vec3 vN; varying vec2 vUv;
@@ -237,13 +237,26 @@ export function paintMaterial(lights, shared, swirl) {
 
         // Luz de inspeção (LED pequeno): ponto quente no verniz e, em volta, os micro-riscos,
         // que acendem onde a ranhura fica perpendicular ao meio-vetor (o efeito holograma).
-        vec3 Lv = uInsp - vW;
+        // com uInspBar, a luz de inspeção é a barra 0 (a linha de luz): o ponto dela mais perto
+        // do raio refletido faz o papel do LED, e os riscos acendem numa faixa em volta do reflexo
+        float halo = 1.0;
+        vec3 Lp = uInsp;
+        if (uInspBar > 0.5) {
+          vec3 bc = uBarC[0].xyz; vec3 ba = uBarA[0].xyz; float bl = uBarA[0].w;
+          vec3 w0 = vW - bc; float bb = dot(r, ba); float be = dot(w0, ba);
+          float tt = max((be * bb - dot(w0, r)) / max(1.0 - bb * bb, 1e-4), 0.0);
+          float ss = clamp(be + tt * bb, -bl, bl);
+          Lp = bc + ss * ba;
+          float dd = length(w0 + tt * r - ss * ba);
+          halo = exp(-dd * dd / (0.0016 + 0.02 * tt * tt * uInspSpread));
+        }
+        vec3 Lv = Lp - vW;
         float dl2 = max(dot(Lv, Lv), 1e-4);
         vec3 L = Lv * inversesqrt(dl2);
         vec3 H = normalize(L + v);
         float NdL = max(dot(n, L), 0.0);
         float NdH = max(dot(nc, H), 0.0);
-        vec3 insp = uInspC * F * NdL / dl2 * (pow(NdH, 4000.0) * 6.0 + pow(NdH, 120.0) * 0.004);
+        vec3 insp = uInspBar > 0.5 ? vec3(0.0) : uInspC * F * NdL / dl2 * (pow(NdH, 4000.0) * 6.0 + pow(NdH, 120.0) * 0.004);
         float polished = smoothstep(uPolishZ - 0.012, uPolishZ + 0.012, vW.z);
         vec4 sw = texture2D(tSwirl, vW.xz * uSwirlScale);
         float scratch = sw.b * uSwirl * (1.0 - polished) * uCoat;
@@ -251,8 +264,8 @@ export function paintMaterial(lights, shared, swirl) {
         T = normalize(T - n * dot(T, n) + 1e-5);
         vec3 Bt = cross(n, T);
         float ht = dot(H, T), hb = dot(H, Bt), hn = max(dot(H, n), 1e-3);
-        float sel = exp(-ht * ht / 0.0009) * (1.0 - smoothstep(0.32, 0.6, abs(hb) / hn));
-        vec3 swirlC = uInspC * sel * scratch * NdL / dl2 * 0.32;
+        float sel = exp(-ht * ht / (0.0009 * uSwirlGain)) * (1.0 - smoothstep(0.32, 0.6, abs(hb) / hn));
+        vec3 swirlC = uInspC * sel * scratch * NdL / mix(dl2, 1.0, uInspBar) * 0.32 * halo * uSwirlGain;
         // os riscos também espalham um pouco das barras (névoa no reflexo)
         if (scratch > 0.001) swirlC += barsRadiance(vW, r, 0.03) * scratch * 0.02;
 
@@ -284,6 +297,9 @@ export function paintMaterial(lights, shared, swirl) {
       uPolishZ: { value: 9 },
       uInsp: { value: new THREE.Vector3(0, 1, 0) },
       uInspC: { value: new THREE.Color(0, 0, 0) },
+      uInspBar: { value: 0 },
+      uInspSpread: { value: 1 },
+      uSwirlGain: { value: 1 },
       uFilm: { value: 0 },
       uFilmX: { value: 9 },
       uDim: { value: 1 },
@@ -427,7 +443,7 @@ export function layerMaterial(kind, lights, shared) {
   const m = new THREE.ShaderMaterial({
     vertexShader: VERT,
     fragmentShader: /* glsl */ `
-      uniform vec3 uCam; uniform float uKind; uniform float uDim; uniform float uGlow;
+      uniform vec3 uCam; uniform float uKind; uniform float uDim; uniform float uGlow; uniform float uDetail; uniform vec3 uPrimer;
       varying vec3 vW; varying vec3 vN; varying vec2 vUv;
       ${BARS}
       ${NOISE}
@@ -442,17 +458,17 @@ export function layerMaterial(kind, lights, shared) {
         float side = 1.0 - smoothstep(0.7, 0.95, abs(n.y)); // bordas da placa
         if (uKind < 0.5) {
           // estrutura: metal escovado (riscos finos no comprimento)
-          float brush = vnoise(vec2(vW.x * 30.0, vW.z * 2400.0)) * 0.5 + vnoise(vec2(vW.x * 8.0, vW.z * 900.0)) * 0.5;
+          float brush = vnoise(vec2(vW.x * 30.0, vW.z * 2400.0) * uDetail) * 0.5 + vnoise(vec2(vW.x * 8.0, vW.z * 900.0) * uDetail) * 0.5;
           vec3 f0 = vec3(0.46, 0.47, 0.49) * (0.82 + brush * 0.3);
-          vec3 F = f0 + (1.0 - f0) * pow(1.0 - NdV, 5.0);
+          vec3 F = f0 + (1.0 - f0) * pow(clamp(1.0 - NdV, 0.0, 1.0), 5.0);
           col = (barsRadiance(vW, r, 0.05 + brush * 0.03) + studioAmbient(r) * 2.0) * F + barsDiffuse(vW, n) * 0.01;
         } else if (uKind < 1.5) {
           // primer: fosco, cinza claro
           float F = fresnel(NdV, 0.03);
-          col = vec3(0.07, 0.07, 0.068) * (barsDiffuse(vW, n) * 0.4 + 0.06) + barsRadiance(vW, r, 0.25) * F * 0.3;
+          col = uPrimer * (barsDiffuse(vW, n) * 0.4 + 0.06) + barsRadiance(vW, r, 0.25) * F * 0.3;
         } else if (uKind < 2.5) {
           // cor: base metálica grafite (flocos)
-          vec2 cell = vW.xz * 900.0; vec2 id = floor(cell); vec2 h2 = hash22(id);
+          vec2 cell = vW.xz * 900.0 * uDetail; vec2 id = floor(cell); vec2 h2 = hash22(id);
           float has = step(0.45, hash12(id + 3.1));
           float detail = 1.0 - smoothstep(0.35, 1.2, length(fwidth(cell)));
           vec3 fn = normalize(n + vec3(h2.x - 0.5, 0.0, h2.y - 0.5) * 0.9);
@@ -474,7 +490,7 @@ export function layerMaterial(kind, lights, shared) {
         col *= uDim;
         gl_FragColor = ${transparent ? 'vec4(col, a)' : 'vec4(col, sharpness())'};
       }`,
-    uniforms: { ...lights.uniforms, ...shared, uKind: { value: ['metal', 'primer', 'base', 'clear', 'film'].indexOf(kind) }, uDim: { value: 1 }, uGlow: { value: 1 } },
+    uniforms: { ...lights.uniforms, ...shared, uKind: { value: ['metal', 'primer', 'base', 'clear', 'film'].indexOf(kind) }, uDim: { value: 1 }, uGlow: { value: 1 }, uDetail: { value: 1 }, uPrimer: { value: new THREE.Color(0.07, 0.07, 0.068) } },
   });
   // transparentes: cor = reflexo + fundo × (1 − a); o alfa (nitidez) do que está atrás fica intacto
   if (transparent) keepAlpha(m);

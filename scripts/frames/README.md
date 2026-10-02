@@ -1,17 +1,40 @@
-# Sequência do filme com profundidade
+# Fotos, camadas e trechos da v6
 
-O filme da abertura é controlado pela rolagem, então ele é servido como quadros (WebP), não
-como vídeo. Cada quadro leva o mapa de profundidade logo abaixo da imagem, no mesmo arquivo.
+Todos os assets visuais saem de duas fontes ilustrativas (geradas por IA, não são trabalhos reais
+da empresa):
 
-Para regenerar a partir do master (`dist/assets/porsche-scroll.mp4`), numa pasta de trabalho:
+- o vídeo master `source/porsche-scroll.mp4` (1916×1080, 24 fps, 15 s);
+- duas fotos que ficaram só no histórico do git:
+  `git show 892c586:dist/assets/poster.webp > poster.webp` (a foto que originou o quadro 0 do
+  vídeo, 4× mais nítida que ele) e `git show 9ed39fa:dist/assets/interior.webp > interior.webp` (a foto do interior da v5).
 
-1. Quadros a 15 fps: `ffmpeg -i porsche-scroll.mp4 -vf fps=15 src/f%03d.png` (226 quadros).
-2. Modelo de profundidade: Depth Anything V2 Small em ONNX (`../depth/model.onnx`), com
-   `onnxruntime` e `numpy`.
-3. `python3 depth_seq.py` → `depth_raw/*.npy` (um mapa por quadro).
-4. `python3 depth_post.py` → `depth_all.npy` (normalizado por quadro e suavizado no tempo).
-5. `python3 pack.py <saida>` → `<saida>/d` (1280×720 + profundidade 640×360) e `<saida>/m`
-   (960×540 + 480×270). Copie para `dist/assets/film/`.
+Modelos em ONNX, rodando com `onnxruntime`, `numpy`, `Pillow` e `opencv-python`:
 
-`depth_image.py` gera o mapa de profundidade de uma foto avulsa (usado em
-`dist/assets/interior-depth.webp`).
+| Modelo | Licença | Uso |
+|---|---|---|
+| Real-ESRGAN General x4v3 | BSD-3 | `upscale.py`: ampliação 2× (blocos de 128 px, sobreposição de 16) |
+| BiRefNet lite | MIT | `cutout.py`: recorte do carro (alfa) |
+| LaMa | Apache-2.0 | `hero_layers.py`: placa limpa do galpão sem o carro |
+| Depth Anything V2 **Small** | Apache-2.0 | `hero_layers.py` (normais do carro) e `depth_image.py` |
+
+Não use o Depth Anything V2 Base/Large nem outro modelo com licença não comercial em assets
+publicados.
+
+## Receita
+
+1. Quadros do master em PNG, sem perdas: `ffmpeg -ss <s> -i source/porsche-scroll.mp4 -frames:v 1 f.png`.
+   PPF: 2,25 s. Resultado: 3,5 s. A lavagem sai do `scripts/encode-wash.sh` (trecho de 5,25 a 7,0 s
+   e o quadro do congelamento).
+2. `python3 upscale.py esrgan.onnx <entrada> <saida2x.png>` em cada foto (poster, quadros, interior).
+3. Hero: `python3 cutout.py birefnet_lite.onnx poster.webp alpha.png`, depois
+   `python3 hero_layers.py poster.webp poster2x.png alpha.png lama_fp32.onnx depth_small.onnx <saida>`
+   e copie `car`, `plate`, `normal` (e `-m`) para `dist/assets/hero/`.
+4. PPF: `cutout.py` no quadro de 2,25 s → alfa reduzido para 958×540 → `front-mask.webp`; o quadro 2× vira `front.webp`
+   (3200 px) e `front-m.webp`.
+5. Interior: `python3 interior_layers.py interior2x.png <saida>` → `near.png` (carroceria e porta
+   com alfa) e `far.png` (cabine com a área da moldura escurecida). WebP qualidade 84.
+6. Resultado: quadro de 3,5 s ampliado → `result-d.webp` (3200 px) e o recorte vertical
+   `result-m.webp`.
+
+Os pôsteres das cenas 3D (sem WebGL e enquanto carregam) e o `og.jpg` saem de
+`node scripts/posters.cjs` com o site rodando.

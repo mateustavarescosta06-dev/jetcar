@@ -1,9 +1,9 @@
 {
   "name": "jetcar-landing",
-  "version": "5.0.0",
+  "version": "6.0.0",
   "private": true,
   "type": "module",
-  "description": "Site da JETCAR: um filme automotivo conduzido pela rolagem (WebGL)",
+  "description": "Site da JETCAR: as baias de uma oficina percorridas por uma linha de luz (HTML, WebGL e foto em camadas)",
   "scripts": {
     "start": "node scripts/serve.cjs",
     "dev": "node scripts/serve.cjs",

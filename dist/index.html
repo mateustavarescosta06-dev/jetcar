@@ -3,27 +3,25 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#000000">
+<meta name="theme-color" content="#0b0b0c">
 <title>JETCAR · Estética automotiva em Boa Viagem, Recife</title>
-<meta name="description" content="Lavagem técnica, correção de pintura, Ceramic Coating, PPF e higienização interna. JETCAR Estética Automotiva, na Rua José Trajano, Boa Viagem, Recife.">
+<meta name="description" content="Lavagem técnica, polimento, Ceramic Coating, PPF e higienização interna. JETCAR Estética Automotiva, na Rua José Trajano, Boa Viagem, Recife.">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="pt_BR">
 <meta property="og:title" content="JETCAR · Estética automotiva em Boa Viagem">
-<meta property="og:description" content="Lavagem técnica, correção de pintura, Ceramic Coating, PPF e higienização interna, em Boa Viagem, Recife.">
+<meta property="og:description" content="Lavagem técnica, polimento, Ceramic Coating, PPF e higienização interna, em Boa Viagem, Recife.">
+<meta property="og:image" content="assets/og.jpg">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M6 2h24l-4 28H2z' fill='%23d7261e'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-family='Arial' font-style='italic' font-weight='900' font-size='15' fill='white'%3EJC%3C/text%3E%3C/svg%3E">
 <link rel="preload" href="assets/fonts/barlow-400.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/barlow-condensed-800.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/barlow-condensed-800-italic.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="assets/film/d/000.webp" as="fetch" crossorigin media="(min-width: 761px)">
-<link rel="preload" href="assets/film/m/000.webp" as="fetch" crossorigin media="(max-width: 760px)">
 <link rel="modulepreload" href="vendor/three.min.js">
 <link rel="stylesheet" href="style.css">
 <script>document.documentElement.classList.replace('no-js', 'js')</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"AutoWash","name":"JETCAR Estética Automotiva","description":"Lavagem técnica, correção de pintura, Ceramic Coating, PPF e higienização interna.","address":{"@type":"PostalAddress","streetAddress":"Rua José Trajano","addressLocality":"Recife","addressRegion":"PE","addressCountry":"BR"},"geo":{"@type":"GeoCoordinates","latitude":-8.12055,"longitude":-34.89937},"hasMap":"https://maps.apple/p/uRv~vCQ0G1zNn4","sameAs":["https://www.instagram.com/jetcarbv/"]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"AutoWash","name":"JETCAR Estética Automotiva","description":"Lavagem técnica, polimento, Ceramic Coating, PPF e higienização interna.","address":{"@type":"PostalAddress","streetAddress":"Rua José Trajano","addressLocality":"Recife","addressRegion":"PE","addressCountry":"BR"},"geo":{"@type":"GeoCoordinates","latitude":-8.12055,"longitude":-34.89937},"hasMap":"https://maps.apple/p/uRv~vCQ0G1zNn4","sameAs":["https://www.instagram.com/jetcarbv/"]}</script>
 </head>
 <body>
 <a class="skip" href="#agendar">Ir direto para o agendamento</a>
-
 <svg class="sprite" aria-hidden="true" focusable="false">
   <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h15M13 6l6 6-6 6"/></symbol>
   <symbol id="i-arrow-ur" viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8"/></symbol>
@@ -34,32 +32,36 @@
   <symbol id="i-mute" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="m16 10 4 4M20 10l-4 4"/></symbol>
 </svg>
 
-<header class="nav">
-  <a class="nav-brand" href="#inicio" aria-label="JETCAR, voltar ao início"><img src="assets/jetcar-logo.svg" alt="" width="1354" height="652"></a>
-  <nav class="nav-links" aria-label="Principal">
-    <a href="#lavagem">Serviços</a>
-    <a href="#camadas">Proteção</a>
-    <a href="#interior">Interior</a>
-    <a href="#rota">Endereço</a>
-    <a href="#duvidas">Dúvidas</a>
+<header class="bar">
+  <a class="bar-brand" href="#inicio"><img src="assets/jetcar-logo.svg" alt="JETCAR, voltar ao início" width="1354" height="652"></a>
+  <!-- A linha de luz vira a navegação: cada baia é uma parada. -->
+  <nav class="lane" aria-label="Etapas do tratamento">
+    <i class="lane-rail" aria-hidden="true"><i class="lane-lit"></i></i>
+    <ol>
+      <li><a href="#lavagem" data-bay="wash"><b>01</b><span>Lavagem</span></a></li>
+      <li><a href="#polimento" data-bay="polish"><b>02</b><span>Polimento</span></a></li>
+      <li><a href="#ceramic" data-bay="ceramic"><b>03</b><span>Ceramic</span></a></li>
+      <li><a href="#ppf" data-bay="ppf"><b>04</b><span>PPF</span></a></li>
+      <li><a href="#interior" data-bay="interior"><b>05</b><span>Interior</span></a></li>
+    </ol>
   </nav>
-  <div class="nav-actions">
-    <button class="nav-sound" type="button" aria-pressed="false"><span class="sr-only">Ligar o som ambiente</span><svg><use href="#i-mute"/></svg></button>
+  <div class="bar-actions">
+    <a class="bar-link" href="#endereco">Endereço</a>
+    <button class="bar-icon bar-sound" type="button" aria-pressed="false"><span class="sr-only">Ligar o som ambiente</span><svg><use href="#i-mute"/></svg></button>
     <a class="btn btn-sm" href="#agendar"><span>Agendar</span></a>
-    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="menu"><span class="sr-only">Abrir menu</span><svg><use href="#i-menu"/></svg></button>
+    <button class="bar-icon bar-menu" type="button" aria-expanded="false" aria-controls="menu"><span class="sr-only">Abrir menu</span><svg><use href="#i-menu"/></svg></button>
   </div>
-  <i class="nav-progress" aria-hidden="true"><i></i></i>
 </header>
-
 <div class="menu" id="menu" hidden>
-  <nav class="menu-links" aria-label="Capítulos">
-    <a href="#lavagem"><span>01</span>Lavagem técnica</a>
-    <a href="#correcao"><span>02</span>Correção de pintura</a>
-    <a href="#ceramic"><span>03</span>Ceramic Coating</a>
-    <a href="#ppf"><span>04</span>PPF</a>
-    <a href="#interior"><span>05</span>Higienização</a>
-    <a href="#rota"><span>06</span>Endereço</a>
-    <a href="#agendar"><span>07</span>Agendar</a>
+  <nav class="menu-links" aria-label="Menu">
+    <a href="#lavagem"><b>01</b>Lavagem técnica</a>
+    <a href="#polimento"><b>02</b>Polimento</a>
+    <a href="#ceramic"><b>03</b>Ceramic Coating</a>
+    <a href="#ppf"><b>04</b>PPF</a>
+    <a href="#interior"><b>05</b>Higienização interna</a>
+    <a href="#agendar">Agendar</a>
+    <a href="#endereco">Endereço</a>
+    <a href="#duvidas">Dúvidas</a>
   </nav>
   <div class="menu-foot">
     <a class="btn" href="https://ig.me/m/jetcarbv" target="_blank" rel="noopener noreferrer"><span>Falar no Direct</span><svg><use href="#i-arrow-ur"/></svg></a>
@@ -67,136 +69,243 @@
   </div>
 </div>
 
-<main class="journey" id="conteudo">
-  <!-- Palco: uma única cena WebGL que a rolagem conduz como um plano-sequência. -->
-  <div class="stage">
-    <canvas class="gl" aria-hidden="true"></canvas>
-    <img class="poster" src="assets/film-poster.webp" alt="" aria-hidden="true">
-    <div class="labels" aria-hidden="true"></div>
+<main id="conteudo">
 
-    <div class="hud">
-      <section class="cap cap-hero" data-cap="abertura" aria-labelledby="t-hero">
-        <p class="cap-kicker">JETCAR Estética Automotiva <span>Boa Viagem · Recife</span></p>
-        <h1 class="cap-title" id="t-hero">Estética automotiva em Boa Viagem</h1>
-        <p class="cap-cue" aria-hidden="true"><i></i>Role para revelar</p>
-      </section>
-
-      <p class="cap cap-marca" data-cap="marca" aria-hidden="true"><span>Estética automotiva</span></p>
-
-      <section class="cap" data-cap="lavagem" aria-labelledby="t-lavagem">
-        <p class="cap-num">01</p>
-        <h2 class="cap-title" id="t-lavagem">Lavagem técnica</h2>
-        <p class="cap-text">Água, espuma e etapas pensadas para não agredir a pintura. Normalmente é o primeiro passo antes de qualquer outro serviço.</p>
-      </section>
-
-      <section class="cap" data-cap="correcao" aria-labelledby="t-correcao">
-        <p class="cap-num">02</p>
-        <h2 class="cap-title" id="t-correcao">Correção de pintura</h2>
-        <p class="cap-text">A luz de inspeção mostra as marcas finas no verniz. O polimento trabalha essa camada para recuperar o brilho, conforme o estado da pintura.</p>
-      </section>
-
-      <section class="cap" data-cap="ceramic" aria-labelledby="t-ceramic">
-        <p class="cap-num">03</p>
-        <h2 class="cap-title" id="t-ceramic">Ceramic Coating</h2>
-        <p class="cap-text">Um revestimento cerâmico aplicado sobre a pintura depois da preparação. A equipe explica como fica a manutenção.</p>
-      </section>
-
-      <section class="cap" data-cap="camadas" aria-labelledby="t-camadas">
-        <p class="cap-kicker">Proteção</p>
-        <h2 class="cap-title" id="t-camadas">Onde cada camada fica</h2>
-        <p class="cap-text">Estrutura, primer, cor e verniz. Por cima do verniz entram o Ceramic Coating ou o PPF, sozinhos ou juntos.</p>
-        <ul class="sr-only"><li>Estrutura: a chapa</li><li>Primer</li><li>Cor: a pintura</li><li>Verniz: camada transparente</li><li>Proteção: Ceramic Coating ou PPF</li></ul>
-      </section>
-
-      <section class="cap" data-cap="ppf" aria-labelledby="t-ppf">
-        <p class="cap-num">04</p>
-        <h2 class="cap-title" id="t-ppf">PPF</h2>
-        <p class="cap-text">Paint Protection Film: uma película transparente aplicada sobre a pintura, nas áreas do carro que você combinar com a equipe.</p>
-      </section>
-
-      <section class="cap" data-cap="interior" aria-labelledby="t-interior">
-        <p class="cap-num">05</p>
-        <h2 class="cap-title" id="t-interior">Higienização</h2>
-        <p class="cap-text">Bancos, superfícies e os detalhes de dentro do carro. O tipo de revestimento muda o cuidado, então conte o que tem no seu.</p>
-      </section>
-
-      <section class="cap cap-final" data-cap="final" aria-labelledby="t-final">
-        <h2 class="cap-title" id="t-final"><span class="sr-only">JETCAR. </span>Seu carro. Em outro nível.</h2>
-        <a class="btn" href="#agendar"><span>Agendar</span><svg><use href="#i-arrow"/></svg></a>
-      </section>
-
-      <section class="cap cap-rota" data-cap="rota" aria-labelledby="t-rota">
-        <p class="cap-kicker">Endereço</p>
-        <h2 class="cap-title" id="t-rota">Rua José Trajano, Boa Viagem</h2>
-        <p class="cap-text">Recife, Pernambuco. A poucas quadras da orla.</p>
-        <a class="link" href="https://maps.apple/p/uRv~vCQ0G1zNn4" target="_blank" rel="noopener noreferrer">Abrir no mapa<svg><use href="#i-arrow-ur"/></svg></a>
-      </section>
-    </div>
-
-    <p class="slate" aria-hidden="true"><b class="slate-num"></b><span class="slate-name"></span></p>
-    <p class="osm" aria-hidden="true">Mapa: © OpenStreetMap</p>
-  </div>
-
-  <!-- Trilho da rolagem: cada capítulo ocupa algumas telas (as alturas vêm do script). -->
-  <div class="track" aria-hidden="true">
-    <div class="ch" id="inicio" data-ch="abertura"></div>
-    <div class="ch" data-ch="marca"></div>
-    <div class="ch" id="lavagem" data-ch="lavagem"></div>
-    <div class="ch" id="correcao" data-ch="correcao"></div>
-    <div class="ch" id="ceramic" data-ch="ceramic"></div>
-    <div class="ch" id="camadas" data-ch="camadas"></div>
-    <div class="ch" id="ppf" data-ch="ppf"></div>
-    <div class="ch" id="interior" data-ch="interior"></div>
-    <div class="ch" id="final" data-ch="final"></div>
-    <div class="ch" id="rota" data-ch="rota"></div>
-  </div>
-
-  <section class="booking" id="agendar" aria-labelledby="t-booking">
-    <div class="booking-in">
-      <p class="kicker"><span>07</span>Agendar</p>
-      <h2 id="t-booking">Vamos preparar o seu atendimento</h2>
-      <form class="config" id="config" novalidate>
-        <fieldset class="step">
-          <legend><span>01</span>Qual é o seu carro?</legend>
-          <input id="car-model" name="car" maxlength="80" placeholder="Marca e modelo" autocomplete="off" enterkeyhint="next">
-        </fieldset>
-        <fieldset class="step">
-          <legend><span>02</span>O que você quer melhorar?</legend>
-          <div class="opts">
-            <label class="opt"><input type="checkbox" name="want" value="pintura"><span><b>Pintura</b><small>Correção e polimento</small></span></label>
-            <label class="opt"><input type="checkbox" name="want" value="protecao"><span><b>Proteção</b><small>Ceramic Coating ou PPF</small></span></label>
-            <label class="opt"><input type="checkbox" name="want" value="interior"><span><b>Interior</b><small>Higienização</small></span></label>
-            <label class="opt"><input type="checkbox" name="want" value="lavagem"><span><b>Lavagem</b><small>Lavagem técnica</small></span></label>
-            <label class="opt"><input type="checkbox" name="want" value="avaliacao"><span><b>Avaliação</b><small>Ainda não sei</small></span></label>
-          </div>
-        </fieldset>
-        <div class="step step-summary">
-          <p class="legend"><span>03</span>A JETCAR prepara o atendimento</p>
-          <p class="message" id="message-text" aria-live="polite"></p>
-          <div class="step-actions">
-            <a class="btn" id="send-message" href="https://ig.me/m/jetcarbv" target="_blank" rel="noopener noreferrer"><span>Agendar pelo Instagram</span><svg><use href="#i-arrow-ur"/></svg></a>
-            <button type="button" class="link" id="copy-message">Só copiar a mensagem</button>
-          </div>
-          <p class="fine" id="copy-status" role="status" aria-live="polite"></p>
+  <!-- HERO · planos separados: galpão, piso, letreiro, carro, pilar. A luz encontra o carro. -->
+  <section class="act act-hero" id="inicio" data-act="hero" data-span="1.5" data-span-m="1.2" aria-labelledby="t-hero">
+    <div class="stage">
+      <div class="gl-slot" aria-hidden="true">
+        <picture>
+          <source media="(max-width: 760px)" srcset="assets/posters/hero-m.webp">
+          <img class="poster" src="assets/posters/hero-d.webp" alt="" width="1920" height="1200">
+        </picture>
+      </div>
+      <i class="scrim hero-scrim" aria-hidden="true"></i>
+      <div class="hero-copy">
+        <p class="kicker">JETCAR Estética Automotiva</p>
+        <h1 id="t-hero">Estética automotiva em Boa Viagem, Recife.</h1>
+        <p class="lead">Lavagem técnica, polimento, Ceramic Coating, PPF e higienização interna. Uma etapa de cada vez, com a luz certa em cima de cada detalhe.</p>
+        <div class="actions">
+          <a class="btn" href="#agendar"><span>Agendar</span><svg><use href="#i-arrow"/></svg></a>
+          <a class="link" href="#lavagem">Ver o processo</a>
         </div>
-      </form>
-      <p class="fine">Preço e prazo são definidos pela equipe depois de ver o carro. Nada é enviado por este site: a mensagem vai pelo seu Instagram.</p>
+      </div>
     </div>
   </section>
 
-  <section class="sheet faq" id="duvidas" aria-labelledby="t-faq">
+  <!-- 01 · LAVAGEM: footage curto controlado pela rolagem, depois o tempo para e a água fica no espaço. -->
+  <section class="act bay bay-wash" id="lavagem" data-act="wash" data-span="2.6" data-span-m="2.2" data-hold="0.8" aria-labelledby="t-lavagem">
+    <div class="stage">
+      <div class="gl-slot" aria-hidden="true">
+        <picture>
+          <source media="(max-width: 760px)" srcset="assets/posters/wash-m.webp">
+          <img class="poster" src="assets/posters/wash-d.webp" alt="" width="1920" height="1200" loading="lazy">
+        </picture>
+      </div>
+      <article class="card" data-card="wash">
+        <svg class="card-trace" aria-hidden="true"><rect class="trace-dim" pathLength="1"/><rect class="trace-head" pathLength="1"/></svg>
+        <p class="card-num">01<span>Exterior</span></p>
+        <h2 class="card-title" id="t-lavagem"><span>Lavagem</span> <span>técnica</span></h2>
+        <p class="card-lead">O primeiro toque.</p>
+        <p class="card-text">Água, espuma e etapas pensadas para não agredir a pintura. Normalmente é o primeiro passo antes de qualquer outro serviço.</p>
+        <div class="card-actions">
+          <a class="card-explore" href="#lavagem" data-explore="wash">Explorar<svg><use href="#i-arrow"/></svg></a>
+          <button class="card-add" type="button" aria-pressed="false" data-want="lavagem">Incluir no pedido</button>
+        </div>
+        <p class="card-hint" data-hint="wash">Arraste para olhar em volta da água.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- 02 · POLIMENTO: escuro; a luz de inspeção revela as marcas e termina no card. -->
+  <section class="act bay bay-polish" id="polimento" data-act="polish" data-span="2.4" data-span-m="2.0" data-hold="0.78" aria-labelledby="t-polimento">
+    <div class="stage">
+      <div class="gl-slot" aria-hidden="true">
+        <picture>
+          <source media="(max-width: 760px)" srcset="assets/posters/polish-m.webp">
+          <img class="poster" src="assets/posters/polish-d.webp" alt="" width="1920" height="1200" loading="lazy">
+        </picture>
+      </div>
+      <article class="card" data-card="polish">
+        <svg class="card-trace" aria-hidden="true"><rect class="trace-dim" pathLength="1"/><rect class="trace-head" pathLength="1"/></svg>
+        <p class="card-num">02<span>Pintura</span></p>
+        <h2 class="card-title" id="t-polimento"><span>Polimento</span> <span>e correção</span></h2>
+        <p class="card-lead">O que a luz mostra.</p>
+        <p class="card-text">A luz de inspeção revela as marcas finas no verniz. O polimento trabalha essa camada para recuperar o brilho, conforme o estado da pintura.</p>
+        <div class="card-actions">
+          <button class="card-explore" type="button" aria-pressed="false" data-explore="polish">Ver antes<svg><use href="#i-arrow"/></svg></button>
+          <button class="card-add" type="button" aria-pressed="false" data-want="pintura">Incluir no pedido</button>
+        </div>
+        <p class="card-hint" data-hint="polish">Mova o cursor para inclinar a luz.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- 03 + 04 · PROTEÇÃO (o pico): camadas que você separa; depois a película atravessa a carroceria. -->
+  <section class="act bay bay-protect" id="ceramic" data-act="protect" data-span="4.4" data-span-m="3.6" data-hold="0.3" aria-labelledby="t-ceramic">
+    <div class="stage">
+      <div class="gl-slot" aria-hidden="true">
+        <picture>
+          <source media="(max-width: 760px)" srcset="assets/posters/protect-m.webp">
+          <img class="poster" src="assets/posters/protect-d.webp" alt="" width="1920" height="1200" loading="lazy">
+        </picture>
+      </div>
+      <ol class="layer-labels" aria-label="Camadas da pintura, de cima para baixo">
+        <li data-layer="0"><b>Ceramic Coating</b><span>revestimento</span></li>
+        <li data-layer="1"><b>Verniz</b><span>camada transparente</span></li>
+        <li data-layer="2"><b>Cor</b><span>a pintura</span></li>
+        <li data-layer="3"><b>Primer</b><span>preparação</span></li>
+        <li data-layer="4"><b>Chapa</b><span>estrutura</span></li>
+      </ol>
+      <div class="separator">
+        <label class="sr-only" for="sep">Separar as camadas da pintura</label>
+        <input id="sep" type="range" min="0" max="100" value="0" step="1" aria-valuetext="Camadas juntas">
+        <p class="separator-hint" aria-hidden="true">Arraste para separar</p>
+      </div>
+      <div class="stack">
+        <article class="card" data-card="ceramic">
+          <svg class="card-trace" aria-hidden="true"><rect class="trace-dim" pathLength="1"/><rect class="trace-head" pathLength="1"/></svg>
+          <p class="card-num">03<span>Proteção</span></p>
+          <h2 class="card-title" id="t-ceramic"><span>Ceramic</span> <span>Coating</span></h2>
+          <p class="card-lead">Uma camada a mais.</p>
+          <p class="card-text">Revestimento cerâmico aplicado sobre o verniz depois da preparação da pintura. A equipe explica como fica a manutenção.</p>
+          <div class="card-actions">
+            <a class="card-explore" href="#ceramic" data-explore="ceramic">Separar camadas<svg><use href="#i-arrow"/></svg></a>
+            <button class="card-add" type="button" aria-pressed="false" data-want="ceramic">Incluir no pedido</button>
+          </div>
+        </article>
+        <article class="card" id="ppf" data-card="ppf" aria-labelledby="t-ppf">
+          <svg class="card-trace" aria-hidden="true"><rect class="trace-dim" pathLength="1"/><rect class="trace-head" pathLength="1"/></svg>
+          <p class="card-num">04<span>Proteção</span></p>
+          <h2 class="card-title" id="t-ppf"><span>PPF</span> <span>Película</span></h2>
+          <p class="card-lead">Transparente por cima de tudo.</p>
+          <p class="card-text">Paint Protection Film: uma película transparente aplicada sobre a pintura, nas áreas do carro que você combinar com a equipe.</p>
+          <div class="card-actions">
+            <a class="card-explore" href="#ppf" data-explore="ppf">Passar a película<svg><use href="#i-arrow"/></svg></a>
+            <button class="card-add" type="button" aria-pressed="false" data-want="ppf">Incluir no pedido</button>
+          </div>
+        </article>
+      </div>
+      <div class="film-labels" aria-hidden="true"><span class="fl-off">Sem proteção</span><span class="fl-on">Com PPF</span></div>
+      <div class="film-control">
+        <label class="sr-only" for="film">Posição da película</label>
+        <input id="film" type="range" min="0" max="100" value="0" step="1" aria-valuetext="Sem película">
+      </div>
+    </div>
+  </section>
+
+  <!-- 05 · INTERIOR: passagem pelo vidro e pela porta; depois a cena para e você explora. -->
+  <section class="act bay bay-interior" id="interior" data-act="interior" data-span="2.4" data-span-m="2.2" data-hold="0.7" aria-labelledby="t-interior">
+    <div class="stage">
+      <div class="cabin" aria-hidden="true">
+        <img class="cabin-far" src="assets/interior/far.webp" alt="" width="3072" height="2048" loading="lazy" decoding="async">
+        <img class="cabin-near" src="assets/interior/near.webp" alt="" width="3072" height="2048" loading="lazy" decoding="async">
+        <i class="cabin-glass"></i>
+      </div>
+      <div class="spots" role="group" aria-label="Detalhes do interior">
+        <button class="spot" type="button" data-spot="banco" aria-pressed="false"><i></i><span>Banco</span></button>
+        <button class="spot" type="button" data-spot="acabamentos" aria-pressed="false"><i></i><span>Acabamentos</span></button>
+        <button class="spot" type="button" data-spot="superficies" aria-pressed="false"><i></i><span>Superfícies</span></button>
+        <button class="spot" type="button" data-spot="volante" aria-pressed="false"><i></i><span>Volante</span></button>
+      </div>
+      <article class="card" data-card="interior">
+        <svg class="card-trace" aria-hidden="true"><rect class="trace-dim" pathLength="1"/><rect class="trace-head" pathLength="1"/></svg>
+        <p class="card-num">05<span>Interior</span></p>
+        <h2 class="card-title" id="t-interior"><span>Higienização</span> <span>interna</span></h2>
+        <p class="card-lead">Onde você passa o tempo.</p>
+        <p class="card-text" data-spot-text>Bancos, volante, acabamentos e superfícies. O tipo de revestimento muda o cuidado, então conte o que tem no seu.</p>
+        <div class="card-actions">
+          <a class="card-explore" href="#interior" data-explore="interior">Explorar<svg><use href="#i-arrow"/></svg></a>
+          <button class="card-add" type="button" aria-pressed="false" data-want="interior">Incluir no pedido</button>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- RESULTADO · foto inteira, a luz passa uma última vez. -->
+  <section class="result" id="resultado" aria-labelledby="t-result">
+    <figure class="result-figure">
+      <picture>
+        <source media="(max-width: 760px)" srcset="assets/result-m.webp">
+        <img src="assets/result-d.webp" alt="Porsche 911 grafite pronto, molhado e brilhando no galpão escuro" width="3832" height="2160" loading="lazy" decoding="async">
+      </picture>
+      <i class="result-trace" aria-hidden="true"></i>
+    </figure>
+    <i class="scrim result-scrim" aria-hidden="true"></i>
+    <div class="result-copy">
+      <h2 id="t-result">Lavado, corrigido, protegido.</h2>
+      <p class="lead">E por dentro também. Cada etapa no lugar, do jeito que o seu carro pedir.</p>
+      <a class="btn" href="#agendar"><span>Agendar</span><svg><use href="#i-arrow"/></svg></a>
+    </div>
+  </section>
+
+  <!-- ORDEM DE SERVIÇO · precisão, sem espetáculo. -->
+  <section class="order" id="agendar" aria-labelledby="t-order">
+    <div class="order-head">
+      <h2 id="t-order">Monte o seu pedido</h2>
+      <p class="lead">Três respostas e a mensagem fica pronta para o Direct. Preço e prazo a equipe passa depois de ver o carro.</p>
+    </div>
+    <form class="config" id="config" novalidate>
+      <fieldset class="step">
+        <legend><b>01</b>Qual é o seu carro?</legend>
+        <label class="sr-only" for="car-model">Marca e modelo do carro</label>
+        <input id="car-model" name="car" maxlength="80" placeholder="Marca e modelo" autocomplete="off" enterkeyhint="next">
+      </fieldset>
+      <fieldset class="step">
+        <legend><b>02</b>O que você quer melhorar?</legend>
+        <div class="opts">
+          <label class="opt"><input type="checkbox" name="want" value="lavagem"><span><b>Lavagem</b><small>Lavagem técnica</small></span></label>
+          <label class="opt"><input type="checkbox" name="want" value="pintura"><span><b>Pintura</b><small>Polimento e correção</small></span></label>
+          <label class="opt"><input type="checkbox" name="want" value="ceramic"><span><b>Ceramic</b><small>Ceramic Coating</small></span></label>
+          <label class="opt"><input type="checkbox" name="want" value="ppf"><span><b>PPF</b><small>Película de proteção</small></span></label>
+          <label class="opt"><input type="checkbox" name="want" value="interior"><span><b>Interior</b><small>Higienização interna</small></span></label>
+          <label class="opt"><input type="checkbox" name="want" value="avaliacao"><span><b>Avaliação</b><small>Ainda não sei</small></span></label>
+        </div>
+      </fieldset>
+      <div class="step step-send">
+        <p class="legend"><b>03</b>Agendar</p>
+        <p class="message" id="message-text" aria-live="polite"></p>
+        <div class="step-actions">
+          <a class="btn" id="send-message" href="https://ig.me/m/jetcarbv" target="_blank" rel="noopener noreferrer"><span>Agendar pelo Direct</span><svg><use href="#i-arrow-ur"/></svg></a>
+          <button type="button" class="link" id="copy-message">Só copiar a mensagem</button>
+        </div>
+        <p class="fine" id="copy-status" role="status" aria-live="polite"></p>
+        <p class="fine">Nada é enviado por este site: a mensagem vai pelo seu Instagram.</p>
+      </div>
+    </form>
+  </section>
+
+  <!-- ENDEREÇO · a linha vira a rota até a porta. -->
+  <section class="act act-route" id="endereco" data-act="route" data-span="1.6" data-span-m="1.4" data-hold="1" aria-labelledby="t-route">
+    <div class="stage">
+      <div class="route-map" aria-hidden="true"><img class="route-static" src="assets/route.svg" alt="" width="1600" height="1000" loading="lazy"></div>
+      <i class="scrim route-scrim" aria-hidden="true"></i>
+      <div class="route-copy">
+        <p class="kicker">Endereço</p>
+        <h2 id="t-route">Rua José Trajano, Boa Viagem</h2>
+        <p class="lead">Recife, Pernambuco. A poucas quadras da orla.</p>
+        <p class="route-order" data-order hidden></p>
+        <div class="actions">
+          <a class="btn" href="#agendar" data-route-cta><span>Agendar</span><svg><use href="#i-arrow"/></svg></a>
+          <a class="link" href="https://maps.apple/p/uRv~vCQ0G1zNn4" target="_blank" rel="noopener noreferrer">Abrir no mapa<svg><use href="#i-arrow-ur"/></svg></a>
+        </div>
+      </div>
+      <p class="osm">Mapa: dados © OpenStreetMap</p>
+    </div>
+  </section>
+
+  <section class="faq" id="duvidas" aria-labelledby="t-faq">
     <div class="faq-head">
-      <p class="kicker"><span>08</span>Dúvidas</p>
       <h2 id="t-faq">Perguntas comuns</h2>
       <p class="lead">Não achou a sua? Manda no Direct que a equipe responde.</p>
-      <a class="btn" href="https://ig.me/m/jetcarbv" target="_blank" rel="noopener noreferrer"><span>Mandar mensagem</span><svg><use href="#i-arrow-ur"/></svg></a>
+      <a class="btn" href="https://ig.me/m/jetcarbv" target="_blank" rel="noopener noreferrer"><span>Falar no Direct</span><svg><use href="#i-arrow-ur"/></svg></a>
     </div>
     <div class="faq-list">
-      <details><summary><span class="q-num">01</span><span class="q">Qual serviço eu devo escolher?</span><i aria-hidden="true"></i></summary><p>Conte como o carro está e o que te incomoda nele. A equipe avalia e indica o que faz sentido.</p></details>
-      <details><summary><span class="q-num">02</span><span class="q">Qual a diferença entre Ceramic Coating e PPF?</span><i aria-hidden="true"></i></summary><p>O Ceramic Coating é um revestimento aplicado sobre a pintura. O PPF é uma película transparente colocada por cima dela. Dá para usar um, outro ou os dois.</p></details>
-      <details><summary><span class="q-num">03</span><span class="q">Quanto custa e quanto tempo demora?</span><i aria-hidden="true"></i></summary><p>Depende do carro, do estado dele e do serviço. A equipe passa valor e prazo depois de avaliar.</p></details>
-      <details><summary><span class="q-num">04</span><span class="q">Como eu agendo?</span><i aria-hidden="true"></i></summary><p>Pelo Instagram <a href="https://www.instagram.com/jetcarbv/" target="_blank" rel="noopener noreferrer">@jetcarbv</a>. Se quiser, monte a mensagem no agendamento aqui do site e é só colar no Direct.</p></details>
-      <details><summary><span class="q-num">05</span><span class="q">Onde vocês ficam?</span><i aria-hidden="true"></i></summary><p>Na Rua José Trajano, em Boa Viagem, Recife. <a href="https://maps.apple/p/uRv~vCQ0G1zNn4" target="_blank" rel="noopener noreferrer">Abrir no mapa</a>.</p></details>
+      <details><summary><span class="q">Qual serviço eu devo escolher?</span><i aria-hidden="true"></i></summary><p>Conte como o carro está e o que te incomoda nele. A equipe avalia e indica o que faz sentido.</p></details>
+      <details><summary><span class="q">Qual a diferença entre Ceramic Coating e PPF?</span><i aria-hidden="true"></i></summary><p>O Ceramic Coating é um revestimento aplicado sobre a pintura. O PPF é uma película transparente colocada por cima dela. Dá para usar um, outro ou os dois.</p></details>
+      <details><summary><span class="q">Quanto custa e quanto tempo demora?</span><i aria-hidden="true"></i></summary><p>Depende do carro, do estado dele e do serviço. A equipe passa valor e prazo depois de avaliar.</p></details>
+      <details><summary><span class="q">Como eu agendo?</span><i aria-hidden="true"></i></summary><p>Pelo Instagram <a href="https://www.instagram.com/jetcarbv/" target="_blank" rel="noopener noreferrer">@jetcarbv</a>. Se quiser, monte o pedido aqui no site e a mensagem vai pronta para o Direct.</p></details>
+      <details><summary><span class="q">Onde vocês ficam?</span><i aria-hidden="true"></i></summary><p>Na Rua José Trajano, em Boa Viagem, Recife. <a href="https://maps.apple/p/uRv~vCQ0G1zNn4" target="_blank" rel="noopener noreferrer">Abrir no mapa</a>.</p></details>
     </div>
   </section>
 
@@ -206,9 +315,9 @@
       <p class="footer-line">Estética automotiva em Boa Viagem, Recife</p>
     </div>
     <div class="footer-cols">
-      <div><h4>Serviços</h4><a href="#lavagem">Lavagem técnica</a><a href="#correcao">Correção de pintura</a><a href="#ceramic">Ceramic Coating</a><a href="#ppf">PPF</a><a href="#interior">Higienização</a></div>
-      <div><h4>Contato</h4><a href="https://www.instagram.com/jetcarbv/" target="_blank" rel="noopener noreferrer">Instagram @jetcarbv</a><a href="https://ig.me/m/jetcarbv" target="_blank" rel="noopener noreferrer">Direct</a><a href="#agendar">Agendar</a></div>
-      <div><h4>Endereço</h4><p>Rua José Trajano<br>Boa Viagem, Recife, PE</p><a href="https://maps.apple/p/uRv~vCQ0G1zNn4" target="_blank" rel="noopener noreferrer">Abrir no mapa</a></div>
+      <div><h3>Etapas</h3><a href="#lavagem">01 Lavagem técnica</a><a href="#polimento">02 Polimento</a><a href="#ceramic">03 Ceramic Coating</a><a href="#ppf">04 PPF</a><a href="#interior">05 Higienização interna</a></div>
+      <div><h3>Contato</h3><a href="https://www.instagram.com/jetcarbv/" target="_blank" rel="noopener noreferrer">Instagram @jetcarbv</a><a href="https://ig.me/m/jetcarbv" target="_blank" rel="noopener noreferrer">Direct</a><a href="#agendar">Agendar</a></div>
+      <div><h3>Endereço</h3><p>Rua José Trajano<br>Boa Viagem, Recife, PE</p><a href="https://maps.apple/p/uRv~vCQ0G1zNn4" target="_blank" rel="noopener noreferrer">Abrir no mapa</a></div>
     </div>
     <div class="footer-bottom">
       <span>© 2026 JETCAR Estética Automotiva. Fotos e vídeo ilustrativos. Mapa: dados © OpenStreetMap (ODbL).</span>
@@ -216,11 +325,8 @@
     </div>
   </footer>
 </main>
-
-<div class="loader" aria-hidden="true"><img src="assets/jetcar-logo.svg" alt=""><i><b></b></i></div>
 <i class="svh-probe" aria-hidden="true"></i>
 <i class="lvh-probe" aria-hidden="true"></i>
-
-<script type="module" src="experience.js"></script>
+<script type="module" src="app.js"></script>
 </body>
 </html>
