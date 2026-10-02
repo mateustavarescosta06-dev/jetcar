@@ -1,13 +1,10 @@
-// Interface do site: menu, progresso, diálogo dos serviços, controle das camadas,
-// escolha do serviço e mensagem pronta para o Instagram.
-import { $, $$, view, state, css, f, lerp } from './core.js';
-import { S, T, SERVICES } from './timeline.js';
-import { focusCard } from './scenes.js';
-import { paperAt } from './matte.js';
+// Interface: menu, progresso, link ativo, movimento reduzido, som opcional e o configurador
+// de agendamento (monta a mensagem para o Direct do Instagram; nada é enviado pelo site).
+import { $, $$, view, state, css, f } from './core.js';
+import { chapterAt } from './chapters.js';
 
 let jumpFn = () => {};
 export function bindJump(fn) { jumpFn = fn; }
-export const jumpTo = (target, opts) => jumpFn(target, opts);
 
 // ——— Navegação ———
 const nav = $('.nav');
@@ -30,71 +27,25 @@ toggle.addEventListener('click', () => setMenu(menu.hidden));
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !menu.hidden) setMenu(false); });
 addEventListener('resize', () => { if (!menu.hidden && innerWidth > 1080) setMenu(false); });
 
-let solid = null, active = null, darkNav = null, lastMix = -1;
-const intro = $('.blk-intro');
-const mixRGB = (a, b, t) => a.map((v, i) => Math.round(lerp(v, b[i], t))).join(',');
-function sectionAt(u) {
-  if (u >= T.sheet - 0.6) return 'duvidas';
-  if (u >= S.local - 0.7) return 'local';
-  if (u >= S.contato - 0.7) return 'contato';
-  if (u >= S.ppf - 0.7) return 'servicos';
-  if (u >= S.protecao - 0.7) return 'protecao';
-  if (u >= S.servicos - 0.7) return 'servicos';
-  return null;
-}
+const LINK_FOR = { lavagem: '#lavagem', correcao: '#lavagem', ceramic: '#lavagem', camadas: '#camadas', ppf: '#camadas', interior: '#interior', rota: '#rota' };
+let solid = null, page = null, active = null;
 
-// ——— Controle das camadas (Ceramic Coating ⇄ PPF) ———
-const seg = $('.segmented');
-const segButtons = $$('[data-guard]', seg);
-let shownGuard = -1;
-segButtons.forEach(b => b.addEventListener('click', () => { state.guard = Number(b.dataset.guard); state.busy = true; }));
-seg.addEventListener('keydown', e => {
-  if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) return;
-  e.preventDefault();
-  const next = state.guardShown ? 0 : 1;
-  state.guard = next;
-  state.busy = true;
-  segButtons[next].focus();
-});
-
-/** Atualiza menu, progresso e controles a cada quadro em que a rolagem muda. */
-export function renderUi(u) {
-  const isSolid = window.scrollY > 24;
+/** Menu, progresso e link ativo a cada quadro. */
+export function renderUi(u, scrollY, pageY) {
+  const isSolid = scrollY > 24;
   if (isSolid !== solid) { solid = isSolid; nav.classList.toggle('is-solid', isSolid); }
-  // A página "acende" em papel quando o farol vira a moldura. O menu troca de tema junto:
-  // escuro sobre o vídeo e o logo, claro sobre o papel e escuro de novo sobre as dúvidas.
-  const sheetTop = (T.sheet - state.target) * view.unit;
-  const dark = paperAt(u, view.w * 0.5, view.nav * 0.5) < 0.5 || sheetTop <= view.nav * 0.5;
-  if (dark !== darkNav) { darkNav = dark; nav.classList.toggle('on-dark', dark); nav.classList.toggle('on-paper', !dark); }
-  // No computador o texto de Serviços chega ainda no escuro: a cor dele acompanha a luz que passa por ele.
-  const mix = view.portrait ? 1 : paperAt(u, view.w * 0.2, view.svh * 0.55);
-  if (intro && Math.abs(mix - lastMix) > 0.002) {
-    lastMix = mix;
-    css(intro, '--fg', `rgb(${mixRGB([255, 255, 255], [18, 18, 18], mix)})`);
-    css(intro, '--fg-2', `rgb(${mixRGB([189, 187, 181], [78, 76, 71], mix)})`);
-    css(intro, '--rule-c', `rgba(${mixRGB([255, 255, 255], [18, 18, 18], mix)},${f(lerp(0.2, 0.16, mix), 3)})`);
-  }
-  css(progress, 'transform', `scaleX(${f(Math.min(1, window.scrollY / (view.scrollMax || 1)), 4)})`);
-  const id = sectionAt(u);
+  const isPage = scrollY > pageY - view.nav;
+  if (isPage !== page) { page = isPage; nav.classList.toggle('is-page', isPage); }
+  css(progress, 'transform', `scaleX(${f(Math.min(1, scrollY / (view.scrollMax || 1)), 4)})`);
+  const id = isPage ? (scrollY > (view.faqY || 1e9) - view.nav ? '#duvidas' : null) : LINK_FOR[chapterAt(u).id] ?? null;
   if (id !== active) {
     active = id;
     for (const a of navLinks) {
-      const on = a.getAttribute('href') === `#${id}`;
+      const on = a.getAttribute('href') === id;
       a.classList.toggle('is-active', on);
       if (on) a.setAttribute('aria-current', 'true');
       else a.removeAttribute('aria-current');
     }
-  }
-  // A escolha manual vale enquanto a seção de camadas estiver por perto.
-  if (state.guard != null && (u < S.protecao - 1.4 || u > S.ppf + 0.3)) state.guard = null;
-  const g = state.guardShown ?? 0;
-  if (g !== shownGuard) {
-    shownGuard = g;
-    seg.classList.toggle('is-right', g === 1);
-    segButtons.forEach((b, i) => {
-      b.setAttribute('aria-checked', String(i === g));
-      b.tabIndex = i === g ? 0 : -1;
-    });
   }
 }
 
@@ -112,81 +63,51 @@ export function savedMotion() {
 }
 motionButton.addEventListener('click', () => setReduce(!state.reduce, true));
 
-// ——— Diálogo dos serviços ———
-const serviceDialog = $('#service-dialog');
-let detailIndex = 0;
-const point = text => Object.assign(document.createElement('li'), { textContent: text });
-for (const b of $$('[data-detail]')) b.addEventListener('click', () => {
-  detailIndex = Number(b.dataset.detail);
-  const s = SERVICES[detailIndex];
-  $('#detail-title').textContent = s.name;
-  $('#detail-description').textContent = s.description;
-  const img = $('.detail-img', serviceDialog);
-  img.src = s.img;
-  img.alt = `${s.name} (imagem ilustrativa)`;
-  $('#detail-points').replaceChildren(...s.points.map(point));
-  $('.detail-num', serviceDialog).textContent = String(detailIndex + 1).padStart(2, '0');
-  openDialog(serviceDialog);
-});
-$('#choose-service').addEventListener('click', () => {
-  closeDialog(serviceDialog);
-  choose(detailIndex);
-});
-for (const b of $$('[data-choose]')) b.addEventListener('click', () => choose(Number(b.dataset.choose)));
-function choose(i) {
-  select(i);
-  jumpTo($('#contato'), { focus: selectEl });
-}
-// Diálogos nativos; em navegadores antigos sem <dialog>, abre como painel simples.
-let lastFocus = null;
-function openDialog(d) {
-  lastFocus = document.activeElement;
-  if (typeof d.showModal === 'function') d.showModal();
-  else { d.setAttribute('open', ''); d.querySelector('button, a')?.focus(); }
-}
-function closeDialog(d) {
-  if (typeof d.close === 'function') d.close();
-  else { d.removeAttribute('open'); lastFocus?.focus?.(); }
-}
-for (const d of $$('dialog')) {
-  d.addEventListener('click', e => {
-    if (e.target !== d) return;
-    const r = d.getBoundingClientRect();
-    if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) closeDialog(d);
-  });
-  d.querySelector('.close')?.addEventListener('click', e => { if (typeof d.close !== 'function') { e.preventDefault(); closeDialog(d); } });
-}
-
-// ——— Escolha do serviço (arco ⇄ campo) ———
-const selectEl = $('#service-select');
-export function select(i) {
-  state.selected = i;
-  selectEl.value = String(i);
-  focusCard(i);
-}
-selectEl.addEventListener('change', () => select(Number(selectEl.value)));
-document.addEventListener('jetcar:select', e => {
-  select(e.detail);
-  status.textContent = '';
+// ——— Som ambiente opcional (desligado por padrão) ———
+const soundButton = $('.nav-sound');
+let soundFn = null;
+export function bindSound(fn) { soundFn = fn; }
+soundButton.addEventListener('click', async () => {
+  const on = soundButton.getAttribute('aria-pressed') !== 'true';
+  const ok = soundFn ? await soundFn(on) : false;
+  const really = on && ok !== false;
+  soundButton.setAttribute('aria-pressed', String(really));
+  $('.sr-only', soundButton).textContent = really ? 'Desligar o som ambiente' : 'Ligar o som ambiente';
+  $('use', soundButton).setAttribute('href', really ? '#i-sound' : '#i-mute');
 });
 
-// ——— Pedido de orçamento: a ficha leva a data de hoje ———
-const ticketDate = $('.ticket-date');
-if (ticketDate) {
-  const now = new Date();
-  ticketDate.dateTime = now.toISOString().slice(0, 10);
-  ticketDate.textContent = now.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/\./g, '').replace(/ de /g, ' ');
-}
-
-// ——— Mensagem ———
-const form = $('#contact-form'), fields = $('.fields', form), result = $('.result', form);
-const messageEl = $('#message-text'), status = $('#copy-status');
+// ——— Configurador de agendamento ———
+const form = $('#config');
+const carInput = $('#car-model');
+const messageEl = $('#message-text');
+const status = $('#copy-status');
+const WANTS = {
+  pintura: 'correção de pintura (polimento)',
+  protecao: 'proteção da pintura (Ceramic Coating ou PPF)',
+  interior: 'higienização do interior',
+  lavagem: 'lavagem técnica',
+};
 function buildMessage() {
-  const i = Number(selectEl.value), car = $('#car-model').value.trim();
-  const intro = car ? `Meu carro é um ${car}. ` : '';
-  const ask = i < 0 ? 'Gostaria de orientação para escolher o cuidado adequado.' : `Tenho interesse em ${SERVICES[i].name}.`;
-  return `Olá, JETCAR! ${intro}${ask} Podem me informar o orçamento e a disponibilidade?`;
+  const car = carInput.value.trim();
+  const picked = $$('input[name="want"]:checked', form).map(i => i.value);
+  const services = picked.filter(v => WANTS[v]).map(v => WANTS[v]);
+  const parts = ['Olá, JETCAR!'];
+  if (car) parts.push(`Meu carro é um ${car}.`);
+  if (services.length) {
+    const list = services.length > 1 ? `${services.slice(0, -1).join(', ')} e ${services[services.length - 1]}` : services[0];
+    parts.push(`Tenho interesse em ${list}.`);
+  }
+  if (picked.includes('avaliacao') || !services.length) parts.push('Gostaria de uma avaliação para saber o que o carro precisa.');
+  parts.push('Podem me passar o orçamento e a disponibilidade?');
+  return parts.join(' ');
 }
+function refresh() { messageEl.textContent = buildMessage(); }
+form.addEventListener('input', refresh);
+form.addEventListener('change', refresh);
+form.addEventListener('submit', e => e.preventDefault());
+carInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('input[name="want"]', form)?.focus(); } });
+refresh();
+
 async function copy(text) {
   try { await navigator.clipboard.writeText(text); return true; } catch {}
   try {
@@ -201,54 +122,27 @@ async function copy(text) {
     return ok;
   } catch { return false; }
 }
-form.addEventListener('submit', e => {
-  e.preventDefault();
-  messageEl.textContent = buildMessage();
-  fields.hidden = true;
-  result.hidden = false;
-  status.textContent = 'Mensagem pronta. Copie e envie para @jetcarbv.';
-  $('#send-message').focus({ preventScroll: true });
-});
 $('#send-message').addEventListener('click', () => {
   // A cópia começa dentro do gesto; o link abre o Direct do Instagram em seguida.
-  copy(messageEl.textContent).then(ok => { status.textContent = ok ? 'Mensagem copiada. É só colar no Direct.' : 'Copie o texto acima e cole no Direct.'; });
+  copy(buildMessage()).then(ok => { status.textContent = ok ? 'Mensagem copiada. É só colar no Direct.' : 'Copie o texto acima e cole no Direct.'; });
 });
 $('#copy-message').addEventListener('click', async () => {
-  const ok = await copy(messageEl.textContent);
+  const ok = await copy(buildMessage());
   status.textContent = ok ? 'Mensagem copiada.' : 'Selecione o texto acima para copiar.';
   if (!ok) { const r = document.createRange(); r.selectNodeContents(messageEl); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); }
 });
-$('#edit-message').addEventListener('click', () => {
-  result.hidden = true;
-  fields.hidden = false;
-  status.textContent = '';
-  $('#car-model').focus({ preventScroll: true });
-});
 
-// ——— Campos focados no celular: o teclado não deve "rolar" a experiência ———
-// O iOS rola a página ao abrir/fechar o teclado; por um instante ignoramos essa rolagem
-// e devolvemos a posição. A rolagem do usuário volta a valer logo em seguida.
+// ——— Teclado do celular: ao focar um campo, o iOS rola a página; ignoramos por um instante ———
 let freezeTimer = 0;
 const touchOnly = matchMedia('(hover: none)');
 function freezeFor(ms) {
   if (state.frozenY == null) state.frozenY = window.scrollY;
   clearTimeout(freezeTimer);
-  freezeTimer = setTimeout(() => {
-    const y = state.frozenY;
-    state.frozenY = null;
-    if (y != null && Math.abs(window.scrollY - y) > 4) window.scrollTo(0, y);
-  }, ms);
+  freezeTimer = setTimeout(() => { state.frozenY = null; }, ms);
 }
-document.addEventListener('focusin', e => { if (touchOnly.matches && e.target.matches('input, select, textarea')) freezeFor(900); });
-document.addEventListener('focusout', e => { if (touchOnly.matches && e.target.matches('input, select, textarea')) freezeFor(600); });
-/** Gesto do usuário ou navegação explícita sempre vencem a proteção do teclado. */
-export function cancelFreeze() {
-  clearTimeout(freezeTimer);
-  state.frozenY = null;
-}
+document.addEventListener('focusin', e => { if (touchOnly.matches && e.target.matches('input, select, textarea')) freezeFor(800); });
+export function cancelFreeze() { clearTimeout(freezeTimer); state.frozenY = null; }
 addEventListener('touchmove', () => { if (state.frozenY != null) cancelFreeze(); }, { passive: true });
 
-// ——— Carregamento ———
-export function ready() {
-  document.documentElement.classList.add('is-ready');
-}
+export function ready() { document.documentElement.classList.add('is-ready'); }
+export function loading(p) { css($('.loader'), '--p', f(p, 3).toString()); }

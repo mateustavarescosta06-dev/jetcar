@@ -1,254 +1,243 @@
-// JETCAR — site com transições contínuas guiadas pela rolagem.
-// O conteúdo rola de forma nativa; o palco (filme, logo e moldura dos serviços) fica preso
-// atrás dele e acompanha a rolagem com uma suavização leve. O filme toca sozinho.
-import { $, $$, view, frame, pointer, state, clamp } from './js/core.js';
-import { BLOCKS, S, T, buildTimeline } from './js/timeline.js';
-import { layoutFrame, placeImages, setupFilm, updateFilm, IMG, video } from './js/media.js';
-import { resizeMatte, renderMatte } from './js/matte.js';
-import { layoutScenes, renderScenes } from './js/scenes.js';
-import { resizeFx, renderFx } from './js/fx.js';
-import { setupReveals, revealWithin } from './js/reveal.js';
-import { renderUi, bindJump, setReduce, savedMotion, ready, cancelFreeze, setMenu } from './js/ui.js';
+// JETCAR — um plano-sequência conduzido pela rolagem.
+// A rolagem é a linha do tempo: um palco WebGL preso na tela desenha o filme, o logo, o estúdio
+// e o mapa; a posição da rolagem (em telas) decide onde a câmera está e o que a luz revela.
+import Lenis from './vendor/lenis.min.js';
+import { $, $$, view, pointer, state, clamp } from './js/core.js';
+import { CHAPTERS, C, TOTAL, chapterAt } from './js/chapters.js';
+import { Engine, post, pickQuality, resetPost } from './js/gl/engine.js';
+import { FilmShot } from './js/gl/shot-film.js';
+import { StudioShot } from './js/gl/shot-studio.js';
+import { MapShot } from './js/gl/shot-map.js';
+import { renderCaptions, captionHold } from './js/captions.js';
+import { renderUi, bindJump, setReduce, savedMotion, setMenu, cancelFreeze, ready, loading, bindSound } from './js/ui.js';
 
-const journey = $('.journey'), stage = $('.stage'), flow = $('.flow'), sheet = $('.sheet'), navEl = $('.nav');
-const blocks = BLOCKS.map(b => ({ ...b, el: $(`[data-blk="${b.id}"]`) }));
-const unitProbe = $('.unit-probe'), svhProbe = $('.svh-probe');
-const portraitQuery = matchMedia('(max-aspect-ratio: 9/10)'), mobileQuery = matchMedia('(max-width: 760px)');
-const curtain = Object.assign(document.createElement('div'), { className: 'curtain' });
-curtain.setAttribute('aria-hidden', 'true');
-for (let i = 0; i < 9; i++) curtain.append(document.createElement('i'));
-document.body.append(curtain);
+const html = document.documentElement;
+const stage = $('.stage'), canvas = $('.gl'), track = $('.track');
+const svhProbe = $('.svh-probe'), lvhProbe = $('.lvh-probe');
+const chEls = $$('.ch');
+const mobileQ = matchMedia('(max-width: 760px)'), portraitQ = matchMedia('(max-aspect-ratio: 9/10)');
 
-let lastW = 0, lastH = 0, lastSvh = 0, forceRender = true;
+// ——— Movimento reduzido (preferência do sistema ou escolha salva) ———
+const reduceQ = matchMedia('(prefers-reduced-motion: reduce)');
+const saved = savedMotion();
+setReduce(saved ? saved === 'reduce' : reduceQ.matches);
+reduceQ.addEventListener?.('change', e => { if (!savedMotion()) setReduce(e.matches); });
 
-/** Mede onde cada bloco começa e recalcula a linha do tempo. */
-function measure() {
-  const y = window.scrollY;
-  const top = journey.getBoundingClientRect().top + y;
-  const at = el => (el.getBoundingClientRect().top + y - top) / view.unit;
-  const starts = {};
-  for (const b of blocks) starts[b.id] = at(b.el);
-  const lastRect = blocks[blocks.length - 1].el.getBoundingClientRect();
-  view.jTop = top;
-  view.scrollMax = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
-  buildTimeline(starts, (lastRect.bottom + y - top) / view.unit, at(sheet));
-}
-
-/** Textos mais altos que a tela rolam normalmente (não ficam presos com partes cortadas). */
-function fitPins() {
-  for (const b of blocks) {
-    const txt = b.el.querySelector('.pin > .txt');
-    if (!txt) continue;
-    b.el.classList.toggle('pin-flow', txt.offsetHeight > view.svh - view.nav - 20);
-  }
-}
-
-// Revela de uma vez o conteúdo de cada bloco que já chegou ao lugar (cartões presos na
-// borda de baixo da tela podem nunca cruzar a margem do observador).
-let revealedUpTo = -1;
-function revealBlocks(u) {
-  for (let i = revealedUpTo + 1; i < blocks.length; i++) {
-    if (u < S[blocks[i].id] - 0.02) break;
-    revealWithin(blocks[i].el);
-    revealedUpTo = i;
-  }
-}
-
-function resize(force = false) {
-  const w = stage.clientWidth || document.documentElement.clientWidth;
-  const h = stage.clientHeight || window.innerHeight;
+// ——— WebGL ———
+function measureView() {
+  const w = document.documentElement.clientWidth;
+  const h = lvhProbe.offsetHeight || window.innerHeight;
   const svh = svhProbe.offsetHeight || window.innerHeight;
-  // A barra do Safari aparecendo/sumindo não muda o palco: só remede a rolagem.
-  if (!force && w === lastW && h === lastH && svh === lastSvh) { measure(); onScroll(); return; }
-  lastW = w; lastH = h; lastSvh = svh;
-  Object.assign(view, {
-    w, h, svh, cx: w / 2, cy: h / 2, diag: Math.hypot(w, h), dpr: Math.min(window.devicePixelRatio || 1, 2),
-    // Mesmas condições do CSS: celular (≤760px), tela em pé (≤ 9/10) e tela baixa.
-    mobile: mobileQuery.matches, portrait: portraitQuery.matches, short: svh < 700,
-    unit: unitProbe.offsetHeight || svh * 0.85, nav: navEl.offsetHeight || 72,
-  });
-  for (const b of blocks) {
-    const units = (view.portrait && b.portraitUnits) || b.units;
-    if (units) b.el.style.minHeight = `${Math.round(units * view.unit)}px`;
+  Object.assign(view, { w, h, svh, unit: svh, aspect: w / h, dpr: Math.min(window.devicePixelRatio || 1, 3), mobile: mobileQ.matches, portrait: portraitQ.matches, short: svh < 640, nav: $('.nav').offsetHeight || 64 });
+}
+measureView();
+let engine = null;
+const quality = pickQuality({ mobile: view.mobile, dpr: view.dpr, cores: navigator.hardwareConcurrency, memory: navigator.deviceMemory });
+try {
+  engine = new Engine(canvas, quality);
+} catch (e) {
+  html.classList.add('no-gl');
+  // sem WebGL: o filme passa em loop atrás do conteúdo (mudo, pausa quando a aba some)
+  const v = Object.assign(document.createElement('video'), { muted: true, loop: true, playsInline: true, autoplay: true, preload: 'metadata' });
+  v.className = 'fallback-film';
+  v.setAttribute('aria-hidden', 'true');
+  v.poster = view.portrait ? 'assets/film-poster-portrait.webp' : 'assets/film-poster.webp';
+  v.src = view.portrait ? 'assets/film-portrait.mp4' : 'assets/film-720.mp4';
+  if (state.reduce) v.removeAttribute('autoplay');
+  stage.append(v);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) v.pause(); else if (!state.reduce) v.play().catch(() => {}); });
+}
+const shots = {};
+if (engine) {
+  shots.film = new FilmShot(quality);
+  shots.studio = new StudioShot(quality);
+  shots.map = new MapShot(quality);
+}
+
+// ——— Trilho: altura de cada capítulo em px ———
+let trackTop = 0, pageY = 0, lastW = 0, lastH = 0;
+function layout(force = false) {
+  measureView();
+  const sizeChanged = view.w !== lastW || Math.abs(view.h - lastH) > 120;
+  chEls.forEach((el, i) => { el.style.height = `${Math.round(CHAPTERS[i].len * view.unit)}px`; });
+  const y = window.scrollY;
+  trackTop = track.getBoundingClientRect().top + y;
+  pageY = $('.booking').getBoundingClientRect().top + y;
+  view.faqY = $('#duvidas').getBoundingClientRect().top + y;
+  view.scrollMax = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+  if (engine && (force || sizeChanged)) {
+    lastW = view.w; lastH = view.h;
+    const scale = clamp(view.dpr, quality.minScale, quality.maxScale) * dynScale;
+    engine.resize(view.w, view.h, scale);
+    for (const s of Object.values(shots)) { s.scale = engine.scale; s.resize(); s.setRes?.(engine.size.x, engine.size.y); }
   }
-  fitPins();
-  measure();
-  layoutFrame();
-  placeImages();
-  resizeMatte();
-  layoutScenes();
-  resizeFx();
-  setupFilm();
   onScroll();
-  forceRender = true;
+}
+
+// Resolução dinâmica: se o aparelho não acompanha, desenha menos pixels.
+let dynScale = 1, slowFrames = 0, fastFrames = 0;
+function adaptResolution(ms) {
+  if (!engine) return;
+  if (ms > 26) { slowFrames++; fastFrames = 0; } else if (ms < 14) { fastFrames++; slowFrames = 0; } else { slowFrames = Math.max(0, slowFrames - 1); fastFrames = 0; }
+  if (slowFrames > 45 && dynScale > 0.55) { dynScale = Math.max(0.55, dynScale - 0.12); slowFrames = 0; layout(true); }
+  else if (fastFrames > 240 && dynScale < 1) { dynScale = Math.min(1, dynScale + 0.08); fastFrames = 0; layout(true); }
+}
+
+// ——— Rolagem suave (roda do mouse); no toque, a rolagem nativa ———
+let lenis = null;
+if (!state.reduce) {
+  lenis = new Lenis({ autoRaf: false, lerp: 0.085, wheelMultiplier: 0.85, smoothWheel: true, syncTouch: false });
 }
 
 function onScroll() {
   if (state.frozenY != null) return;
-  state.target = clamp((window.scrollY - (view.jTop || 0)) / view.unit, 0, T.sheet + 1);
+  state.target = clamp((window.scrollY - trackTop) / view.unit, 0, TOTAL + 1.5);
 }
+addEventListener('scroll', onScroll, { passive: true });
 
-// ——— Navegação interna: rolagem suave por perto; para longe, uma cortina rápida ———
-function jump(target, { focus } = {}) {
+// ——— Navegação: capítulos e âncoras ———
+const curtain = Object.assign(document.createElement('div'), { className: 'curtain' });
+curtain.setAttribute('aria-hidden', 'true');
+document.body.append(curtain);
+
+function targetY(el) {
+  const id = el.dataset?.ch;
+  if (id && C[id]) return Math.round(trackTop + captionHold(id) * view.unit);
+  if (el.id === 'inicio') return 0;
+  return Math.round(el.getBoundingClientRect().top + window.scrollY);
+}
+function jump(el, { focus } = {}) {
   cancelFreeze();
   setMenu(false);
-  const el = typeof target === 'string' ? $(target) : target;
-  if (!el) return;
-  const top = el.id === 'inicio' ? 0 : Math.round(el.getBoundingClientRect().top + window.scrollY);
-  const u = (top - view.jTop) / view.unit;
+  const top = targetY(el);
   const settle = () => {
-    revealWithin(el);
-    const f = focus || el;
+    const f = focus || el.querySelector?.('h2, input') || el;
     if (!f.matches('a, button, input, select, textarea, [tabindex]')) f.setAttribute('tabindex', '-1');
     f.focus({ preventScroll: true });
   };
-  const far = Math.abs(u - state.u) > 3.2;
+  const far = Math.abs(top - window.scrollY) > view.unit * 3.5;
   if (state.reduce || !far) {
-    window.scrollTo({ top, behavior: state.reduce ? 'auto' : 'smooth' });
-    setTimeout(settle, state.reduce ? 0 : 700);
+    if (lenis && !state.reduce) lenis.scrollTo(top, { duration: 1.4 });
+    else window.scrollTo(0, top);
+    setTimeout(settle, state.reduce ? 0 : 900);
     return;
   }
-  // Saltos longos: a cortina cobre a tela em vez de atravessar todas as cenas.
-  curtain.classList.remove('is-out');
+  // Saltos longos: um corte rápido no preto (como num filme), em vez de atravessar tudo.
   curtain.classList.add('is-on');
   setTimeout(() => {
-    window.scrollTo({ top, behavior: 'auto' });
+    if (lenis) lenis.scrollTo(top, { immediate: true, force: true });
+    else window.scrollTo(0, top);
     onScroll();
     state.u = state.target;
-    forceRender = true;
     settle();
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      curtain.classList.add('is-out');
-      setTimeout(() => {
-        curtain.classList.add('no-anim');
-        curtain.classList.remove('is-on', 'is-out');
-        requestAnimationFrame(() => curtain.classList.remove('no-anim'));
-      }, 420);
-    }));
+    requestAnimationFrame(() => requestAnimationFrame(() => curtain.classList.remove('is-on')));
   }, 340);
 }
 bindJump(jump);
-
 for (const a of $$('a[href^="#"]')) a.addEventListener('click', e => {
   const id = a.getAttribute('href').slice(1);
   const target = id && document.getElementById(id);
   if (!target) return;
   e.preventDefault();
-  jump(target, { focus: a.classList.contains('skip') ? $('#service-select') : null });
+  jump(target, { focus: id === 'agendar' ? $('#car-model') : null });
   if (history.replaceState) history.replaceState(null, '', id === 'inicio' ? location.pathname + location.search : `#${id}`);
 });
+// Conteúdo focado pelo teclado dentro de uma legenda leva a rolagem até o capítulo dela.
+document.addEventListener('focusin', e => {
+  const cap = e.target.closest?.('.cap');
+  if (!cap) return;
+  const id = cap.dataset.cap, ch = C[id];
+  if (!ch) return;
+  const t = (state.target - ch.start) / ch.len;
+  if (t < 0 || t > 1) jump(chEls[CHAPTERS.indexOf(ch)], { focus: e.target });
+});
 
-// ——— Ponteiro e toque (sem bloquear a rolagem) ———
-let lastTouch = null;
-function setPointer(x, y, touch) {
-  pointer.x = x; pointer.y = y; pointer.touch = touch;
-  pointer.nx = clamp((x / view.w) * 2 - 1, -1, 1);
-  pointer.ny = clamp((y / view.h) * 2 - 1, -1, 1);
-  pointer.at = state.now;
-}
+// ——— Cursor (só mouse: a câmera responde poucos pixels) ———
 addEventListener('pointermove', e => {
-  if (e.pointerType === 'touch') return;
-  if (pointer.at > 0) pointer.strokes.push([pointer.x, pointer.y, e.clientX, e.clientY]);
-  setPointer(e.clientX, e.clientY, false);
+  if (e.pointerType !== 'mouse') return;
+  pointer.x = e.clientX; pointer.y = e.clientY;
+  pointer.nx = clamp((e.clientX / view.w) * 2 - 1, -1, 1);
+  pointer.ny = clamp((e.clientY / view.h) * 2 - 1, -1, 1);
+  pointer.at = state.now;
 }, { passive: true });
-addEventListener('pointerdown', e => {
-  if (e.pointerType === 'touch') return;
-  setPointer(e.clientX, e.clientY, false);
-  pointer.taps.push({ x: e.clientX, y: e.clientY });
-}, { passive: true });
-addEventListener('touchstart', e => {
-  const t = e.touches[0];
-  if (!t) return;
-  setPointer(t.clientX, t.clientY, true);
-  pointer.taps.push({ x: t.clientX, y: t.clientY });
-  lastTouch = { x: t.clientX, y: t.clientY };
-}, { passive: true });
-addEventListener('touchmove', e => {
-  const t = e.touches[0];
-  if (!t) return;
-  if (lastTouch) pointer.strokes.push([lastTouch.x, lastTouch.y, t.clientX, t.clientY]);
-  lastTouch = { x: t.clientX, y: t.clientY };
-  setPointer(t.clientX, t.clientY, true);
-}, { passive: true });
-addEventListener('touchend', () => { lastTouch = null; }, { passive: true });
 
 // ——— Quadro a quadro ———
 let last = performance.now();
-let lastU = -1, lastSX = 0, lastSY = 0;
+let activeShot = null;
+function shotFor(u) {
+  const ch = chapterAt(u);
+  return shots[ch.shot] || null;
+}
 function tick(now) {
   const dt = Math.min(64, now - last || 16);
   last = now;
   state.now = now;
   state.dt = dt;
+  lenis?.raf(now);
   const prev = state.u;
   if (state.reduce) state.u = state.target;
   else {
-    state.u += (state.target - state.u) * (1 - Math.exp(-dt / 60));
-    if (Math.abs(state.target - state.u) < 0.0004) state.u = state.target;
+    state.u += (state.target - state.u) * (1 - Math.exp(-dt / 55));
+    if (Math.abs(state.target - state.u) < 1e-4) state.u = state.target;
   }
-  state.vel = state.vel * 0.82 + ((state.u - prev) / dt) * 1000 * 0.18;
-  const ease = 1 - Math.exp(-dt / 170);
+  state.vel = state.vel * 0.85 + ((state.u - prev) / dt) * 1000 * 0.15;
+  const ease = 1 - Math.exp(-dt / 220);
   pointer.sx += (pointer.nx - pointer.sx) * ease;
   pointer.sy += (pointer.ny - pointer.sy) * ease;
   const u = state.u;
-  // Quando a seção de dúvidas cobre a tela, o palco para de trabalhar.
-  const covered = state.target >= T.sheet - 0.002 && u >= T.sheet - 0.01;
-  if (covered !== state.covered) {
-    state.covered = covered;
-    stage.style.visibility = covered ? 'hidden' : '';
-    forceRender = true;
-  }
-  const changed = forceRender || state.busy || u !== lastU || Math.abs(pointer.sx - lastSX) > 0.0005 || Math.abs(pointer.sy - lastSY) > 0.0005 || Math.abs(state.vel) > 0.01;
-  state.busy = false;
-  if (changed) {
-    forceRender = false;
-    lastU = u; lastSX = pointer.sx; lastSY = pointer.sy;
-    updateFilm(u);
-    if (!covered) {
-      renderMatte(u);
-      renderScenes(u, dt);
+  const y = window.scrollY;
+  // O palco para quando o conteúdo final cobre a tela.
+  const covered = y > pageY + view.h * 1.1;
+  if (covered !== state.covered) { state.covered = covered; stage.style.visibility = covered ? 'hidden' : ''; }
+  if (engine && !covered && !document.hidden) {
+    // a troca de resolução acontece antes de desenhar (redimensionar limpa a tela)
+    adaptResolution(dt);
+    const shot = shotFor(Math.min(u, TOTAL - 0.001));
+    if (shot !== activeShot) { activeShot?.leave?.(); activeShot = shot; }
+    resetPost();
+    if (shot) {
+      shot.update(Math.min(u, TOTAL - 0.001), dt);
+      engine.render(shot.scene, shot.camera, now / 1000);
+    } else {
+      post.exposure = 1; post.white = 0; post.black = 1;
+      engine.render(null, null, now / 1000);
     }
   }
-  if (!covered) renderFx(u, dt);
-  else { pointer.taps.length = 0; pointer.strokes.length = 0; }
-  renderUi(u);
-  revealBlocks(state.target);
+  renderCaptions(u);
+  renderUi(u, y, pageY);
   requestAnimationFrame(tick);
 }
 
 // ——— Início ———
-const reduceQuery = matchMedia('(prefers-reduced-motion: reduce)');
-const saved = savedMotion();
-setReduce(saved ? saved === 'reduce' : reduceQuery.matches);
-reduceQuery.addEventListener?.('change', e => { if (!savedMotion()) { setReduce(e.matches); forceRender = true; } });
-$('.motion').addEventListener('click', () => { forceRender = true; });
-
-setupReveals();
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
-resize(true);
-addEventListener('resize', () => resize());
-addEventListener('orientationchange', () => setTimeout(() => resize(true), 250));
-addEventListener('scroll', onScroll, { passive: true });
-if ('ResizeObserver' in window) new ResizeObserver(() => { measure(); onScroll(); forceRender = true; }).observe(flow);
+layout(true);
+addEventListener('resize', () => layout());
+addEventListener('orientationchange', () => setTimeout(() => layout(true), 250));
+if ('ResizeObserver' in window) new ResizeObserver(() => layout()).observe(document.body);
 
 const hashTarget = location.hash.length > 1 && document.getElementById(decodeURIComponent(location.hash.slice(1)));
-window.scrollTo(0, hashTarget && hashTarget.id !== 'inicio' ? Math.round(hashTarget.getBoundingClientRect().top + window.scrollY) : 0);
+window.scrollTo(0, hashTarget ? targetY(hashTarget) : 0);
 onScroll();
 state.u = state.target;
 
-const firstFrame = new Promise(resolve => {
-  if (video.readyState >= 2) resolve();
-  video.addEventListener('loadeddata', resolve, { once: true });
-  video.addEventListener('error', resolve, { once: true });
+// Carregamento: fontes + primeiros quadros do filme.
+const fontsReady = document.fonts?.ready ?? Promise.resolve();
+const firstFrames = shots.film ? shots.film.seq.firstReady : Promise.resolve();
+let p = 0;
+const progressTimer = setInterval(() => { p = Math.min(0.92, p + 0.06); loading(p); }, 120);
+Promise.race([Promise.all([fontsReady, firstFrames]), new Promise(r => setTimeout(r, 6000))]).then(() => {
+  clearInterval(progressTimer);
+  loading(1);
+  shots.film?.drawType?.(shots.film.typeWord, true);
+  setTimeout(() => {
+    ready();
+    // o restante do filme e das cenas carrega em segundo plano
+    shots.film?.prefetchRest();
+    setTimeout(() => shots.map?.load(), 1500);
+  }, 250);
 });
-Promise.race([
-  Promise.all([document.fonts?.ready ?? Promise.resolve(), IMG.wash.ready, firstFrame]),
-  new Promise(r => setTimeout(r, 2800)),
-]).then(() => { forceRender = true; ready(); });
-// Fontes carregadas mudam a altura dos textos: remede tudo uma vez.
-document.fonts?.ready.then(() => resize(true));
+document.fonts?.ready.then(() => layout(true));
 
-// Gancho de depuração para QA visual (?debug na URL).
-if (/[?&]debug\b/.test(location.search)) window.__jetcar = { state, view, frame, T, S, pointer, settle: () => { state.u = state.target; forceRender = true; } };
+if (/[?&]debug\b/.test(location.search)) window.__jetcar = { state, view, C, TOTAL, pointer, post, shots, engine, settle: () => { state.u = state.target; } };
 
 requestAnimationFrame(tick);
