@@ -1,1 +1,15 @@
-{"name":"jetcar-landing","version":"1.0.0","private":true,"description":"Landing page cinematográfica da JETCAR","scripts":{"start":"node scripts/serve.cjs","dev":"node scripts/serve.cjs","check":"node --check dist/experience.js && node --check scripts/serve.cjs"},"engines":{"node":">=18"}}
+{
+  "name": "jetcar-landing",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Landing page cinematográfica da JETCAR",
+  "scripts": {
+    "start": "node scripts/serve.cjs",
+    "dev": "node scripts/serve.cjs",
+    "check": "node scripts/check.cjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,27 +1,252 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#080808"><title>JETCAR · Estética Automotiva em Boa Viagem</title><meta name="description" content="Lavagem técnica, polimento, Ceramic Coating, PPF e higienização. Conheça a JETCAR em Boa Viagem, Recife."><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='5' fill='black'/%3E%3Ctext x='6' y='24' font-family='Arial' font-weight='900' font-size='23' fill='white'%3EJ%3C/text%3E%3C/svg%3E"><link rel="stylesheet" href="style.css"></head><body>
-<main id="journey" aria-label="Experiência JETCAR">
-<div class="stage">
-<img class="poster" src="assets/poster.webp" alt="Porsche 911 Turbo S grafite">
-<video id="source" muted autoplay loop playsinline preload="auto" poster="assets/poster.webp" aria-hidden="true" src="assets/porsche-scroll.mp4"></video>
-<div class="worlds" aria-hidden="true"><div class="world" data-world="0"><img src="assets/wash.webp" alt=""></div><div class="world" data-world="1"><img src="assets/polish.webp" alt=""></div><div class="world" data-world="2"><img src="assets/ceramic.webp" alt=""></div><div class="world" data-world="3"><img src="assets/ppf.webp" alt=""></div><div class="world" data-world="4"><img src="assets/interior.webp" alt=""></div><div class="world" data-world="5"><img src="assets/finish.webp" alt=""></div></div>
-<canvas id="film" aria-hidden="true"></canvas><div class="shade"></div>
-<header><button class="brand" data-jump="0" aria-label="Voltar ao início"><img src="assets/jetcar-mask.png" alt="JETCAR Estética Automotiva"></button><nav aria-label="Navegação principal"><button data-jump=".24">Serviços</button><button data-jump=".86">Onde estamos</button><button class="nav-contact" data-jump=".75">Vamos conversar</button></nav></header>
-<section class="scene intro" data-start="0" data-end=".20"><p class="eyebrow">BOA VIAGEM · RECIFE</p><h1>Seu carro.<br>Em outro nível.</h1><p class="intro-sub">Estética automotiva premium.</p><button class="text-button" data-jump=".24">Explore o cuidado <span>+</span></button></section>
-<div class="logo-label">ESTÉTICA AUTOMOTIVA. EM CADA DETALHE.</div>
-<div class="service-scenes">
-<section class="scene service" data-start=".22" data-end=".32" data-service="0"><div class="scene-copy"><p class="eyebrow">01 / 05 · PREPARAR</p><h2>O primeiro<br>toque.</h2><h3>Lavagem técnica</h3><p>Uma limpeza cuidadosa para a carroceria, as rodas e os detalhes que fazem a diferença.</p><button class="text-button" data-detail="0">Explore o serviço <span>+</span></button></div><span class="oversized" aria-hidden="true">01</span></section>
-<section class="scene service" data-start=".32" data-end=".42" data-service="1"><div class="scene-copy"><p class="eyebrow">02 / 05 · REVELAR</p><h2>A luz encontra<br>a pintura.</h2><h3>Polimento</h3><p>Um olhar atento ao acabamento. O cuidado que realça o brilho e trata imperfeições da pintura.</p><button class="text-button" data-detail="1">Explore o serviço <span>+</span></button></div><span class="oversized" aria-hidden="true">02</span></section>
-<section class="scene service" data-start=".42" data-end=".52" data-service="2"><div class="scene-copy"><p class="eyebrow">03 / 05 · PRESERVAR</p><h2>Brilho que<br>merece cuidado.</h2><h3>Ceramic Coating</h3><p>Uma camada de proteção cerâmica para complementar o cuidado com o acabamento do seu carro.</p><button class="text-button" data-detail="2">Explore o serviço <span>+</span></button></div><span class="oversized" aria-hidden="true">03</span></section>
-<section class="scene service" data-start=".52" data-end=".62" data-service="3"><div class="scene-copy"><p class="eyebrow">04 / 05 · PROTEGER</p><h2>A proteção.<br>Quase invisível.</h2><h3>PPF</h3><p>Uma película transparente aplicada à pintura. Escolha as áreas de proteção com a orientação da equipe.</p><button class="text-button" data-detail="3">Explore o serviço <span>+</span></button></div><span class="oversized" aria-hidden="true">04</span></section>
-<section class="scene service" data-start=".62" data-end=".72" data-service="4"><div class="scene-copy"><p class="eyebrow">05 / 05 · RENOVAR</p><h2>O cuidado<br>vem de dentro.</h2><h3>Higienização</h3><p>Bancos, superfícies e detalhes internos. Uma atenção especial ao espaço em que você vive o carro.</p><button class="text-button" data-detail="4">Explore o serviço <span>+</span></button></div><span class="oversized" aria-hidden="true">05</span></section>
+<!doctype html>
+<html lang="pt-BR" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#050505">
+<meta name="color-scheme" content="dark">
+<title>JETCAR · Estética Automotiva em Boa Viagem, Recife</title>
+<meta name="description" content="Lavagem técnica, polimento, Ceramic Coating, PPF e higienização. JETCAR Estética Automotiva na Rua José Trajano, Boa Viagem, Recife.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:title" content="JETCAR · Seu carro. Em outro nível.">
+<meta property="og:description" content="Estética automotiva em Boa Viagem, Recife: lavagem técnica, polimento, Ceramic Coating, PPF e higienização.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23050505'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-family='Arial' font-weight='900' font-size='15' fill='%23f3f1eb'%3EJC%3C/text%3E%3C/svg%3E">
+<link rel="preload" href="assets/fonts/archivo-latin-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="style.css">
+<script>document.documentElement.classList.replace('no-js', 'js')</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"AutoWash","name":"JETCAR Estética Automotiva","description":"Lavagem técnica, polimento, Ceramic Coating, PPF e higienização.","address":{"@type":"PostalAddress","streetAddress":"Rua José Trajano","addressLocality":"Recife","addressRegion":"PE","addressCountry":"BR"},"geo":{"@type":"GeoCoordinates","latitude":-8.12055,"longitude":-34.89937},"hasMap":"https://maps.apple/p/uRv~vCQ0G1zNn4","sameAs":["https://www.instagram.com/jetcarbv/"]}</script>
+</head>
+<body>
+<a class="skip" href="#contato">Ir direto para o contato</a>
+
+<!-- Palco visual: tudo aqui é decorativo e controlado pela rolagem. -->
+<div class="stage" aria-hidden="true">
+  <video class="film" muted loop playsinline preload="auto" poster="assets/film-poster.webp" disablepictureinpicture></video>
+  <canvas class="matte"></canvas>
+  <div class="layer layer-wash"><img class="cover" data-img="wash" src="assets/wash.webp" alt=""></div>
+  <div class="layer layer-polish">
+    <img class="cover" data-img="polish" data-src="soft" src="assets/polish-soft.webp" alt="">
+    <i class="dim"></i>
+    <div class="disc"><img class="cover" data-img="polish" src="assets/polish.webp" alt=""><i class="sheen"></i></div>
+    <svg class="orbit" viewBox="-500 -500 1000 1000"><defs><path id="orbit-path" d="M-440 0A440 440 0 1 1 440 0A440 440 0 1 1-440 0"/></defs><text><textPath href="#orbit-path" textLength="2760" lengthAdjust="spacing">POLIMENTO · BRILHO · ACABAMENTO · REFLEXO · POLIMENTO · BRILHO · ACABAMENTO · REFLEXO ·</textPath></text></svg>
+  </div>
+  <div class="layer layer-hive"></div>
+  <div class="layer layer-ceramic"><img class="cover" data-img="ceramic" src="assets/ceramic.webp" alt=""></div>
+  <div class="layer layer-stack">
+    <div class="rig">
+      <div class="plane plane-base"></div>
+      <div class="plane plane-photo"><img src="assets/ceramic.webp" alt=""><img class="ph-ppf" src="assets/ppf.webp" alt=""></div>
+      <div class="plane plane-clear"></div>
+      <div class="plane plane-guard"><i class="guard-ceramic"></i><i class="guard-film"></i><i class="guard-flap"></i></div>
+    </div>
+    <div class="tags">
+      <div class="tag" data-z="2"><b>Proteção</b><span class="tag-swap"><em>Ceramic Coating</em><em>PPF · película</em></span></div>
+      <div class="tag" data-z="1"><b>Verniz</b><span>camada transparente</span></div>
+      <div class="tag" data-z="0"><b>Cor</b><span>a pintura que você vê</span></div>
+      <div class="tag" data-z="-1"><b>Base</b><span>primer</span></div>
+    </div>
+  </div>
+  <div class="layer layer-interior"><div class="frame"><img class="cover" data-img="interior" src="assets/interior.webp" alt=""></div></div>
+  <div class="layer layer-ppf"><div class="door"><img class="cover" data-img="ppf" src="assets/ppf.webp" alt=""><i class="film-sheet"></i><i class="door-shade"></i></div><i class="spec"></i></div>
+  <div class="layer layer-ring">
+    <div class="card" data-service="0"><img src="assets/wash.webp" alt=""><span><b>01</b>Lavagem técnica</span></div>
+    <div class="card" data-service="1"><img src="assets/polish.webp" alt=""><span><b>02</b>Polimento</span></div>
+    <div class="card" data-service="2"><img src="assets/ceramic.webp" alt=""><span><b>03</b>Ceramic Coating</span></div>
+    <div class="card" data-service="3"><img src="assets/ppf.webp" alt=""><span><b>04</b>PPF</span></div>
+    <div class="card" data-service="4"><img src="assets/interior.webp" alt=""><span><b>05</b>Higienização</span></div>
+    <p class="ring-hint"><span class="on-fine">Arraste ou clique para escolher</span><span class="on-touch">Deslize ou toque para escolher</span></p>
+  </div>
+  <canvas class="fx"></canvas>
 </div>
-<section class="scene consultation" data-start=".72" data-end=".84"><div class="consult-copy"><p class="eyebrow">CADA CARRO, UM CUIDADO.</p><h2>O próximo<br>é o seu.</h2><p>Conte o que você procura. A conversa começa com o seu carro e o cuidado que ele precisa.</p><div class="floating-photos" aria-hidden="true"><img src="assets/polish.webp" alt=""><img src="assets/ceramic.webp" alt=""><img src="assets/interior.webp" alt=""></div></div><form id="contact-form"><label for="service-select">Qual cuidado você procura?</label><select id="service-select"><option>Quero orientação</option><option>Lavagem técnica</option><option>Polimento</option><option>Ceramic Coating</option><option>PPF</option><option>Higienização</option></select><label for="car-model">Seu carro <span>(opcional)</span></label><input id="car-model" maxlength="90" placeholder="Marca e modelo" autocomplete="off"><button class="solid-button" type="submit">Preparar minha mensagem</button><div class="message-result" hidden><p id="message-text"></p><div class="message-actions"><button type="button" id="copy-message">Copiar mensagem</button><a href="https://www.instagram.com/jetcarbv/" target="_blank" rel="noopener noreferrer">Abrir Instagram</a></div><p class="fine" id="copy-status" role="status">Copie a mensagem e envie para @jetcarbv.</p></div></form></section>
-<section class="scene location" data-start=".84" data-end="1.01"><div class="location-copy"><p class="eyebrow">RECIFE, PERNAMBUCO</p><h2>Boa Viagem.<br>Bom cuidado.</h2><p>O próximo destino do seu carro é a JETCAR.</p><a class="solid-button" href="https://maps.apple/p/uRv~vCQ0G1zNn4" target="_blank" rel="noopener noreferrer">Traçar minha rota</a><div class="location-links"><a href="https://www.instagram.com/jetcarbv/" target="_blank" rel="noopener noreferrer">@jetcarbv</a><button id="faq-open">Dúvidas frequentes</button></div></div><div class="final-mark"><img src="assets/jetcar-mask.png" alt="JETCAR Estética Automotiva"><span>SEU CARRO. EM OUTRO NÍVEL.</span></div><button class="restart" data-jump="0">Rever a experiência</button></section>
-<aside class="service-rail" aria-label="Explore os serviços"><button data-jump=".26">Lavagem</button><button data-jump=".36">Polimento</button><button data-jump=".46">Ceramic</button><button data-jump=".56">PPF</button><button data-jump=".66">Interior</button></aside>
-<footer class="hud"><button id="explore">ROLE PARA EXPLORAR <span class="scroll-line"></span></button><button id="motion" aria-pressed="false">Reduzir movimento</button><span id="chapter-label">A EXPERIÊNCIA</span></footer><div class="progress-track" aria-hidden="true"><span></span></div>
-<div class="loading" role="status">Preparando a experiência<span></span></div><button id="play-film" hidden>Reproduzir vídeo</button><div class="media-error" hidden><p>Não foi possível carregar o filme.</p><button id="retry">Tentar novamente</button></div>
-</div></main>
-<dialog id="service-dialog"><button class="close-dialog" aria-label="Fechar detalhes">×</button><p class="eyebrow">O CUIDADO, MAIS DE PERTO.</p><h2 id="detail-title"></h2><p id="detail-description"></p><div id="detail-points"></div><button id="choose-service" class="solid-button">Quero este cuidado</button><p class="fine">Valores, prazo e indicação são definidos com a equipe após entender as necessidades do veículo.</p></dialog>
-<dialog id="faq-dialog"><button class="close-dialog" aria-label="Fechar dúvidas">×</button><p class="eyebrow">ANTES DE COMEÇAR</p><h2>Vamos esclarecer.</h2><details open><summary>Qual serviço é indicado para meu carro?</summary><p>Conte à equipe o que você quer melhorar e como está o veículo. Essa avaliação ajuda a escolher o cuidado adequado.</p></details><details><summary>Qual a diferença entre Ceramic Coating e PPF?</summary><p>O coating é um revestimento cerâmico; o PPF é uma película aplicada sobre a pintura. A equipe pode orientar sobre a escolha e a combinação dos tratamentos.</p></details><details><summary>Quanto custa e quanto tempo leva?</summary><p>O orçamento e o prazo variam conforme o veículo, seu estado e o serviço escolhido. Consulte a equipe antes de levar o carro.</p></details><details><summary>Como faço para agendar?</summary><p>Entre em contato pelo Instagram @jetcarbv para confirmar os serviços, a disponibilidade e o agendamento.</p><a class="text-button" href="https://www.instagram.com/jetcarbv/" target="_blank" rel="noopener noreferrer">Conversar com a JETCAR</a></details><details><summary>Onde fica a JETCAR?</summary><p>Em Boa Viagem, Recife. Abra a localização para consultar o endereço e traçar sua rota.</p><a class="text-button" href="https://maps.apple/p/uRv~vCQ0G1zNn4" target="_blank" rel="noopener noreferrer">Abrir localização</a></details></dialog>
-<noscript><div class="no-script"><h1>JETCAR</h1><p>Estética automotiva em Boa Viagem, Recife.</p><p>Lavagem técnica · Polimento · Ceramic Coating · PPF · Higienização</p><a href="https://www.instagram.com/jetcarbv/">Entre em contato</a><a href="https://maps.apple/p/uRv~vCQ0G1zNn4">Localização</a></div></noscript>
-<script src="experience.js"></script></body></html>
+
+<!-- Camada de conteúdo: textos, navegação e formulários. -->
+<div class="overlay">
+  <i class="scrim" aria-hidden="true"></i>
+  <header class="bar">
+    <button class="brand" type="button" data-jump="inicio" aria-label="JETCAR, voltar ao início"><img src="assets/jetcar-logo.svg" alt="" width="1354" height="652"></button>
+    <nav aria-label="Principal">
+      <button type="button" data-jump="lavagem">Serviços</button>
+      <button type="button" data-jump="local">Onde estamos</button>
+      <button type="button" class="pill" data-jump="contato">Vamos conversar</button>
+    </nav>
+  </header>
+
+  <main>
+    <section class="act act-hero" data-act="hero" aria-labelledby="hero-title">
+      <div class="copy">
+        <p class="eyebrow ln">Estética automotiva · Boa Viagem, Recife</p>
+        <h1 class="display split" id="hero-title">Seu carro.<br>Em outro nível.</h1>
+        <p class="lede ln">Lavagem técnica, polimento, Ceramic Coating, PPF e higienização. Cada etapa com atenção aos detalhes.</p>
+      </div>
+      <button class="badge" type="button" data-jump="marca" aria-label="Começar a experiência">
+        <svg viewBox="-60 -60 120 120" aria-hidden="true"><defs><path id="badge-path" d="M-44 0A44 44 0 1 1 44 0A44 44 0 1 1-44 0"/></defs><text><textPath href="#badge-path" textLength="274" lengthAdjust="spacing">ROLE PARA ENTRAR · ROLE PARA ENTRAR ·</textPath></text><path class="arrow" d="M0-14V14M-9 5 0 14 9 5"/></svg>
+      </button>
+    </section>
+
+    <section class="act act-brand" data-act="brand" aria-label="A marca">
+      <p class="ticker ln">Lavagem técnica <i></i> Polimento <i></i> Ceramic Coating <i></i> PPF <i></i> Higienização</p>
+    </section>
+
+    <section class="act act-service" data-act="wash" id="lavagem" aria-labelledby="t-wash">
+      <div class="copy">
+        <p class="eyebrow ln"><span class="index">01 / 05</span> Preparar</p>
+        <h2 class="headline split" id="t-wash">O primeiro toque.</h2>
+        <h3 class="service-name ln">Lavagem técnica</h3>
+        <p class="body ln">Uma limpeza cuidadosa da carroceria, das rodas e dos detalhes que fazem a diferença.</p>
+        <div class="actions ln"><button type="button" class="more" data-detail="0">Explore o serviço <span aria-hidden="true">+</span></button><span class="hint"><span class="on-fine">Passe o cursor pela espuma</span><span class="on-touch">Toque na espuma</span></span></div>
+      </div>
+    </section>
+
+    <section class="act act-service act-right" data-act="polish" id="polimento" aria-labelledby="t-polish">
+      <div class="copy">
+        <p class="eyebrow ln"><span class="index">02 / 05</span> Revelar</p>
+        <h2 class="headline split" id="t-polish">A luz encontra a pintura.</h2>
+        <h3 class="service-name ln">Polimento</h3>
+        <p class="body ln">Um olhar atento ao acabamento: o cuidado que realça o brilho e trata imperfeições da pintura.</p>
+        <div class="actions ln"><button type="button" class="more" data-detail="1">Explore o serviço <span aria-hidden="true">+</span></button><span class="hint"><span class="on-fine">Mova o cursor e guie o reflexo</span><span class="on-touch">Arraste para guiar o reflexo</span></span></div>
+      </div>
+    </section>
+
+    <section class="act act-service" data-act="ceramic" id="ceramic" aria-labelledby="t-ceramic">
+      <div class="copy">
+        <p class="eyebrow ln"><span class="index">03 / 05</span> Preservar</p>
+        <h2 class="headline split" id="t-ceramic">Brilho que merece cuidado.</h2>
+        <h3 class="service-name ln">Ceramic Coating</h3>
+        <p class="body ln">Uma camada de proteção cerâmica para complementar o cuidado com o acabamento do seu carro.</p>
+        <div class="actions ln"><button type="button" class="more" data-detail="2">Explore o serviço <span aria-hidden="true">+</span></button><span class="hint"><span class="on-fine">Passe o cursor pela superfície</span><span class="on-touch">Toque na superfície</span></span></div>
+      </div>
+    </section>
+
+    <section class="act act-layers" data-act="layers" aria-labelledby="t-layers">
+      <div class="copy">
+        <p class="eyebrow ln">Anatomia da proteção</p>
+        <h2 class="headline split" id="t-layers">Camada por camada.</h2>
+        <p class="body ln">Ceramic Coating e PPF são aplicados sobre o verniz, a camada mais externa da pintura. A equipe orienta a escolha e a combinação de cada tratamento.</p>
+        <ul class="sr-only"><li>Proteção: Ceramic Coating ou PPF</li><li>Verniz: camada transparente</li><li>Cor: a pintura que você vê</li><li>Base: primer</li></ul>
+      </div>
+    </section>
+
+    <section class="act act-service" data-act="ppf" id="ppf" aria-labelledby="t-ppf">
+      <div class="copy">
+        <p class="eyebrow ln"><span class="index">04 / 05</span> Proteger</p>
+        <h2 class="headline split" id="t-ppf">A proteção. Quase invisível.</h2>
+        <h3 class="service-name ln">PPF</h3>
+        <p class="body ln">Paint Protection Film: uma película transparente aplicada sobre a pintura. As áreas de proteção são definidas com a orientação da equipe.</p>
+        <div class="actions ln"><button type="button" class="more" data-detail="3">Explore o serviço <span aria-hidden="true">+</span></button><span class="hint"><span class="on-fine">Mova o cursor e veja a película</span><span class="on-touch">Toque e veja a película</span></span></div>
+      </div>
+    </section>
+
+    <section class="act act-service" data-act="interior" id="higienizacao" aria-labelledby="t-interior">
+      <div class="copy">
+        <p class="eyebrow ln"><span class="index">05 / 05</span> Renovar</p>
+        <h2 class="headline split" id="t-interior">O cuidado vem de dentro.</h2>
+        <h3 class="service-name ln">Higienização</h3>
+        <p class="body ln">Bancos, superfícies e detalhes internos. Uma atenção especial ao espaço em que você vive o carro.</p>
+        <div class="actions ln"><button type="button" class="more" data-detail="4">Explore o serviço <span aria-hidden="true">+</span></button><span class="hint"><span class="on-fine">Passe o cursor para desembaçar</span><span class="on-touch">Passe o dedo para desembaçar</span></span></div>
+      </div>
+    </section>
+
+    <section class="act act-contact" data-act="contact" id="contato" aria-labelledby="t-contact">
+      <div class="copy">
+        <p class="eyebrow ln">Cada carro, um cuidado</p>
+        <h2 class="headline split" id="t-contact">O próximo é o seu.</h2>
+        <p class="body ln intro-text">Escolha o cuidado no anel ou peça orientação. A mensagem fica pronta para você enviar no Instagram.</p>
+        <form class="ln" id="contact-form" novalidate>
+          <div class="fields">
+            <label class="field"><span>Cuidado</span>
+              <select id="service-select" name="service">
+                <option value="-1">Quero orientação</option>
+                <option value="0">Lavagem técnica</option>
+                <option value="1">Polimento</option>
+                <option value="2">Ceramic Coating</option>
+                <option value="3">PPF</option>
+                <option value="4">Higienização</option>
+              </select>
+            </label>
+            <label class="field"><span>Seu carro <small>(opcional)</small></span><input id="car-model" name="car" maxlength="80" placeholder="Marca e modelo" autocomplete="off" enterkeyhint="done"></label>
+            <button class="cta" type="submit">Preparar minha mensagem</button>
+            <noscript><a class="cta" href="https://ig.me/m/jetcarbv">Conversar no Instagram</a></noscript>
+          </div>
+          <div class="result" hidden>
+            <p class="message" id="message-text"></p>
+            <div class="result-actions">
+              <a class="cta" id="send-message" href="https://ig.me/m/jetcarbv" target="_blank" rel="noopener noreferrer">Copiar e abrir o Direct</a>
+              <button type="button" class="link" id="copy-message">Só copiar</button>
+              <button type="button" class="link" id="edit-message">Editar</button>
+            </div>
+            <p class="fine" id="copy-status" role="status" aria-live="polite"></p>
+          </div>
+        </form>
+        <p class="fine ln">Valores, prazos e indicação são definidos com a equipe depois de conhecer o veículo.</p>
+      </div>
+    </section>
+
+    <section class="act act-place" data-act="place" id="local" aria-labelledby="t-place">
+      <div class="copy">
+        <p class="eyebrow ln">Recife · Pernambuco</p>
+        <h2 class="sr-only" id="t-place">Boa Viagem, Recife</h2>
+        <address class="ln"><span>Rua José Trajano</span><span>Boa Viagem — Recife, PE</span></address>
+        <p class="coords ln" aria-label="Coordenadas: 8 graus, 7 minutos e 14 segundos sul; 34 graus, 53 minutos e 58 segundos oeste">8°07′14″ S <i></i> 34°53′58″ O</p>
+        <div class="place-actions ln">
+          <a class="cta" href="https://maps.apple/p/uRv~vCQ0G1zNn4" target="_blank" rel="noopener noreferrer">Traçar minha rota</a>
+          <a class="link" href="https://www.instagram.com/jetcarbv/" target="_blank" rel="noopener noreferrer">@jetcarbv</a>
+          <button type="button" class="link" id="faq-open">Dúvidas frequentes</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="act act-final" data-act="final" aria-label="Encerramento">
+      <div class="copy">
+        <p class="display-sm ln">Seu carro. Em outro nível.</p>
+        <div class="final-actions ln">
+          <button type="button" class="cta" data-jump="contato">Vamos conversar</button>
+          <button type="button" class="link" data-jump="inicio">Rever a experiência ↑</button>
+        </div>
+        <p class="fine ln">© 2026 JETCAR Estética Automotiva · Boa Viagem, Recife · Imagens ilustrativas.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="hud">
+    <span class="chapter" aria-hidden="true"><b>00</b><span>Início</span></span>
+    <nav class="chapters" aria-label="Capítulos"></nav>
+    <button type="button" class="motion" aria-pressed="false">Reduzir movimento</button>
+    <i class="progress" aria-hidden="true"><i></i></i>
+  </footer>
+  <button type="button" class="play-film" hidden>Reproduzir o filme</button>
+  <div class="loader" aria-hidden="true"><img src="assets/jetcar-logo.svg" alt=""><i></i></div>
+</div>
+
+<div id="journey" aria-hidden="true"><i class="unit-probe"></i></div>
+
+<dialog id="service-dialog" aria-labelledby="detail-title">
+  <form method="dialog"><button class="close" aria-label="Fechar">×</button></form>
+  <img class="detail-img" alt="">
+  <div class="detail-body">
+    <p class="eyebrow">O cuidado, mais de perto</p>
+    <h2 id="detail-title"></h2>
+    <p id="detail-description"></p>
+    <ul id="detail-points"></ul>
+    <button type="button" class="cta" id="choose-service">Quero este cuidado</button>
+    <p class="fine">Valores, prazo e indicação são definidos com a equipe depois de entender as necessidades do veículo. Imagem ilustrativa.</p>
+  </div>
+</dialog>
+
+<dialog id="faq-dialog" aria-labelledby="faq-title">
+  <form method="dialog"><button class="close" aria-label="Fechar">×</button></form>
+  <div class="detail-body">
+    <p class="eyebrow">Antes de começar</p>
+    <h2 id="faq-title">Vamos esclarecer.</h2>
+    <details open><summary>Qual serviço é indicado para o meu carro?</summary><p>Conte à equipe o que você quer melhorar e como está o veículo. Essa avaliação ajuda a escolher o cuidado adequado.</p></details>
+    <details><summary>Qual a diferença entre Ceramic Coating e PPF?</summary><p>O coating é um revestimento cerâmico; o PPF é uma película aplicada sobre a pintura. A equipe pode orientar sobre a escolha e a combinação dos tratamentos.</p></details>
+    <details><summary>Quanto custa e quanto tempo leva?</summary><p>O orçamento e o prazo variam conforme o veículo, o estado dele e o serviço escolhido. Consulte a equipe antes de levar o carro.</p></details>
+    <details><summary>Como faço para agendar?</summary><p>Fale com a JETCAR pelo Instagram @jetcarbv para confirmar serviços, disponibilidade e agendamento.</p><a class="link" href="https://ig.me/m/jetcarbv" target="_blank" rel="noopener noreferrer">Conversar com a JETCAR</a></details>
+    <details><summary>Onde fica a JETCAR?</summary><p>Na Rua José Trajano, em Boa Viagem, Recife. Abra a localização para traçar sua rota.</p><a class="link" href="https://maps.apple/p/uRv~vCQ0G1zNn4" target="_blank" rel="noopener noreferrer">Abrir no mapa</a></details>
+  </div>
+</dialog>
+
+<noscript><style>.stage,.hud,.loader,.badge,#journey{display:none!important}</style></noscript>
+<script type="module" src="experience.js"></script>
+</body>
+</html>

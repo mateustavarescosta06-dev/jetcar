@@ -1,31 +1,169 @@
-const $=s=>document.querySelector(s),video=$('#source'),canvas=$('#film'),ctx=canvas.getContext('2d'),journey=$('#journey');
-const logo=new Image();logo.src='assets/jetcar-mask.png';const matte=document.createElement('canvas'),mc=matte.getContext('2d');
-const scenes=[...document.querySelectorAll('.scene')],worlds=[...document.querySelectorAll('.world')],rail=$('.service-rail'),railButtons=[...rail.querySelectorAll('button')];
-const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v)),ease=v=>{v=clamp(v);return v*v*(3-2*v)};
-let width=innerWidth,height=innerHeight,progress=0,smooth=0,dirty=true,logoReady=false,reduce=matchMedia('(prefers-reduced-motion: reduce)').matches,mouseX=0,mouseY=0;
-const starts=[.22,.32,.42,.52,.62,.72];
-const services=[
-{name:'Lavagem técnica',description:'A base do cuidado automotivo. Uma limpeza voltada à carroceria, rodas e detalhes externos.',points:['Conte à equipe como você usa o veículo e quais áreas precisam de atenção.','A avaliação do carro orienta o cuidado e o acabamento.']},
-{name:'Polimento',description:'Um tratamento do acabamento da pintura para realçar o brilho e trabalhar imperfeições superficiais, conforme a avaliação do veículo.',points:['A condição da pintura determina a abordagem do tratamento.','Converse sobre o resultado esperado antes de definir o serviço.']},
-{name:'Ceramic Coating',description:'Um revestimento cerâmico aplicado ao acabamento. A preparação da superfície faz parte da definição do tratamento.',points:['A equipe orienta sobre a indicação para o seu carro.','Consulte os cuidados de manutenção após a aplicação.']},
-{name:'PPF',description:'Paint Protection Film: uma película transparente de proteção aplicada sobre a pintura.',points:['A cobertura pode ser discutida por áreas do veículo.','Peça orientação sobre aplicação, acabamento e cuidados posteriores.']},
-{name:'Higienização',description:'Uma atenção dedicada ao interior: bancos, superfícies e os detalhes do ambiente interno.',points:['Informe o tipo de revestimento e os pontos que exigem atenção.','A equipe avalia as necessidades do interior antes de definir o serviço.']}
-];
-function resize(){width=innerWidth;height=innerHeight;const dpr=Math.min(devicePixelRatio,1.5);canvas.width=matte.width=Math.round(width*dpr);canvas.height=matte.height=Math.round(height*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);mc.setTransform(dpr,0,0,dpr,0,0);onScroll();dirty=true}
-function onScroll(){progress=clamp(-journey.getBoundingClientRect().top/Math.max(1,journey.offsetHeight-height));dirty=true}
-function jump(p){scrollTo({top:p*(journey.offsetHeight-height),behavior:reduce?'instant':'smooth'})}
-function render(){const p=smooth;ctx.clearRect(0,0,width,height);if(logoReady&&p<.22){const q=p/.22,enter=ease((q-.12)/.14),leave=ease((q-.55)/.18);const zoom=reduce?1:1+Math.pow(ease((q-.42)/.30),2)*17;const lw=Math.min(width*.78,1050)*zoom,lh=lw*logo.naturalHeight/logo.naturalWidth;mc.clearRect(0,0,width,height);mc.globalCompositeOperation='source-over';mc.fillStyle='#080808';mc.fillRect(0,0,width,height);mc.globalCompositeOperation='destination-out';mc.drawImage(logo,(width-lw)/2,(height-lh)/2,lw,lh);mc.globalCompositeOperation='source-over';ctx.globalAlpha=enter*(1-leave);ctx.drawImage(matte,0,0,matte.width,matte.height,0,0,width,height);ctx.globalAlpha=1}
-$('.logo-label').style.opacity=ease((p-.065)/.015)*(1-ease((p-.10)/.018));
-scenes.forEach((el,i)=>{const start=Number(el.dataset.start),end=Number(el.dataset.end);let alpha=i===0?1-ease(p/.035):ease((p-start)/.018)*(1-ease((p-(end-.022))/.02));if(i===scenes.length-1)alpha=ease((p-start)/.025);el.style.opacity=alpha;el.classList.toggle('active',alpha>.08);el.inert=alpha<=.08;const local=clamp((p-start)/(end-start));el.style.transform=reduce?'none':`translate3d(0,${(1-ease(local/.2))*35-ease((local-.8)/.2)*25}px,0)`;const numeral=el.querySelector('.oversized');if(numeral)numeral.style.transform=reduce?'none':`translateX(${(local-.5)*80}px) rotate(${(local-.5)*-9}deg)`;});
-worlds.forEach((el,i)=>{const start=starts[i],next=starts[i+1]||2;const incoming=ease((p-start+.018)/.065),outgoing=1-ease((p-next-.008)/.03),local=clamp((p-start)/.1);el.style.opacity=incoming>0?outgoing:0;el.style.zIndex=i+1;const image=el.querySelector('img');image.style.transform=reduce?'none':`scale(${1.14-local*.10}) translate(${mouseX*5}px,${mouseY*4}px) rotate(${i===1?(1-incoming)*-6:i===4?(1-incoming)*3:0}deg)`;if(reduce)el.style.clipPath='none';else if(i===0)el.style.clipPath=`circle(${incoming*150}% at 68% 50%)`;else if(i===1)el.style.clipPath=`polygon(${(1-incoming)*130}% 0,100% 0,100% 100%,${(1-incoming)*100}% 100%)`;else if(i===2)el.style.clipPath=`inset(${(1-incoming)*48}% ${(1-incoming)*30}% round ${(1-incoming)*200}px)`;else if(i===3)el.style.clipPath=`polygon(0 0,${incoming*200}% 0,0 ${incoming*200}%)`;else if(i===4)el.style.clipPath=`inset(0 ${(1-incoming)*100}% 0 0)`;else el.style.clipPath=`circle(${incoming*150}% at 50% 50%)`;});
-const serviceIndex=Math.floor((p-.22)/.1);const visible=p>.24&&p<.704;rail.style.opacity=visible?1:0;rail.style.visibility=visible?'visible':'hidden';rail.inert=!visible;railButtons.forEach((b,i)=>{b.classList.toggle('selected',i===serviceIndex);if(i===serviceIndex)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current')});$('.progress-track span').style.transform=`scaleX(${p})`;$('#chapter-label').textContent=p<.22?'A EXPERIÊNCIA':p<.72?services[clamp(serviceIndex,0,4)].name.toUpperCase():p<.84?'SEU PRÓXIMO CUIDADO':'BOA VIAGEM · RECIFE';
-const floats=$('.floating-photos');floats.style.transform=reduce?'none':`translateY(${(clamp((p-.72)/.12)-.5)*-35}px) rotate(${(clamp((p-.72)/.12)-.5)*5}deg)`;$('.final-mark').style.transform=reduce?'none':`scale(${.8+ease((p-.84)/.15)*.2}) rotate(${(1-ease((p-.84)/.1))*-10}deg)`;
+// JETCAR — experiência contínua guiada pela rolagem.
+// A rolagem nativa define o alvo; os visuais seguem com suavização. O filme toca sozinho.
+import { $, view, pointer, state, clamp } from './js/core.js';
+import { T, CHAPTERS } from './js/timeline.js';
+import { placeImages, setupFilm, updateFilm, IMG, video } from './js/media.js';
+import { resizeMatte, renderMatte } from './js/matte.js';
+import { layoutScenes, renderScenes } from './js/scenes.js';
+import { resizeFx, renderFx } from './js/fx.js';
+import { renderCopy, layoutCopy, bindFocus } from './js/copy.js';
+import { renderHud, bindJump, jumpToAct, setReduce, ready, cancelFreeze } from './js/ui.js';
+
+const lvhProbe = Object.assign(document.createElement('i'), { className: 'lvh-probe' });
+document.body.append(lvhProbe);
+const unitProbe = $('.unit-probe');
+const curtain = Object.assign(document.createElement('i'), { className: 'curtain' });
+$('.overlay').append(curtain);
+
+let lastW = 0, lastH = 0, forceRender = true;
+function resize(force = false) {
+  const w = window.innerWidth;
+  const h = Math.max(lvhProbe.offsetHeight || 0, window.innerHeight);
+  view.unit = unitProbe.offsetHeight || h * 0.88;
+  // A barra do Safari aparecendo/sumindo muda só a altura visível: não refaz o palco.
+  if (!force && w === lastW && Math.abs(h - lastH) < 160) { onScroll(); return; }
+  lastW = w; lastH = h;
+  Object.assign(view, { w, h, cx: w / 2, cy: h / 2, diag: Math.hypot(w, h), dpr: Math.min(window.devicePixelRatio || 1, 2), mobile: w < 761, portrait: w / h < 1 });
+  placeImages();
+  resizeMatte();
+  layoutScenes();
+  resizeFx();
+  layoutCopy();
+  setupFilm();
+  onScroll();
+  forceRender = true;
 }
-function tick(){const delta=progress-smooth;smooth=reduce?progress:smooth+delta*.16;if(Math.abs(delta)<.00015)smooth=progress;if(dirty||Math.abs(delta)>.00015){render();dirty=false}requestAnimationFrame(tick)}
-const play=$('#play-film');async function startPlayback(){video.muted=true;try{await video.play();play.hidden=true}catch{play.hidden=false}}
-video.addEventListener('loadeddata',()=>{document.body.classList.add('ready');startPlayback()});video.addEventListener('playing',()=>{document.body.classList.add('ready');play.hidden=true});video.addEventListener('error',()=>{$('.media-error').hidden=false;$('.loading').style.display='none'});play.onclick=startPlayback;$('#retry').onclick=()=>{$('.media-error').hidden=true;video.load();startPlayback()};
-function setMotion(){document.body.classList.toggle('reduced',reduce);$('#motion').setAttribute('aria-pressed',String(reduce));$('#motion').textContent=reduce?'Ativar efeitos':'Reduzir efeitos';if(reduce)$('#motion').textContent='Ativar efeitos';dirty=true}
-$('#motion').onclick=()=>{reduce=!reduce;setMotion()};$('#explore').onclick=()=>jump(progress<.2?.25:Math.min(1,progress+.1));document.querySelectorAll('[data-jump]').forEach(b=>b.onclick=()=>jump(Number(b.dataset.jump)));
-let chosen=0;const detail=$('#service-dialog');document.querySelectorAll('[data-detail]').forEach(b=>b.onclick=()=>{chosen=Number(b.dataset.detail);const data=services[chosen];$('#detail-title').textContent=data.name;$('#detail-description').textContent=data.description;const points=$('#detail-points');points.replaceChildren(...data.points.map(t=>{const d=document.createElement('div');d.textContent=t;return d}));detail.showModal()});$('#choose-service').onclick=()=>{detail.close();$('#service-select').value=services[chosen].name;jump(.765)};$('#faq-open').onclick=()=>$('#faq-dialog').showModal();document.querySelectorAll('.close-dialog').forEach(b=>b.onclick=()=>b.closest('dialog').close());document.querySelectorAll('dialog').forEach(d=>d.addEventListener('click',e=>{if(e.target===d){const r=d.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)d.close()}}));
-$('#contact-form').onsubmit=e=>{e.preventDefault();const service=$('#service-select').value,model=$('#car-model').value.trim();$('#message-text').textContent=`Olá, JETCAR! ${model?'Meu carro é um '+model+'. ':''}${service==='Quero orientação'?'Gostaria de orientação para escolher o cuidado adequado.':'Tenho interesse em '+service+'.'} Podem me informar o orçamento e a disponibilidade?`;$('.message-result').hidden=false;$('#copy-status').textContent='Copie a mensagem e envie para @jetcarbv.';$('#copy-message').focus()};$('#copy-message').onclick=async()=>{try{await navigator.clipboard.writeText($('#message-text').textContent);$('#copy-status').textContent='Mensagem copiada. Agora é só enviar para @jetcarbv.'}catch{$('#copy-status').textContent='Selecione o texto acima e copie a mensagem para enviar.';const r=document.createRange();r.selectNodeContents($('#message-text'));const selection=getSelection();selection.removeAllRanges();selection.addRange(r)}};
-logo.onload=()=>{logoReady=true;dirty=true};addEventListener('scroll',onScroll,{passive:true});addEventListener('resize',resize);addEventListener('pointermove',e=>{mouseX=e.clientX/width-.5;mouseY=e.clientY/height-.5;if(!reduce)dirty=true},{passive:true});addEventListener('pointerdown',()=>{if(video.paused)startPlayback()},{passive:true});document.addEventListener('visibilitychange',()=>{if(document.hidden)video.pause();else startPlayback()});setMotion();resize();startPlayback();requestAnimationFrame(tick);
+
+function onScroll() {
+  if (state.frozenY != null) return;
+  state.target = clamp(window.scrollY / view.unit, 0, T.total);
+}
+
+function jump(u) {
+  cancelFreeze();
+  const top = Math.round(u * view.unit);
+  const far = Math.abs(u - state.u) > 3.2;
+  if (state.reduce || !far) {
+    window.scrollTo({ top, behavior: state.reduce ? 'auto' : 'smooth' });
+    return;
+  }
+  // Saltos longos: cortina rápida em vez de atravessar todas as cenas.
+  curtain.classList.add('is-on');
+  setTimeout(() => {
+    window.scrollTo({ top, behavior: 'auto' });
+    state.target = state.u = clamp(u, 0, T.total);
+    forceRender = true;
+    requestAnimationFrame(() => curtain.classList.remove('is-on'));
+  }, 260);
+}
+
+// ——— Ponteiro e toque (sem bloquear a rolagem) ———
+let lastTouch = null;
+function setPointer(x, y, touch) {
+  pointer.x = x; pointer.y = y; pointer.touch = touch;
+  pointer.nx = clamp((x / view.w) * 2 - 1, -1, 1);
+  pointer.ny = clamp((y / view.h) * 2 - 1, -1, 1);
+  pointer.at = state.now;
+}
+addEventListener('pointermove', e => {
+  if (e.pointerType === 'touch') return;
+  if (pointer.at > 0) pointer.strokes.push([pointer.x, pointer.y, e.clientX, e.clientY]);
+  setPointer(e.clientX, e.clientY, false);
+}, { passive: true });
+addEventListener('pointerdown', e => {
+  if (e.pointerType === 'touch') return;
+  setPointer(e.clientX, e.clientY, false);
+  pointer.taps.push({ x: e.clientX, y: e.clientY });
+}, { passive: true });
+addEventListener('touchstart', e => {
+  const t = e.touches[0];
+  if (!t) return;
+  setPointer(t.clientX, t.clientY, true);
+  pointer.taps.push({ x: t.clientX, y: t.clientY });
+  lastTouch = { x: t.clientX, y: t.clientY };
+}, { passive: true });
+addEventListener('touchmove', e => {
+  const t = e.touches[0];
+  if (!t) return;
+  if (lastTouch) pointer.strokes.push([lastTouch.x, lastTouch.y, t.clientX, t.clientY]);
+  lastTouch = { x: t.clientX, y: t.clientY };
+  setPointer(t.clientX, t.clientY, true);
+}, { passive: true });
+addEventListener('touchend', () => { lastTouch = null; }, { passive: true });
+
+// ——— Quadro a quadro ———
+let last = performance.now();
+let lastU = -1, lastSX = 0, lastSY = 0;
+function frame(now) {
+  const dt = Math.min(64, now - last || 16);
+  last = now;
+  state.now = now;
+  state.dt = dt;
+  const prev = state.u;
+  if (state.reduce) state.u = state.target;
+  else {
+    state.u += (state.target - state.u) * (1 - Math.exp(-dt / 90));
+    if (Math.abs(state.target - state.u) < 0.0004) state.u = state.target;
+  }
+  state.vel = state.vel * 0.82 + ((state.u - prev) / dt) * 1000 * 0.18;
+  const ease = 1 - Math.exp(-dt / 170);
+  pointer.sx += (pointer.nx - pointer.sx) * ease;
+  pointer.sy += (pointer.ny - pointer.sy) * ease;
+  const u = state.u;
+  const ringLive = u > T.contact.gather[0] && u < T.contact.flatten[1];
+  const changed = forceRender || u !== lastU || Math.abs(pointer.sx - lastSX) > 0.0005 || Math.abs(pointer.sy - lastSY) > 0.0005 || Math.abs(state.vel) > 0.01 || ringLive;
+  if (changed) {
+    forceRender = false;
+    lastU = u; lastSX = pointer.sx; lastSY = pointer.sy;
+    updateFilm(u);
+    renderMatte(u);
+    renderScenes(u, dt);
+    renderCopy(u);
+    renderHud(u);
+  }
+  renderFx(u, dt);
+  requestAnimationFrame(frame);
+}
+
+// ——— Início ———
+const reduceQuery = matchMedia('(prefers-reduced-motion: reduce)');
+setReduce(reduceQuery.matches);
+reduceQuery.addEventListener?.('change', e => { setReduce(e.matches); forceRender = true; });
+document.querySelector('.motion').addEventListener('click', () => { forceRender = true; });
+
+bindJump(jump);
+bindFocus(jumpToAct);
+for (const a of document.querySelectorAll('a[href^="#"]')) a.addEventListener('click', e => {
+  const ch = CHAPTERS.find(c => c.id === a.getAttribute('href').slice(1));
+  if (!ch) return;
+  e.preventDefault();
+  jump(ch.u);
+  const target = document.getElementById(ch.id);
+  setTimeout(() => target?.querySelector('select, input, button, a')?.focus({ preventScroll: true }), 600);
+});
+
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+resize(true);
+addEventListener('resize', () => resize());
+addEventListener('orientationchange', () => setTimeout(() => resize(true), 250));
+addEventListener('scroll', onScroll, { passive: true });
+
+const hashChapter = CHAPTERS.find(c => `#${c.id}` === location.hash);
+if (hashChapter) { window.scrollTo(0, Math.round(hashChapter.u * view.unit)); onScroll(); state.u = state.target; }
+else { window.scrollTo(0, 0); onScroll(); state.u = state.target; }
+
+const firstFrame = new Promise(resolve => {
+  if (video.readyState >= 2) resolve();
+  video.addEventListener('loadeddata', resolve, { once: true });
+  video.addEventListener('error', resolve, { once: true });
+});
+Promise.race([
+  Promise.all([document.fonts?.ready ?? Promise.resolve(), IMG.wash.ready, firstFrame]),
+  new Promise(r => setTimeout(r, 2800)),
+]).then(() => { forceRender = true; ready(); });
+document.fonts?.ready.then(() => { layoutCopy(); forceRender = true; });
+
+// Gancho de depuração para QA visual (?debug na URL).
+if (/[?&]debug\b/.test(location.search)) window.__jetcar = { state, view, T, pointer, settle: () => { state.u = state.target; forceRender = true; } };
+
+requestAnimationFrame(frame);
