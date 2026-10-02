@@ -1,6 +1,6 @@
-# JETCAR — Landing page
+# JETCAR — Site
 
-Experiência contínua de estética automotiva em Boa Viagem, Recife. Uma única jornada de rolagem, sem divisão de páginas: o filme do Porsche aparece dentro do logo JETCAR, a câmera atravessa o farol do emblema e cada serviço se transforma no seguinte — bolhas, disco giratório, colmeia de hexágonos, camadas da pintura explodidas em 3D, porta que se abre, vidro embaçado para limpar com o dedo, um arco 3D para escolher o serviço e, no fim, BOA VIAGEM com o filme dentro das letras.
+Site da JETCAR Estética Automotiva, em Boa Viagem, Recife. O conteúdo rola como em qualquer site — menu, serviços, agendamento, localização, dúvidas e rodapé — enquanto um palco atrás dele faz as transições: o filme do Porsche aparece dentro do logo JETCAR, a câmera mergulha no farol do emblema, que vira a moldura dos serviços, e cada serviço se transforma no seguinte (bolhas, disco giratório, colmeia de hexágonos, camadas da pintura explodidas em 3D, porta que se abre, vidro embaçado para limpar com o dedo, um arco 3D para escolher o serviço) até BOA VIAGEM com o filme dentro das letras.
 
 ## Rodar localmente
 
@@ -14,12 +14,12 @@ Abra http://localhost:3000. Não há dependências para instalar. Alternativa: `
 
 ## Estrutura
 
-- `dist/index.html`: conteúdo (textos, formulário, diálogos) e o palco visual.
-- `dist/style.css`: apresentação, layouts por orientação e fallback sem JavaScript.
-- `dist/experience.js`: ponto de entrada (rolagem, ponteiro, quadro a quadro).
-- `dist/js/timeline.js`: linha do tempo em unidades — o lugar para ajustar ritmo e pausas de leitura.
-- `dist/js/matte.js`, `scenes.js`, `fx.js`, `copy.js`, `ui.js`: logo/filme recortado, cenas 3D, efeitos interativos, textos e interface.
-- `dist/assets/`: filmes, pôsteres, fotos, logo vetorial e fonte. São arquivos de origem versionados; não tratar `dist` como pasta descartável.
+- `dist/index.html`: conteúdo do site (menu, seções, formulário, diálogo, rodapé) e o palco visual.
+- `dist/style.css`: visual (Geist, vermelho com gradientes sutis), layouts por orientação e fallback sem JavaScript.
+- `dist/experience.js`: ponto de entrada (medição dos blocos, rolagem suavizada, ponteiro, âncoras, quadro a quadro).
+- `dist/js/timeline.js`: blocos e linha do tempo — o lugar para ajustar ritmo e pausas de leitura.
+- `dist/js/media.js`, `matte.js`, `scenes.js`, `fx.js`, `reveal.js`, `ui.js`: moldura/fotos/filme, logo recortado, cenas 3D, efeitos interativos, revelações do conteúdo e interface.
+- `dist/assets/`: filmes, pôsteres, fotos, logo vetorial e fontes. São arquivos de origem versionados; não tratar `dist` como pasta descartável.
 - `scripts/`: servidor local (com suporte a Range), verificação e geradores (logo vetorial, contornos de texto, versões do filme).
 
 Detalhes de arquitetura, requisitos e decisões estão em `CLAUDE.md`.
@@ -36,7 +36,7 @@ Localização: https://maps.apple/p/uRv~vCQ0G1zNn4 (Rua José Trajano, Boa Viage
 npm run check
 ```
 
-Verifica a sintaxe de todos os scripts e se cada arquivo referenciado existe. Antes de publicar, conferir em iPhone/Safari e desktop: autoplay (com Modo Pouca Energia o pôster aparece com o botão de play), fluidez das cenas, toque no anel de serviços, formulário com teclado aberto e movimento reduzido.
+Verifica a sintaxe de todos os scripts e se cada arquivo referenciado existe. Antes de publicar, conferir em iPhone/Safari e desktop: autoplay (com Modo Pouca Energia o pôster aparece com o botão de play), fluidez das cenas, toque no arco de serviços, formulário com teclado aberto, menu e movimento reduzido (botão no rodapé).
 
 ## Publicação
 

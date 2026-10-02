@@ -7,15 +7,17 @@ export const smooth = t => t * t * (3 - 2 * t);
 export const inOut = t => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
 export const out = t => 1 - (1 - t) ** 3;
 export const inn = t => t * t * t;
-export const outBack = t => 1 + 2.2 * (t - 1) ** 3 + 1.2 * (t - 1) ** 2;
 /** Envelope: sobe em [a, b] e desce em [c, d]. */
 export const env = (u, [a, b, c, d]) => smooth(span(u, a, b)) * (1 - smooth(span(u, c, d)));
+export const lerpRect = (a, b, t) => ({ x: lerp(a.x, b.x, t), y: lerp(a.y, b.y, t), w: lerp(a.w, b.w, t), h: lerp(a.h, b.h, t) });
 
-/** Dimensões do palco. h é a altura "grande" (sem a barra do Safari), estável na rolagem. */
-export const view = { w: 1, h: 1, cx: 0.5, cy: 0.5, diag: 1, dpr: 1, mobile: false, portrait: false, short: false, unit: 1 };
+/** Dimensões do palco. h é a altura "grande" (sem a barra do Safari); svh, a visível com a barra. */
+export const view = { w: 1, h: 1, svh: 1, cx: 0.5, cy: 0.5, diag: 1, dpr: 1, mobile: false, portrait: false, short: false, unit: 1, nav: 72 };
+/** Moldura dos serviços (retângulo arredondado no palco). */
+export const frame = { x: 0, y: 0, w: 1, h: 1, cx: 0, cy: 0, r: 24, diag: 1 };
 /** Ponteiro/toque: x/y em px, nx/ny em -1…1, sx/sy suavizados. */
-export const pointer = { x: -9999, y: -9999, nx: 0, ny: 0, sx: 0, sy: 0, at: -1e9, touch: false, down: false, strokes: [], taps: [] };
-export const state = { target: 0, u: 0, vel: 0, reduce: false, now: 0, dt: 16, selected: -1, light: 0, motion: 1 };
+export const pointer = { x: -9999, y: -9999, nx: 0, ny: 0, sx: 0, sy: 0, at: -1e9, touch: false, strokes: [], taps: [] };
+export const state = { target: 0, u: 0, vel: 0, reduce: false, now: 0, dt: 16, selected: -1, light: 0, guard: null };
 
 export const $ = (s, r = document) => r.querySelector(s);
 export const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
@@ -29,6 +31,8 @@ export function cover(iw, ih, bw, bh, fx = 0.5, fy = 0.5) {
 export const zoomRect = (r, k, px, py) => ({ x: px + (r.x - px) * k, y: py + (r.y - py) * k, w: r.w * k, h: r.h * k });
 /** Transform CSS (origem 0 0) que leva o retângulo base r ao retângulo t. */
 export const toRect = (r, t) => `translate3d(${f(t.x - r.x)}px,${f(t.y - r.y)}px,0) scale(${f(t.w / r.w, 5)})`;
+/** clip-path inset para mostrar só o retângulo r (coordenadas do palco). */
+export const insetFor = (r, radius) => `inset(${f(r.y)}px ${f(view.w - r.x - r.w)}px ${f(view.h - r.y - r.h)}px ${f(r.x)}px round ${f(radius)}px)`;
 
 export const f = (v, d = 2) => Math.round(v * 10 ** d) / 10 ** d;
 

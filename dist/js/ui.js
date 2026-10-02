@@ -1,82 +1,130 @@
-// Navegação, capítulos, diálogos, escolha do serviço e mensagem para o Instagram.
+// Interface do site: menu, progresso, diálogo dos serviços, controle das camadas,
+// escolha do serviço e mensagem pronta para o Instagram.
 import { $, $$, view, state, css, f } from './core.js';
-import { T, CHAPTERS, SERVICES, ACT_FOCUS } from './timeline.js';
+import { S, T, SERVICES } from './timeline.js';
 import { focusCard } from './scenes.js';
 
-const overlay = $('.overlay');
-const chapterLabel = $('.chapter span'), chapterIndex = $('.chapter b');
-const chaptersNav = $('.chapters');
-const progress = $('.progress i');
-const motionButton = $('.motion');
 let jumpFn = () => {};
+export function bindJump(fn) { jumpFn = fn; }
+export const jumpTo = (target, opts) => jumpFn(target, opts);
 
-export function bindJump(fn) {
-  jumpFn = fn;
-  for (const b of $$('[data-jump]')) b.addEventListener('click', () => {
-    const ch = CHAPTERS.find(c => c.id === b.dataset.jump);
-    if (ch) jumpFn(ch.u);
-  });
-}
-export const jumpToAct = name => jumpFn(ACT_FOCUS[name] ?? 0);
+// ——— Navegação ———
+const nav = $('.nav');
+const navLinks = $$('.nav-links a');
+const progress = $('.nav-progress i');
+const toggle = $('.nav-toggle');
+const menu = $('#menu');
 
-// ——— Capítulos ———
-const visibleChapters = CHAPTERS.filter(c => !c.hidden);
-for (const ch of visibleChapters) {
-  const b = document.createElement('button');
-  b.type = 'button';
-  b.setAttribute('aria-label', ch.label);
-  b.title = ch.label;
-  b.addEventListener('click', () => jumpFn(ch.u));
-  ch.button = b;
-  chaptersNav.append(b);
+export function setMenu(open) {
+  if (open === !menu.hidden) return;
+  menu.hidden = !open;
+  toggle.setAttribute('aria-expanded', String(open));
+  $('.sr-only', toggle).textContent = open ? 'Fechar menu' : 'Abrir menu';
+  $('use', toggle).setAttribute('href', open ? '#i-close' : '#i-menu');
+  document.documentElement.classList.toggle('menu-open', open);
+  if (open) $('a', menu)?.focus({ preventScroll: true });
+  else if (menu.contains(document.activeElement) || document.activeElement === document.body) toggle.focus({ preventScroll: true });
 }
-let currentChapter = null;
-export function renderHud(u) {
-  let cur = visibleChapters[0];
-  for (const ch of visibleChapters) if (u >= ch.u - 1.1) cur = ch;
-  if (cur !== currentChapter) {
-    currentChapter = cur;
-    const i = visibleChapters.indexOf(cur);
-    chapterIndex.textContent = String(i).padStart(2, '0');
-    chapterLabel.textContent = cur.label;
-    for (const ch of visibleChapters) {
-      ch.button.classList.toggle('is-current', ch === cur);
-      if (ch === cur) ch.button.setAttribute('aria-current', 'step');
-      else ch.button.removeAttribute('aria-current');
+toggle.addEventListener('click', () => setMenu(menu.hidden));
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !menu.hidden) setMenu(false); });
+addEventListener('resize', () => { if (!menu.hidden && innerWidth > 1080) setMenu(false); });
+
+let solid = null, active = null;
+function sectionAt(u) {
+  if (u >= T.sheet - 0.6) return 'duvidas';
+  if (u >= S.local - 0.7) return 'local';
+  if (u >= S.contato - 0.7) return 'contato';
+  if (u >= S.ppf - 0.7) return 'servicos';
+  if (u >= S.protecao - 0.7) return 'protecao';
+  if (u >= S.servicos - 0.7) return 'servicos';
+  return null;
+}
+
+// ——— Controle das camadas (Ceramic Coating ⇄ PPF) ———
+const seg = $('.segmented');
+const segButtons = $$('[data-guard]', seg);
+let shownGuard = -1;
+segButtons.forEach(b => b.addEventListener('click', () => { state.guard = Number(b.dataset.guard); state.busy = true; }));
+seg.addEventListener('keydown', e => {
+  if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) return;
+  e.preventDefault();
+  const next = state.guardShown ? 0 : 1;
+  state.guard = next;
+  state.busy = true;
+  segButtons[next].focus();
+});
+
+/** Atualiza menu, progresso e controles a cada quadro em que a rolagem muda. */
+export function renderUi(u) {
+  const isSolid = window.scrollY > 24;
+  if (isSolid !== solid) { solid = isSolid; nav.classList.toggle('is-solid', isSolid); }
+  css(progress, 'transform', `scaleX(${f(Math.min(1, window.scrollY / (view.scrollMax || 1)), 4)})`);
+  const id = sectionAt(u);
+  if (id !== active) {
+    active = id;
+    for (const a of navLinks) {
+      const on = a.getAttribute('href') === `#${id}`;
+      a.classList.toggle('is-active', on);
+      if (on) a.setAttribute('aria-current', 'true');
+      else a.removeAttribute('aria-current');
     }
   }
-  css(progress, 'transform', `scaleX(${f(Math.min(1, u / (T.total - 0.3)), 4)})`);
-  overlay.classList.toggle('is-light', state.light > 0.5);
+  // A escolha manual vale enquanto a seção de camadas estiver por perto.
+  if (state.guard != null && (u < S.protecao - 1.4 || u > S.ppf + 0.3)) state.guard = null;
+  const g = state.guardShown ?? 0;
+  if (g !== shownGuard) {
+    shownGuard = g;
+    seg.classList.toggle('is-right', g === 1);
+    segButtons.forEach((b, i) => {
+      b.setAttribute('aria-checked', String(i === g));
+      b.tabIndex = i === g ? 0 : -1;
+    });
+  }
 }
 
 // ——— Movimento reduzido ———
-export function setReduce(flag) {
+const motionButton = $('.motion');
+export function setReduce(flag, remember = false) {
   state.reduce = flag;
   document.documentElement.classList.toggle('reduced', flag);
   motionButton.setAttribute('aria-pressed', String(flag));
   motionButton.textContent = flag ? 'Ativar movimento' : 'Reduzir movimento';
+  if (remember) try { localStorage.setItem('jetcar-motion', flag ? 'reduce' : 'full'); } catch {}
 }
-motionButton.addEventListener('click', () => setReduce(!state.reduce));
+export function savedMotion() {
+  try { return localStorage.getItem('jetcar-motion'); } catch { return null; }
+}
+motionButton.addEventListener('click', () => setReduce(!state.reduce, true));
 
-// ——— Diálogos ———
+// ——— Diálogo dos serviços ———
 const serviceDialog = $('#service-dialog');
 let detailIndex = 0;
+function check(text) {
+  const row = document.createElement('div');
+  row.innerHTML = '<svg aria-hidden="true"><use href="#i-check"/></svg>';
+  row.append(Object.assign(document.createElement('span'), { textContent: text }));
+  return row;
+}
 for (const b of $$('[data-detail]')) b.addEventListener('click', () => {
   detailIndex = Number(b.dataset.detail);
   const s = SERVICES[detailIndex];
   $('#detail-title').textContent = s.name;
   $('#detail-description').textContent = s.description;
-  $('.detail-img').src = s.img;
-  $('.detail-img').alt = `${s.name} (imagem ilustrativa)`;
-  $('#detail-points').replaceChildren(...s.points.map(t => Object.assign(document.createElement('li'), { textContent: t })));
+  const img = $('.detail-img', serviceDialog);
+  img.src = s.img;
+  img.alt = `${s.name} (imagem ilustrativa)`;
+  $('#detail-points').replaceChildren(...s.points.map(check));
   openDialog(serviceDialog);
 });
 $('#choose-service').addEventListener('click', () => {
   closeDialog(serviceDialog);
-  select(detailIndex);
-  jumpToAct('contact');
+  choose(detailIndex);
 });
-$('#faq-open').addEventListener('click', () => openDialog($('#faq-dialog')));
+for (const b of $$('[data-choose]')) b.addEventListener('click', () => choose(Number(b.dataset.choose)));
+function choose(i) {
+  select(i);
+  jumpTo($('#contato'), { focus: selectEl });
+}
 // Diálogos nativos; em navegadores antigos sem <dialog>, abre como painel simples.
 let lastFocus = null;
 function openDialog(d) {
@@ -97,7 +145,7 @@ for (const d of $$('dialog')) {
   d.querySelector('.close')?.addEventListener('click', e => { if (typeof d.close !== 'function') { e.preventDefault(); closeDialog(d); } });
 }
 
-// ——— Escolha do serviço (anel ⇄ campo) ———
+// ——— Escolha do serviço (arco ⇄ campo) ———
 const selectEl = $('#service-select');
 export function select(i) {
   state.selected = i;
@@ -184,5 +232,3 @@ addEventListener('touchmove', () => { if (state.frozenY != null) cancelFreeze();
 export function ready() {
   document.documentElement.classList.add('is-ready');
 }
-
-export { view };
