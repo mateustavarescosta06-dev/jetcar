@@ -172,6 +172,10 @@ export function initUi({ jump, lenis }) {
   });
   refresh();
 
+  // o vento do mapa da orla (o silêncio) só anda com ele na tela
+  const quiet = $('.quiet');
+  if (quiet && 'IntersectionObserver' in window) new IntersectionObserver(([e]) => quiet.classList.toggle('is-in', e.isIntersecting)).observe(quiet);
+
   // teclado do celular: ao focar um campo, o iOS rola a página; ignoramos por um instante
   const touchOnly = matchMedia('(hover: none)');
   document.addEventListener('focusin', e => { if (touchOnly.matches && e.target.matches('input:not([type="range"]), select, textarea')) freezeFor(800); });

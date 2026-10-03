@@ -22,7 +22,7 @@ Proibido (pedidos explícitos, v5 e v6): cartões inclinados, "3D" de CSS (rotat
 - Local: link https://maps.apple/p/uRv~vCQ0G1zNn4, que o Apple Maps resolve para Rua José Trajano, Boa Viagem, Recife – PE (−8.12055, −34.89937). Rua e coordenadas vêm desse link; não acrescentar número, CEP ou complemento sem confirmação.
 - Não inventar telefone, horários, preços, depoimentos, garantias, datas de fundação ou resultados de clientes.
 - Contato pelo Instagram https://www.instagram.com/jetcarbv/ (Direct: https://ig.me/m/jetcarbv). O perfil tem WhatsApp, mas o número não foi fornecido.
-- Detalhes locais e automotivos (pedido do usuário: "referências ao automotivo e à Praia de Boa Viagem", sutis): o nome da praia ao longo da orla no mapa, as coordenadas da loja (08°07′14″S · 34°53′58″O, do link do Apple Maps) no endereço e no rodapé, a legenda do silêncio sobre sol e maresia e a faixa quadriculada de chegada no alto do rodapé. Só o que é verdade; nada de dado inventado.
+- Detalhes locais e automotivos (pedido do usuário: "referências ao automotivo e à Praia de Boa Viagem", sutis): o nome da praia ao longo da orla no mapa, as coordenadas da loja (08°07′14″S · 34°53′58″O, do link do Apple Maps) no endereço e no rodapé, a legenda do silêncio sobre sol e maresia, a ficha da praia ao lado do silêncio (mapa da orla com o vento do mar; sol, maresia, chuva e areia descritos sem números nem promessas) e a faixa quadriculada de chegada no alto do rodapé. Só o que é verdade; nada de dado inventado, e nada que prometa resultado dos serviços.
 - O filme e as fotos foram gerados como ilustrações, não são trabalhos reais da empresa; o rodapé avisa ("Fotos e vídeo ilustrativos").
 
 ## Arquitetura atual (v6.2, gramática "Baias de serviço")
@@ -36,7 +36,7 @@ A página é o corredor de uma oficina percorrido baia por baia. Cada ato é um 
 | hero | `#inicio` | 2,3 / 1,5 | WebGL em camadas → **scrub 01** (f0 → f168: aproximação e jato; no celular só o jato, num quadrado) → foto do último quadro | título + Agendar |
 | wash | `#lavagem` (handoff 0) | 1,2 / 1,0 | Foto do mesmo quadro em dois planos (máscara de profundidade suave; o carro chega um pouco mais perto que o fundo); "Ver de perto" com o recorte no tamanho do intermediário; a borda do jato acende e vira a linha | 01, sobe do primeiro plano |
 | polish | `#polimento` (handoff 0) | 1,7 / 1,4 | Três renders alinhados (limpa, riscos acesos, reflexo) em janelas móveis; a linha mostra os riscos na ida e limpa na volta; termina no reflexo perfeito; "Ver antes" | 02, revelado pela linha |
-| (silêncio) | `.quiet` | ~0,9 de fluxo | Só tipografia: "Proteção / que você não vê. / Mas o carro sente." | — |
+| (silêncio) | `.quiet` | ~1 de fluxo | Nenhuma mídia: "Proteção / que você não vê. / Mas o carro sente." e, ao lado (embaixo no tablet e no celular), a ficha da praia: o mapa da orla (OpenStreetMap) com a loja e o vento que vem do mar, o que a pintura enfrenta ali (Sol, Maresia, Chuva, Areia) e "A seguir" 03/04. Pedido: "coloque mais detalhes nessa página" | — |
 | ceramic | `#ceramic` | 3,2 / 2,6 | PICO. Vista explodida em materiais físicos (MeshPhysicalMaterial, luzes de área, mapa de ambiente), câmera anda poucos graus, separação pela pessoa, linha entre as camadas, gotas no coating; fecha numa costura de luz vertical | 03, fica enquanto abre |
 | ppf | `#ppf` (handoff 0) | 1,3 / 1,2 | Macro à esquerda da costura (no celular, a tela toda), película arrastável (`#film`), sem cor; escurece em vidro | 04, ao lado da macro |
 | interior | `#interior` (handoff 0) | 1,4 / 1,2 | O mesmo vidro, limpo pela linha; foto em dois planos, pouco movimento; pontos Couro/Acabamentos/Superfícies/Detalhes e lupa parada ao lado deles | 05, nasce do primeiro ponto |
@@ -84,6 +84,7 @@ QA da v6 com Playwright/Chromium usando WebGL por software (ANGLE/SwiftShader): 
 - `assets/ppf/`: `off-d`/`film-d` (farol e capô, 1533×1555) e `off-m`/`film-m` (1946×2160), `scripts/frames/build_ppf.py`.
 - `result-1920/2560/3200.webp` e `result-m.webp` (o quadro 84; também o começo do filme final). `assets/interior/`: `far-3584/4608.webp`, `near-3584.webp` e o recorte do celular `far-m`/`near-m`.
 - `assets/route.svg`: mapa a partir de `scripts/data/map.json` (OpenStreetMap, ODbL); a atribuição aparece no mapa e no rodapé.
+- `assets/coast-map.svg` e o desenho por cima dele no `index.html` (entre `<!-- coast:start -->` e `<!-- coast:end -->`): o mapa da orla do silêncio, gerados por `scripts/data/build_coast_svg.py` do mesmo `map.json` (não editar à mão).
 - `assets/posters/` e `og.jpg`: quadros do hero e do Ceramic para sem WebGL e carregamento (2880×1800, 1440 e 1170×2532, perfil alto, q90), gerados com `node scripts/posters.cjs` (site rodando).
 - Logo: `jetcar-mask.png` é a fonte; `scripts/trace-logo.cjs` gera `jetcar-logo.svg` e `js/logo-data.js`.
 

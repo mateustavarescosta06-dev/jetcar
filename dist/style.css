@@ -253,6 +253,37 @@ main { position: relative; }
 .quiet-type span + span { color: var(--ink-mute); }
 .quiet-type .quiet-last { margin-top: .32em; color: var(--ink); font-style: italic; }
 .quiet-note { max-width: 1240px; margin-top: var(--s7); font: 500 15px/1.5 var(--sans); letter-spacing: .02em; color: var(--ink-mute); }
+/* a ficha da praia ao lado do silêncio: o mapa da orla (scripts/data/build_coast_svg.py), o que a
+   pintura enfrenta e o que vem a seguir. Tudo em fio fino e texto pequeno: o título manda */
+.quiet { grid-template-columns: minmax(0, 1fr) clamp(300px, 25vw, 400px); column-gap: clamp(40px, 5vw, 96px); align-items: center; }
+.quiet .quiet-type { font-size: clamp(52px, 7.2vw, 136px); }
+.quiet-sheet .kicker { margin-bottom: var(--s4); }
+.quiet-map { margin: 0 0 var(--s6); }
+.quiet-map-box { position: relative; aspect-ratio: 4 / 3; overflow: hidden; background: var(--canvas); box-shadow: inset 0 0 0 1px var(--rule); }
+.quiet-map-box img, .quiet-map-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.quiet-map figcaption { margin-top: var(--s3); font: 400 13px/1.45 var(--sans); color: var(--ink-mute); }
+.quiet-map-art text { font-family: var(--cond); font-weight: 700; letter-spacing: .14em; text-transform: uppercase; fill: var(--ink-mute); }
+.quiet-map-art .q-beach { font-style: italic; fill: var(--ink-soft); }
+.quiet-map-art .q-store { font-weight: 800; letter-spacing: .08em; fill: var(--ink); }
+.quiet-map-art .q-street { font-family: var(--sans); font-weight: 500; letter-spacing: .04em; text-transform: none; }
+.quiet-map-art .q-wind-name { font-family: var(--sans); font-weight: 500; letter-spacing: .06em; text-transform: none; font-style: italic; }
+.quiet-map-art .q-wind { fill: none; stroke: rgba(242, 241, 237, .5); stroke-width: 8; stroke-dasharray: 22 58; stroke-linecap: round; }
+.quiet-map-art .q-head { fill: none; stroke: rgba(242, 241, 237, .5); stroke-width: 8; stroke-linecap: round; stroke-linejoin: round; }
+.quiet-map-art .q-dot { fill: var(--red); }
+.quiet-map-art .q-ring { fill: none; stroke: rgba(255, 255, 255, .35); stroke-width: 7; }
+.quiet-map-art .q-rule { fill: none; stroke: var(--ink-mute); stroke-width: 7; stroke-linecap: square; }
+/* o vento anda devagar do mar para a terra, só com o silêncio na tela (js/ui.js) */
+.quiet.is-in .q-wind { animation: q-wind 2.6s linear infinite; }
+@keyframes q-wind { to { stroke-dashoffset: -80; } }
+@media (prefers-reduced-motion: reduce) { .quiet.is-in .q-wind { animation: none; } }
+.reduced .quiet .q-wind { animation: none; }
+.quiet-facts { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--rule); }
+.quiet-facts li { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: var(--s3); padding: var(--s3) 0; border-bottom: 1px solid var(--rule); }
+.quiet-facts b { font: 800 15px/1.4 var(--cond); letter-spacing: .1em; text-transform: uppercase; }
+.quiet-facts span { font-size: 14px; line-height: 1.45; color: var(--ink-soft); }
+.quiet-next { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s2) var(--s5); margin-top: var(--s5); font: 600 12px/1 var(--sans); letter-spacing: .16em; text-transform: uppercase; color: var(--ink-mute); }
+.quiet-next a { display: inline-flex; align-items: baseline; gap: var(--s2); padding: var(--s2) 0; font: 700 15px/1 var(--cond); letter-spacing: .08em; color: var(--ink); text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 6px; text-decoration-color: rgba(255, 255, 255, .35); transition: text-decoration-color .18s var(--ease); }
+.quiet-next b { font: 800 italic 15px/1 var(--cond); color: var(--red-ink); }
 /* coordenadas da loja (do link do Apple Maps), como numa ficha técnica */
 .coords { margin-top: var(--s3); font: 600 12px/1.2 var(--sans); letter-spacing: .16em; color: var(--ink-mute); font-variant-numeric: tabular-nums; }
 .footer .coords { margin: 0; padding: 0 0 4px; font-size: 12px; color: rgba(255, 255, 255, .78); }
@@ -407,7 +438,7 @@ input[type="range"]:focus-visible { outline: 2px solid var(--red-ink); outline-o
 .faq-list details[open] summary i::after { transform: rotate(0); }
 .faq-list details p { padding: 0 36px var(--s6) 0; font-size: 17px; line-height: 1.6; color: var(--ink-soft); }
 .faq-list details a { color: #fff; text-decoration: underline; text-underline-offset: 4px; }
-@media (hover: hover) and (pointer: fine) { .faq-list summary:hover .q { color: var(--red-ink); } }
+@media (hover: hover) and (pointer: fine) { .faq-list summary:hover .q { color: var(--red-ink); } .quiet-next a:hover { text-decoration-color: var(--red); } }
 .footer { position: relative; padding: var(--s11) var(--pad) calc(var(--s6) + env(safe-area-inset-bottom)); background: var(--red); color: #fff; }
 .footer :focus-visible { outline-color: #fff; }
 .footer-top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--s7); padding-bottom: var(--s8); border-bottom: 1px solid rgba(255, 255, 255, .4); }
@@ -448,6 +479,13 @@ input[type="range"]:focus-visible { outline: 2px solid var(--red-ink); outline-o
   .bar-trace b.is-on { background: var(--red); outline-color: var(--red); }
   .bar-link, .bar-sound { display: none; }
   .bar-menu { display: grid; }
+  /* a ficha da praia desce para baixo do título: o mapa à esquerda, a lista à direita */
+  .quiet { grid-template-columns: minmax(0, 1fr); row-gap: var(--s9); }
+  .quiet .quiet-type { font-size: clamp(52px, 8.2vw, 136px); }
+  .quiet-sheet { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: var(--s8); align-items: start; }
+  .quiet-sheet .kicker { grid-column: 1 / -1; }
+  .quiet-map { grid-row: 2 / span 2; margin: 0; }
+  .quiet-map-box { aspect-ratio: 1; }
 }
 @media (max-width: 960px) {
   .config { grid-template-columns: 1fr; }
@@ -478,7 +516,11 @@ input[type="range"]:focus-visible { outline: 2px solid var(--red-ink); outline-o
   .film-control { margin-top: var(--s2); }
   .film-control input { height: 36px; }
   .quiet { min-height: calc(var(--svh) * .8); }
-  .quiet-type { font-size: clamp(44px, 13.4vw, 64px); }
+  .quiet .quiet-type { font-size: clamp(44px, 13.4vw, 64px); }
+  .quiet-sheet { display: block; }
+  .quiet-map { margin-bottom: var(--s5); }
+  .quiet-map-box { aspect-ratio: 16 / 10; }
+  .quiet-facts li { grid-template-columns: 76px minmax(0, 1fr); }
   .final-copy { left: var(--pad); right: var(--pad); bottom: calc(var(--chrome) + 6vh + env(safe-area-inset-bottom)); }
   .final-copy h2 { font-size: clamp(36px, 10.4vw, 48px); }
   .final-logo { width: 150px; margin-bottom: var(--s3); }

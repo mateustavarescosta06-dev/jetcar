@@ -258,3 +258,15 @@ mostra um quadro de cada vez).
 - Cortes com as fotos (medidos contra a foto): abertura 41,6 dB (H.264) e 42,0 dB (VP9); final
   46,7 / 41,3 dB (H.264) e 46,7 / 44,2 dB (VP9); celular 40,2 dB (H.264, antes 38,4) e 39,1 dB (VP9).
 - Peso: abertura 8,3 MB (H.264) e 10,2 MB (VP9); final 3,9 / 4,9 MB; celular 2,1 / 2,5 MB.
+
+Pedido seguinte, sobre o silêncio ("Proteção que você não vê"): "coloque mais detalhes nessa
+página". A tela tinha só o título e uma legenda, com a metade direita vazia.
+
+- Continua sem mídia (a pausa antes do pico), mas ganhou a ficha da praia ao lado do título (no
+  tablet e no celular, embaixo): o mapa da orla de Boa Viagem a partir do OpenStreetMap (mar, ruas
+  apagadas, costa, a loja, "Praia de Boa Viagem", "Oceano Atlântico", norte e escala de 500 m) com
+  o vento que vem do mar em linhas tracejadas que andam devagar só com a seção na tela (paradas com
+  movimento reduzido); a lista do que a pintura enfrenta ali (Sol, Maresia, Chuva, Areia), em fio
+  fino e texto curto, sem números nem promessas; e "A seguir: 03 Ceramic Coating, 04 PPF".
+- O título fica do mesmo tamanho no desktop grande e cabe com a ficha numa tela de 1440×900.
+- Gerador: `scripts/data/build_coast_svg.py`.
