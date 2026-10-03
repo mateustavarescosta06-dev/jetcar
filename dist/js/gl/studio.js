@@ -1,7 +1,7 @@
 // Peças do estúdio 3D: o capô (superfície paramétrica com vinco), a pintura automotiva
 // (base metálica com flocos, verniz que reflete as barras de luz, micro-riscos que só aparecem
-// sob a luz de inspeção, película PPF com borda), gotas que refratam, a boina da politriz, as
-// camadas da pintura em vista explodida, o vidro e o interior em relevo (2,5D).
+// sob a luz de inspeção), a geometria das gotas, a boina da politriz, o fundo, o piso e os
+// números do fundo. As camadas do Ceramic são materiais físicos (physical.js).
 // Todos os materiais escrevem no alfa a nitidez do pixel (profundidade de campo no pós).
 import * as THREE from '../../vendor/three.min.js';
 import { BARS, NOISE, COLOR, MAX_BARS } from './glsl.js';
@@ -38,46 +38,80 @@ export function hoodGeometry(sx = 320, sz = 220) {
 }
 
 // ——— Textura de micro-riscos (hologramas do polimento mal feito) ———
-// R,G = direção do risco (tangente), B = presença. Arcos em volta de vários centros, como a
-// marca de uma politriz rotativa, e alguns riscos retos de lavagem.
+// R,G = direção do risco em ângulo dobrado vezes a presença, em torno de 0,5 (um risco é uma
+// linha: θ e θ+π são o mesmo risco); B = presença. Com o fundo neutro (0,5; 0,5; 0), o
+// antisserrilhado do canvas e os mipmaps só encurtam o vetor, nunca giram a direção (com a
+// tangente guardada direto, a borda de cada traço apontava para outro lado e o risco revelado
+// pela luz se partia em tracinhos). Arcos em volta de vários centros, como a marca de uma
+// politriz rotativa, e alguns riscos retos de lavagem.
 export function swirlTexture(size = 1024, seed = 11) {
   const cv = document.createElement('canvas');
   cv.width = cv.height = size;
   const g = cv.getContext('2d');
-  g.fillStyle = '#000';
+  g.fillStyle = 'rgb(128,128,0)';
   g.fillRect(0, 0, size, size);
   const R = rng(seed);
+  // escala em relação a uma textura de 1024 (o desenho é o mesmo em qualquer tamanho)
+  const k = size / 1024;
   g.lineCap = 'round';
+  const rgb = (t, a) => `rgb(${Math.round((0.5 + 0.5 * a * Math.cos(t)) * 255)},${Math.round((0.5 + 0.5 * a * Math.sin(t)) * 255)},${Math.round(a * 255)})`;
   const seg = (x0, y0, x1, y1, w, a) => {
-    const tx = x1 - x0, ty = y1 - y0, l = Math.hypot(tx, ty) || 1;
-    const r = Math.round(((tx / l) * 0.5 + 0.5) * 255), gg = Math.round(((ty / l) * 0.5 + 0.5) * 255);
-    g.strokeStyle = `rgb(${r},${gg},${Math.round(a * 255)})`;
-    g.lineWidth = w;
+    g.strokeStyle = rgb(Math.atan2(y1 - y0, x1 - x0) * 2, a);
+    g.lineWidth = w * k;
     g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke();
   };
-  for (let k = 0; k < 14; k++) {
+  // Cada arco sai num traço só, com um degradê cônico em volta do centro: a cor guarda a direção
+  // da tangente, que gira junto com o arco (no ângulo φ em volta do centro, 2φ + π em ângulo
+  // dobrado). Em segmentos retos de cor fixa, a direção andava aos saltos e a luz acendia cada
+  // risco em tracinhos. Um degradê por centro e presença (cache); sem createConicGradient
+  // (navegadores antigos), os segmentos.
+  const conic = typeof g.createConicGradient === 'function';
+  const grads = new Map();
+  const conicAt = (x, y, a) => {
+    const key = `${x}|${y}|${a}`;
+    let gr = grads.get(key);
+    if (!gr) {
+      gr = g.createConicGradient(0, x, y);
+      for (let j = 0; j <= 36; j++) gr.addColorStop(j / 36, rgb(4 * Math.PI * j / 36 + Math.PI, a));
+      grads.set(key, gr);
+    }
+    return gr;
+  };
+  // 14 grupos; o comprimento dos arcos cresce de um grupo para o outro (o primeiro fica vazio).
+  // As medidas valem para a textura de 2048 (k = 2): qualquer tamanho desenha o mesmo padrão, só
+  // com mais ou menos pixels (antes, o contador do laço tinha o mesmo nome da escala e a textura
+  // de 1024 do celular saía com outro desenho, de arcos duas vezes mais longos).
+  for (let c = 0; c < 14; c++) {
     const cx = R() * size, cy = R() * size;
     for (let i = 0; i < 150; i++) {
       const rad = 6 + R() * size * 0.42;
       const a0 = R() * Math.PI * 2;
-      const len = Math.min(Math.PI * 1.2, (18 + R() * 120) / rad);
-      const steps = Math.max(3, Math.ceil(len * rad / 6));
+      const len = Math.min(Math.PI * 1.2, (18 + R() * 120) * c * k / (2 * rad));
       const w = 0.6 + R() * 0.9, a = 0.45 + R() * 0.55;
-      let px = cx + Math.cos(a0) * rad, py = cy + Math.sin(a0) * rad;
-      for (let s = 1; s <= steps; s++) {
-        const an = a0 + (len * s) / steps;
-        const qx = cx + Math.cos(an) * rad, qy = cy + Math.sin(an) * rad;
-        // repete nas bordas para a textura ladrilhar sem emenda
-        for (const ox of [-size, 0, size]) for (const oy of [-size, 0, size]) {
-          if (Math.min(px, qx) + ox > size + 2 || Math.max(px, qx) + ox < -2 || Math.min(py, qy) + oy > size + 2 || Math.max(py, qy) + oy < -2) continue;
-          seg(px + ox, py + oy, qx + ox, qy + oy, w, a);
+      if (!c) continue;
+      g.lineWidth = w * k;
+      // repete nas bordas para a textura ladrilhar sem emenda
+      for (const ox of [-size, 0, size]) for (const oy of [-size, 0, size]) {
+        const x = cx + ox, y = cy + oy;
+        if (x - rad > size + 2 || x + rad < -2 || y - rad > size + 2 || y + rad < -2) continue;
+        if (conic) {
+          g.strokeStyle = conicAt(x, y, Math.round(a * 16) / 16);
+          g.beginPath(); g.arc(x, y, rad, a0, a0 + len); g.stroke();
+          continue;
         }
-        px = qx; py = qy;
+        const steps = Math.max(3, Math.ceil(len * rad / (3 * c * k)));
+        let px = x + Math.cos(a0) * rad, py = y + Math.sin(a0) * rad;
+        for (let s = 1; s <= steps; s++) {
+          const an = a0 + (len * s) / steps;
+          const qx = x + Math.cos(an) * rad, qy = y + Math.sin(an) * rad;
+          seg(px, py, qx, qy, w, a);
+          px = qx; py = qy;
+        }
       }
     }
   }
   for (let i = 0; i < 120; i++) {
-    const x = R() * size, y = R() * size, an = R() * Math.PI, l = 20 + R() * 90;
+    const x = R() * size, y = R() * size, an = R() * Math.PI, l = (20 + R() * 90) * k;
     seg(x, y, x + Math.cos(an) * l, y + Math.sin(an) * l, 0.6 + R() * 0.6, 0.35 + R() * 0.4);
   }
   const t = new THREE.CanvasTexture(cv);
@@ -226,23 +260,29 @@ export function paintMaterial(lights, shared, swirl) {
           nc = normalize(n + vec3(vnoise(q) - 0.5, 0.0, vnoise(q + 9.1) - 0.5) * 0.012 * film);
         }
         vec3 r = reflect(-v, nc);
+        barsFootprint(r);
 
         // Verniz: reflexo nítido das barras de luz e do estúdio.
         float F = fresnel(NdV, 0.045) * uCoat;
         vec3 coat = (barsRadiance(vW, r, uRough) + studioAmbient(r)) * F;
 
         // Flocos metálicos sob o verniz (somem em média quando ficam menores que um pixel).
-        vec2 cell = vW.xz * 1500.0;
+        // Células de 0,33 mm: com 0,67 mm, na frente do capô em 2× cada floco tinha 2 px e
+        // brilhava 90 vezes mais que o vão, um chuvisco de pontos brancos em vez do brilho metálico.
+        vec2 cell = vW.xz * 3000.0;
         vec2 id = floor(cell);
         vec2 h2 = hash22(id);
         float has = step(0.4, hash12(id + 3.1));
         float inF = 1.0 - smoothstep(0.2, 0.4, length(fract(cell) - 0.5));
         float px = length(fwidth(cell));
         float detail = 1.0 - smoothstep(0.35, 1.2, px);
-        // flocos quase paralelos à superfície: brilham só perto dos reflexos (o brilho metálico)
-        vec3 fn = normalize(n + vec3(h2.x - 0.5, 0.0, h2.y - 0.5) * 0.22);
+        // flocos quase paralelos à superfície: brilham só perto dos reflexos (o brilho metálico).
+        // A inclinação sorteada por célula só vale quando o floco tem pixels; menor que isso, um
+        // pixel amostrava a normal de uma célula só e acendia ou não (chuvisco de pontos). Aí vale a
+        // média das inclinações: o reflexo das barras espalhado pela largura do sorteio.
+        vec3 fn = normalize(n + vec3(h2.x - 0.5, 0.0, h2.y - 0.5) * 0.22 * detail);
         vec3 fr = reflect(-v, fn);
-        vec3 flake = barsRadiance(vW, fr, 0.03) * mix(0.3, has * inF, detail) * uFlake;
+        vec3 flake = barsRadiance(vW, fr, mix(0.11, 0.03, detail)) * mix(0.3, has * inF, detail) * uFlake;
         vec3 base = uBase * (barsDiffuse(vW, n) * 0.35 + uFill * (0.6 + 0.4 * n.y)) + flake * uBase * 1.6;
 
         // Luz de inspeção (LED pequeno): ponto quente no verniz e, em volta, os micro-riscos,
@@ -270,7 +310,11 @@ export function paintMaterial(lights, shared, swirl) {
         float polished = smoothstep(uPolishZ - 0.012, uPolishZ + 0.012, vW.z);
         vec4 sw = texture2D(tSwirl, vW.xz * uSwirlScale);
         float scratch = sw.b * uSwirl * (1.0 - polished) * uCoat;
-        vec3 T = vec3(sw.r * 2.0 - 1.0, 0.0, sw.g * 2.0 - 1.0);
+        // direção: o vetor (2R−1, 2G−1) é o ângulo dobrado; volta à tangente pela metade do ângulo
+        vec2 dv = sw.rg * 2.0 - 1.0;
+        float dl = max(length(dv), 1e-4);
+        float c2 = dv.x / dl;
+        vec3 T = vec3(sqrt(max(0.5 + 0.5 * c2, 0.0)), 0.0, sign(dv.y + 1e-6) * sqrt(max(0.5 - 0.5 * c2, 0.0)));
         T = normalize(T - n * dot(T, n) + 1e-5);
         vec3 Bt = cross(n, T);
         float ht = dot(H, T), hb = dot(H, Bt), hn = max(dot(H, n), 1e-3);
@@ -325,52 +369,6 @@ export function dropGeometry() {
   return g;
 }
 
-export function dropMaterial(lights, shared) {
-  return new THREE.ShaderMaterial({
-    vertexShader: /* glsl */ `
-      varying vec3 vW; varying vec3 vN; varying vec3 vC; varying float vR; varying float vViewZ;
-      void main() {
-        vec4 w = modelMatrix * instanceMatrix * vec4(position, 1.0);
-        vN = normalize(mat3(modelMatrix) * mat3(instanceMatrix) * normal);
-        vec4 c = modelMatrix * instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0);
-        vC = c.xyz; vR = length((modelMatrix * instanceMatrix * vec4(1.0, 0.0, 0.0, 0.0)).xyz);
-        vW = w.xyz;
-        vec4 mv = viewMatrix * w; vViewZ = -mv.z;
-        gl_Position = projectionMatrix * mv;
-      }`,
-    fragmentShader: /* glsl */ `
-      uniform vec3 uCam; uniform vec3 uPaint; uniform vec2 uKeyDir; uniform vec3 uKeyC; uniform float uDim;
-      varying vec3 vW; varying vec3 vN; varying vec3 vC; varying float vR;
-      ${BARS}
-      ${DOF}
-      void main() {
-        vec3 n = normalize(vN);
-        vec3 v = normalize(uCam - vW);
-        float NdV = max(dot(n, v), 1e-3);
-        float F = fresnel(NdV, 0.02);
-        vec3 r = reflect(-v, n);
-        vec3 refl = barsRadiance(vW, r, 0.0012) + studioAmbient(r) * 1.5;
-        // refração: através da gota vemos a pintura escura, e a luz que a gota concentra
-        // aparece do lado oposto ao da luz principal
-        vec3 t = refract(-v, n, 0.75);
-        vec3 lp = (vW - vC) / max(vR, 1e-5);
-        vec2 hit = lp.xz + t.xz * (lp.y / max(-t.y, 0.25));
-        float ring = 1.0 - smoothstep(0.5, 1.0, length(hit));
-        float caust = smoothstep(0.2, 0.9, dot(hit, uKeyDir)) * ring;
-        vec3 below = uPaint * (0.25 + 0.5 * ring) + uKeyC * caust * caust;
-        vec3 col = below * (1.0 - F) + refl * F;
-        gl_FragColor = vec4(col * uDim, sharpness());
-      }`,
-    uniforms: {
-      ...lights.uniforms,
-      ...shared,
-      uPaint: { value: new THREE.Color(0.008, 0.0085, 0.0095) },
-      uKeyDir: { value: new THREE.Vector2(-0.7, 0.2).normalize() },
-      uKeyC: { value: new THREE.Color(0.9, 0.9, 0.92) },
-      uDim: { value: 1 },
-    },
-  });
-}
 
 // ——— Boina de polimento (espuma) com o prato de apoio ———
 export function polisher(lights, shared) {
@@ -427,143 +425,9 @@ export function polisher(lights, shared) {
   return group;
 }
 
-// ——— Camadas da pintura (vista explodida) ———
-function roundedRect(w, h, r) {
-  const s = new THREE.Shape();
-  const x = -w / 2, y = -h / 2;
-  s.moveTo(x + r, y);
-  s.lineTo(x + w - r, y); s.quadraticCurveTo(x + w, y, x + w, y + r);
-  s.lineTo(x + w, y + h - r); s.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-  s.lineTo(x + r, y + h); s.quadraticCurveTo(x, y + h, x, y + h - r);
-  s.lineTo(x, y + r); s.quadraticCurveTo(x, y, x + r, y);
-  return s;
-}
-
-export function slabGeometry(w, d, t) {
-  const bevel = Math.min(t * 0.3, 0.0016);
-  const g = new THREE.ExtrudeGeometry(roundedRect(w, d, 0.028), { depth: t - bevel * 2, bevelEnabled: true, bevelThickness: bevel, bevelSize: bevel, bevelSegments: 3, curveSegments: 8 });
-  g.translate(0, 0, bevel);
-  g.rotateX(-Math.PI / 2); // espessura para cima (y)
-  return g;
-}
-
 /** Material das camadas: kind = metal | primer | base | clear | film. */
-export function layerMaterial(kind, lights, shared) {
-  const transparent = kind === 'clear' || kind === 'film';
-  const m = new THREE.ShaderMaterial({
-    vertexShader: VERT,
-    fragmentShader: /* glsl */ `
-      uniform vec3 uCam; uniform float uKind; uniform float uDim; uniform float uGlow; uniform float uDetail; uniform vec3 uPrimer;
-      varying vec3 vW; varying vec3 vN; varying vec2 vUv;
-      ${BARS}
-      ${NOISE}
-      ${DOF}
-      void main() {
-        vec3 n = normalize(vN);
-        vec3 v = normalize(uCam - vW);
-        if (dot(n, v) < 0.0) n = -n;
-        float NdV = max(dot(n, v), 1e-3);
-        vec3 r = reflect(-v, n);
-        vec3 col; float a = 1.0;
-        float side = 1.0 - smoothstep(0.7, 0.95, abs(n.y)); // bordas da placa
-        if (uKind < 0.5) {
-          // estrutura: metal escovado (riscos finos no comprimento)
-          float brush = vnoise(vec2(vW.x * 30.0, vW.z * 2400.0) * uDetail) * 0.5 + vnoise(vec2(vW.x * 8.0, vW.z * 900.0) * uDetail) * 0.5;
-          vec3 f0 = vec3(0.46, 0.47, 0.49) * (0.82 + brush * 0.3);
-          vec3 F = f0 + (1.0 - f0) * pow(clamp(1.0 - NdV, 0.0, 1.0), 5.0);
-          col = (barsRadiance(vW, r, 0.05 + brush * 0.03) + studioAmbient(r) * 2.0) * F + barsDiffuse(vW, n) * 0.01;
-        } else if (uKind < 1.5) {
-          // primer: fosco, cinza claro
-          float F = fresnel(NdV, 0.03);
-          col = uPrimer * (barsDiffuse(vW, n) * 0.4 + 0.06) + barsRadiance(vW, r, 0.25) * F * 0.3;
-        } else if (uKind < 2.5) {
-          // cor: base metálica grafite (flocos)
-          vec2 cell = vW.xz * 900.0 * uDetail; vec2 id = floor(cell); vec2 h2 = hash22(id);
-          float has = step(0.45, hash12(id + 3.1));
-          float detail = 1.0 - smoothstep(0.35, 1.2, length(fwidth(cell)));
-          vec3 fn = normalize(n + vec3(h2.x - 0.5, 0.0, h2.y - 0.5) * 0.9);
-          vec3 flake = barsRadiance(vW, reflect(-v, fn), 0.05) * mix(0.25, has, detail);
-          col = vec3(0.016, 0.017, 0.019) * (barsDiffuse(vW, n) * 0.6 + 0.04) + flake * vec3(0.016, 0.017, 0.019) * 12.0;
-          col += barsRadiance(vW, r, 0.12) * fresnel(NdV, 0.02) * 0.3;
-        } else if (uKind < 3.5) {
-          // verniz: transparente, reflexo nítido; as bordas brilham (Fresnel rasante)
-          float F = fresnel(NdV, 0.045);
-          col = (barsRadiance(vW, r, 0.002) + studioAmbient(r)) * F + vec3(0.004, 0.0045, 0.005) * side;
-          a = clamp(0.1 + F * 0.9 + side * 0.25, 0.0, 1.0);
-        } else {
-          // proteção (coating/PPF): película finíssima com leve iridescência
-          float F = fresnel(NdV, 0.04);
-          vec3 iri = 0.88 + 0.12 * cos(6.2831 * (vec3(0.0, 0.33, 0.67) + 1.6 / max(NdV, 0.2)));
-          col = (barsRadiance(vW, r, 0.004) + studioAmbient(r)) * F * iri + vec3(0.006, 0.0035, 0.0035) * side * uGlow;
-          a = clamp(0.06 + F * 0.9 + side * 0.3, 0.0, 1.0);
-        }
-        col *= uDim;
-        gl_FragColor = ${transparent ? 'vec4(col, a)' : 'vec4(col, sharpness())'};
-      }`,
-    uniforms: { ...lights.uniforms, ...shared, uKind: { value: ['metal', 'primer', 'base', 'clear', 'film'].indexOf(kind) }, uDim: { value: 1 }, uGlow: { value: 1 }, uDetail: { value: 1 }, uPrimer: { value: new THREE.Color(0.07, 0.07, 0.068) } },
-  });
-  // transparentes: cor = reflexo + fundo × (1 − a); o alfa (nitidez) do que está atrás fica intacto
-  if (transparent) keepAlpha(m);
-  return m;
-}
 
-// ——— Vidro (para-brisa) ———
-export function glassMaterial(lights, shared) {
-  return keepAlpha(new THREE.ShaderMaterial({
-    vertexShader: VERT,
-    fragmentShader: /* glsl */ `
-      uniform vec3 uCam; uniform float uReflect; uniform float uTint;
-      varying vec3 vW; varying vec3 vN;
-      ${BARS}
-      void main() {
-        vec3 n = normalize(vN); vec3 v = normalize(uCam - vW);
-        if (dot(n, v) < 0.0) n = -n;
-        float F = fresnel(max(dot(n, v), 0.0), 0.04);
-        vec3 refl = (barsRadiance(vW, reflect(-v, n), 0.0015) + studioAmbient(reflect(-v, n)) * 3.0) * F * uReflect;
-        // a = quanto do fundo é coberto (reflexo + um pouco de absorção do vidro)
-        float a = clamp(F * uReflect + uTint, 0.0, 1.0);
-        gl_FragColor = vec4(refl, a);
-      }`,
-    uniforms: { ...lights.uniforms, ...shared, uReflect: { value: 1 }, uTint: { value: 0.12 } },
-    side: THREE.DoubleSide,
-  }));
-}
 
-// ——— Interior em relevo: foto + mapa de profundidade deslocando uma malha ———
-export function interiorMesh(shared, colorTex, depthTex, w = 2.1, h = 1.4) {
-  const g = new THREE.PlaneGeometry(w, h, 240, 160);
-  const m = new THREE.ShaderMaterial({
-    vertexShader: /* glsl */ `
-      uniform sampler2D tDepth; uniform float uDepth;
-      varying vec2 vUv; varying float vViewZ; varying float vD;
-      void main() {
-        vUv = uv;
-        float d = texture2D(tDepth, uv).r;
-        vD = d;
-        vec3 p = position + vec3(0.0, 0.0, d * uDepth);
-        vec4 mv = modelViewMatrix * vec4(p, 1.0);
-        vViewZ = -mv.z;
-        gl_Position = projectionMatrix * mv;
-      }`,
-    fragmentShader: /* glsl */ `
-      uniform sampler2D tColor; uniform float uExposure; uniform float uLight; uniform float uLightX;
-      varying vec2 vUv; varying float vD;
-      ${COLOR}
-      ${DOF}
-      void main() {
-        vec3 c = srgbToLinear(texture2D(tColor, vUv).rgb);
-        // uma luz de inspeção passa pelo interior (realça bancos e costuras)
-        float gx = (vUv.x - uLightX) / 0.12;
-        float g = exp(-gx * gx);
-        c *= uExposure * (1.0 + uLight * g * 1.6 * smoothstep(0.2, 0.7, vD));
-        gl_FragColor = vec4(c, sharpness());
-      }`,
-    uniforms: { ...shared, tColor: { value: colorTex }, tDepth: { value: depthTex }, uDepth: { value: 0.55 }, uExposure: { value: 1 }, uLight: { value: 0 }, uLightX: { value: -1 } },
-  });
-  const mesh = new THREE.Mesh(g, m);
-  mesh.frustumCulled = false;
-  return mesh;
-}
 
 // ——— Fundo do estúdio e piso ———
 export function backdrop(lights, shared) {
@@ -591,7 +455,9 @@ export function backdrop(lights, shared) {
       void main() {
         vec3 n = vec3(0.0, 1.0, 0.0); vec3 v = normalize(uCam - vW);
         float F = fresnel(max(dot(n, v), 0.0), 0.04);
-        vec3 col = vec3(0.0016) + barsRadiance(vW, reflect(-v, n), 0.04) * F * 0.8;
+        vec3 rf = reflect(-v, n);
+        barsFootprint(rf);
+        vec3 col = vec3(0.0016) + barsRadiance(vW, rf, 0.04) * F * 0.8;
         float fade = 1.0 - smoothstep(4.0, 22.0, length(vW.xz));
         gl_FragColor = vec4(col * fade * uLevel, sharpness());
       }`,
@@ -646,59 +512,3 @@ export function typePlane(text, shared, { h = 1.4, color = 0.05 } = {}) {
   return mesh;
 }
 
-// ——— Fibra de carbono (acabamento do painel, logo atrás do para-brisa) ———
-// Trama sarja 2×2: cada mecha é um feixe de fibras numa direção; o brilho das fibras segue o
-// modelo de Kajiya-Kay (acende quando o meio-vetor fica perpendicular à fibra), então as
-// mechas trocam de brilho em xadrez conforme a luz anda. Por cima, a resina com verniz.
-export function carbonMaterial(lights, shared) {
-  return new THREE.ShaderMaterial({
-    vertexShader: VERT,
-    fragmentShader: /* glsl */ `
-      uniform vec3 uCam; uniform vec2 uTows; uniform float uDim;
-      varying vec3 vW; varying vec3 vN; varying vec2 vUv;
-      ${BARS}
-      ${DOF}
-      // brilho de fibra para as barras de luz: amostra o ponto de cada barra mais perto do pixel
-      float fiber(vec3 T, vec3 n, vec3 v, vec3 p) {
-        float acc = 0.0;
-        for (int i = 0; i < MAX_BARS; i++) {
-          if (i >= uBarN) break;
-          vec3 c = uBarC[i].xyz; vec3 a = uBarA[i].xyz; float l = uBarA[i].w;
-          vec3 q = c + clamp(dot(p - c, a), -l, l) * a;
-          vec3 L = normalize(q - p);
-          vec3 H = normalize(L + v);
-          float th = dot(T, H);
-          float s = pow(max(1.0 - th * th, 0.0), 160.0);
-          acc += s * max(dot(n, L), 0.0) * dot(uBarI[i].rgb, vec3(0.333)) / (1.0 + dot(q - p, q - p));
-        }
-        return acc;
-      }
-      void main() {
-        vec3 n = normalize(vN);
-        vec3 v = normalize(uCam - vW);
-        if (dot(n, v) < 0.0) n = -n;
-        vec2 g = vUv * uTows;
-        vec2 cell = floor(g), f = fract(g);
-        // sarja 2×2: a mecha de cima alterna a cada duas células, deslocando uma por linha
-        float warp = step(mod(cell.x + cell.y, 4.0), 1.5);
-        // direção das fibras no espaço do mundo (u → x, v → z neste painel)
-        vec3 Tu = normalize(vec3(1.0, 0.0, 0.0) - n * n.x);
-        vec3 Tv = normalize(vec3(0.0, 0.0, 1.0) - n * n.z);
-        vec3 T = mix(Tv, Tu, warp);
-        // perfil arredondado de cada mecha (atravessando as fibras) e o sobe-desce da trama
-        float across = warp > 0.5 ? f.y : f.x;
-        float along = warp > 0.5 ? f.x : f.y;
-        float bulge = sin(across * 3.14159) * (0.75 + 0.25 * sin(along * 3.14159));
-        vec3 nb = normalize(n + (warp > 0.5 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0)) * (across - 0.5) * 0.5);
-        float fib = fiber(T, nb, v, vW) * bulge;
-        vec3 base = vec3(0.006, 0.0062, 0.0068) * (0.6 + 0.4 * bulge);
-        // resina com verniz por cima: reflexo nítido das barras
-        vec3 r = reflect(-v, n);
-        float F = fresnel(max(dot(n, v), 0.0), 0.045);
-        vec3 coat = (barsRadiance(vW, r, 0.002) + studioAmbient(r)) * F;
-        vec3 col = base + vec3(0.2, 0.205, 0.215) * fib + coat;
-        gl_FragColor = vec4(col * uDim, sharpness());
-      }`,
-    uniforms: { ...lights.uniforms, ...shared, uTows: { value: new THREE.Vector2(84, 220) }, uDim: { value: 1 } },
-  });
-}

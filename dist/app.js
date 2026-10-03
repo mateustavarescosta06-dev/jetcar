@@ -82,6 +82,8 @@ function warm(a) {
 let lastW = 0, lastH = 0, lastScale = 0, needDraw = false;
 function layout(force = false) {
   measureView();
+  // a janela foi para outra tela ou o zoom mudou: o teto da escala segue o DPR novo
+  if (quality.dpr !== view.dpr) { quality.dpr = view.dpr; applyLevel(quality); }
   for (const a of acts) a.setHeight();
   const y = scrollY;
   for (const a of acts) { a.measure(y); a.layout(); }
@@ -334,6 +336,9 @@ if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 initUi({ jump, acts, byId, lenis });
 layout(true);
 addEventListener('resize', () => layout());
+// DPR que muda sem mudar o tamanho (janela levada para outra tela): só o matchMedia avisa
+const watchDpr = () => matchMedia(`(resolution: ${devicePixelRatio}dppx)`).addEventListener?.('change', () => { layout(true); watchDpr(); }, { once: true });
+watchDpr();
 addEventListener('orientationchange', () => setTimeout(() => layout(true), 250));
 if ('ResizeObserver' in window) new ResizeObserver(() => layout()).observe(document.body);
 reduceQ.addEventListener?.('change', ev => { if (!savedMotion()) { setReduce(ev.matches); location.reload(); } });

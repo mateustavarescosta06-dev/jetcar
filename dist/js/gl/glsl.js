@@ -17,6 +17,13 @@ uniform int uBarN;
 uniform vec3 uAmbTop;
 uniform vec3 uAmbBottom;
 
+// Largura do pixel no raio refletido (radianos por pixel): soma à suavidade da borda do brilho,
+// que senão seria amostrado num ponto (degraus parados e cintilação quando a câmera mexe; o MSAA
+// não amostra o sombreamento). Quem usa chama barsFootprint(r) no corpo principal do shader,
+// fora de qualquer if (derivadas só valem em fluxo uniforme), antes de chamar barsRadiance.
+float barsPix = 0.0;
+void barsFootprint(vec3 r) { barsPix = length(fwidth(r)); }
+
 // Radiância que chega pelo raio (p, r) vinda das barras. rough espalha o reflexo.
 vec3 barsRadiance(vec3 p, vec3 r, float rough) {
   vec3 acc = vec3(0.0);
@@ -32,7 +39,7 @@ vec3 barsRadiance(vec3 p, vec3 r, float rough) {
     if (t <= 0.0) continue;
     float s = e + t * b;
     float dist = length(w0 + t * r - s * a);
-    float soft = uBarI[i].w + rough * t;
+    float soft = uBarI[i].w + rough * t + barsPix * t;
     float across = 1.0 - smoothstep(w, w + soft, dist);
     float along = 1.0 - smoothstep(l, l + soft * 2.0 + 0.04 * l, abs(s));
     acc += uBarI[i].rgb * across * along * (w / (w + 0.35 * soft));

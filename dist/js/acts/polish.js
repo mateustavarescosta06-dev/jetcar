@@ -4,7 +4,7 @@
 // tudo). Depois a boina da politriz passa e, na segunda passada da luz, aquela faixa está limpa.
 // A trajetória da luz termina na borda do card 02. O cursor inclina a barra alguns graus.
 import * as THREE from '../../vendor/three.min.js';
-import { $, view, pointer, state, clamp, lerp, span, smooth, smoother, env } from '../core.js';
+import { $, view, pointer, state, clamp, lerp, span, smooth, smoother, env, glWidth } from '../core.js';
 import { post } from '../gl/engine.js';
 import { hoodY, hoodGeometry, swirlTexture, StudioLights, sharedUniforms, paintMaterial, polisher, backdrop, typePlane } from '../gl/studio.js';
 import { Act, cardState } from './act.js';
@@ -53,7 +53,9 @@ export class PolishAct extends Act {
     const { sky, floor } = backdrop(this.lights, this.shared);
     this.scene.add(sky, floor);
     this.floor = floor;
-    this.swirl = swirlTexture(low ? 768 : 1024, 17);
+    // mapa dos riscos pelo tamanho do canvas, não pelo perfil: num desktop no perfil baixo o
+    // canvas ainda passa de 1800 px e o mapa de 1024 aparecia ampliado (riscos grossos)
+    this.swirl = swirlTexture(glWidth(quality) >= 1400 ? 2048 : 1024, 17);
     this.paint = paintMaterial(this.lights, this.shared, this.swirl);
     this.hood = new THREE.Mesh(hoodGeometry(low ? 220 : 320, low ? 150 : 220), this.paint);
     this.scene.add(this.hood);

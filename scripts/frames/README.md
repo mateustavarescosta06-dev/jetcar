@@ -32,7 +32,8 @@ Ferramentas: `ffmpeg`, `cwebp` 1.4+ (`-sharp_yuv`), e o Python acima.
 
 1. **Quadros do master sem perdas e na matriz BT.709** (a do navegador; a BT.601 padrão do
    ffmpeg desloca até 14 níveis nas cores saturadas):
-   `ffmpeg -i source/porsche-scroll.mp4 -vf "select='eq(n\,54)',scale=in_color_matrix=bt709:in_range=tv:out_range=pc,format=rgb24" -frames:v 1 ppf.png`
+   `ffmpeg -i source/porsche-scroll.mp4 -vf "select='eq(n\,54)',scale=in_color_matrix=bt709:in_range=tv:out_range=pc:flags=lanczos+accurate_rnd+full_chroma_int+full_chroma_inp,format=rgb24" -frames:v 1 ppf.png`
+   (sem `full_chroma_int` o croma vem em blocos de 2×2 nas cores saturadas)
    PPF: quadro 54 (2,25 s). Resultado: quadro 84 (3,5 s). Lavagem: `scripts/encode-wash.sh`
    (quadros 126 a 168; o congelamento é o 168). Quadros já extraídos em BT.601 podem ser
    corrigidos com `to_bt709.py`.

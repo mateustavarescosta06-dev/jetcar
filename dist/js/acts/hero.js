@@ -87,6 +87,7 @@ export class HeroAct extends Act {
           // piso brilhante: reflete a barra de luz (uma faixa vertical na frente do carro)
           vec3 v = normalize(uCam - vW);
           vec3 r = reflect(-v, vec3(0.0, 1.0, 0.0));
+          barsFootprint(r);
           float F = 0.04 + 0.96 * pow(clamp(1.0 - v.y, 0.0, 1.0), 5.0);
           c += barsRadiance(vW, r, 0.06) * F * 0.5;
           // a linha deitada no piso (saída)
@@ -192,6 +193,7 @@ export class HeroAct extends Act {
           vec3 n = normalize(texture2D(tNorm, uv).xyz * 2.0 - 1.0 + vec3(0.0, 0.0, 1e-3));
           vec3 v = normalize(uCam - P);
           vec3 r = reflect(-v, n);
+          barsFootprint(r);
           // clamp: com a normal de frente para a câmera, dot(n, v) arredonda para pouco acima de 1 e
           // pow() de base negativa dá NaN (o bloom espalha em blocos)
           float F = 0.04 + 0.96 * pow(clamp(1.0 - dot(n, v), 0.0, 1.0), 5.0);
@@ -268,8 +270,8 @@ export class HeroAct extends Act {
       cam.setViewOffset(w, h, 0, h * 0.16, w, h);
     } else {
       cam.fov = SRC.fov * (cam.aspect < SRC.w / SRC.h ? (SRC.w / SRC.h) / cam.aspect * 0.92 : 1);
-      // o carro um pouco à direita (o texto fica à esquerda, embaixo)
-      cam.setViewOffset(w, h, -w * 0.07, h * 0.05, w, h);
+      // o carro à direita (o texto fica à esquerda, embaixo, sem passar por cima da traseira)
+      cam.setViewOffset(w, h, -w * 0.1, h * 0.05, w, h);
     }
     cam.updateProjectionMatrix();
   }

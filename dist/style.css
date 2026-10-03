@@ -420,9 +420,17 @@ input[type="range"]:focus-visible { outline: 2px solid var(--red-ink); outline-o
 .no-js .gl-slot, .no-gl .gl-slot { position: absolute; inset: 0; }
 .reduced .gl-slot, .no-gl .gl-slot { bottom: auto; height: var(--lvh); }
 @media (max-width: 760px) { .reduced .bay-protect .stage, .no-gl .bay-protect .stage { padding-top: calc(var(--lvh) * .52); } }
+/* resultado no celular em pé: a foto ocupa o alto e some no fundo; o título fica embaixo do
+   carro, não em cima do farol */
+@media (max-width: 760px) and (orientation: portrait) {
+  .result-figure { bottom: 24%; }
+  .result-figure img { -webkit-mask-image: linear-gradient(180deg, #000 72%, transparent); mask-image: linear-gradient(180deg, #000 72%, transparent); }
+}
+/* tela baixa (Safari do iPhone com as barras à mostra, ~660 px): a foto ocupa menos altura */
+@media (max-width: 760px) and (orientation: portrait) and (max-height: 700px) { .result-figure { bottom: 36%; } }
 .stage.is-tall .gl-slot::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 28%; background: linear-gradient(rgba(11, 11, 12, 0), var(--canvas)); pointer-events: none; }
 .no-js .card, .reduced .card, .no-gl .card { position: relative; left: auto !important; right: auto !important; top: auto !important; bottom: auto !important; margin: 0 !important; --a: 1; --pe: auto; --draw: 1; transform: none !important; opacity: 1 !important; pointer-events: auto !important; }
-.no-js .hero-copy, .no-gl .hero-copy { position: relative; left: auto; bottom: auto; }
+.no-js .hero-copy, .no-gl .hero-copy { position: relative; left: auto; right: auto; bottom: auto; }
 .no-js .stack, .reduced .stack, .no-gl .stack { position: relative; left: auto; right: auto; top: auto; bottom: auto; width: auto; height: auto; display: grid; gap: var(--s6); }
 .no-js .stack .card, .reduced .stack .card, .no-gl .stack .card { position: relative; }
 .no-js .stack .card[data-card="ceramic"]::after, .reduced .stack .card[data-card="ceramic"]::after, .no-gl .stack .card[data-card="ceramic"]::after { opacity: 0; }

@@ -87,7 +87,9 @@ export class WashAct extends Act {
     const R = rng(7);
     const n = low ? 120 : 240;
     this.dropData = [];
-    for (let i = 0; i < n; i++) this.dropData.push({ t: R(), a: R(), b: R(), c: R(), near: R() < 0.06, s: 0.7 + R() * 0.9, seed: R(), p: new THREE.Vector3(), r: 0 });
+    // (sem gotas entre a câmera e a moldura: fora de foco elas viravam manchas cinza sobre a água,
+    // e em foco seriam objetos vindo na direção da pessoa; o congelado é uma foto de flash)
+    for (let i = 0; i < n; i++) this.dropData.push({ t: R(), a: R(), b: R(), c: R(), near: (R(), false), s: 0.7 + R() * 0.9, seed: R(), p: new THREE.Vector3(), r: 0 });
     this.drops = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 24, 16), new THREE.ShaderMaterial({
       vertexShader: /* glsl */ `
         uniform float uStretch;
@@ -125,7 +127,9 @@ export class WashAct extends Act {
           vec3 bg = uBg;
           if (fuv.x > 0.0 && fuv.x < 1.0 && fuv.y > 0.0 && fuv.y < 1.0) bg = texture2D(tStill, cover(fuv)).rgb;
           float F = fresnel(NdV, 0.02);
-          vec3 refl = barsRadiance(vW, reflect(-v, n), 0.0015) + studioAmbient(reflect(-v, n)) * 2.0;
+          vec3 rr = reflect(-v, n);
+          barsFootprint(rr);
+          vec3 refl = barsRadiance(vW, rr, 0.0015) + studioAmbient(rr) * 2.0;
           vec3 col = bg * (1.0 - F) * 0.96 + refl * F;
           // a borda da gota pega a luz ambiente do galpão (fica legível contra o fundo escuro)
           col += vec3(0.5, 0.52, 0.56) * pow(clamp(1.0 - NdV, 0.0, 1.0), 3.0) * 0.08;
@@ -335,7 +339,8 @@ export class WashAct extends Act {
     post.exposure = 1 - out;
     post.tone = 'photo';
     post.vignette = 0.2;
-    post.dof = 0.9 * frz;
+    // congelado como foto de flash: tudo nítido, a água parada no ar (sem desfoque de lente)
+    post.dof = 0;
     engine.render(this.scene, cam);
   }
 }

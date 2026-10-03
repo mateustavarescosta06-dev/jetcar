@@ -43,8 +43,8 @@ Em ordem de peso, somando v5 e v6:
    `front-m` 1916×1080 (uma tira de 499 px visível, ampliada 2,34×), `car-m` 989 px, `plate-m`
    1672 px, `scrub-m` 720 px, `result-m` 1200 px. Nenhum tinha composição própria.
 6. **Compressão e geração repetida.** WebP q84–q90 sem `sharp_yuv` (4:2:0 sem correção) nas fotos
-   da v6; `car-m` e `plate-m` eram uma segunda geração de WebP sobre o poster q88; a máscara do PPF
-   era reduzida para 958×540 e salva com perdas.
+   da v6; `car-m` era uma segunda geração de WebP sobre o poster q88 (o `plate-m` vinha da placa
+   ampliada, em q86); a máscara do PPF era reduzida para 958×540 e salva com perdas.
 7. **Matriz de cor trocada.** Os quadros extraídos com o ffmpeg usavam BT.601; o navegador mostra
    o vídeo HD sem marcação como BT.709. Diferença de até 14 níveis nas cores saturadas (pinças,
    brasão) bem no corte do vídeo para a foto.
@@ -232,9 +232,15 @@ na versão certa.
 - **Curva de tom por tipo de conteúdo**: cenas de foto (hero, lavagem, foto do PPF) usam
   identidade até 1,0 (o branco chega a 255); cenas 3D mantêm o ombro a partir de 0,8.
 - **Desfoque que não toca o assunto**: a mistura com a meia resolução só começa em coc 0,15
-  (antes 0,04). Lavagem com o foco exatamente no plano da moldura; polimento sem desfoque nenhum
-  (o número do fundo já vem desfocado na própria textura); camadas do Ceramic com desfoque só no
-  piso e no fundo; foto do PPF sem desfoque.
+  (antes 0,04), e o disco de amostras gira por pixel (antes uma gota pequena virava um "favo" de
+  cópias). Lavagem sem desfoque: o congelado é uma foto de flash, tudo nítido; as gotas entre a
+  câmera e a moldura saíram (fora de foco viravam manchas cinza sobre a água; em foco seriam
+  objetos vindo na direção da pessoa). Polimento sem desfoque nenhum (o número do fundo já vem
+  desfocado na própria textura); camadas do Ceramic com desfoque só no piso e no fundo; foto do
+  PPF sem desfoque.
+- **Normal do capô do polimento por pixel** (derivadas exatas da superfície): com a normal
+  interpolada dos vértices, o reflexo da barra fazia um "Z" quebrado ao cruzar o vinco; agora é
+  uma curva em S, como num espelho de verdade.
 - **Vinheta** menor (hero 0,25, polimento 0,35, camadas 0,3, foto do PPF 0,15, lavagem 0,2).
 - **Fotos em sRGB**: o hardware converte para linear antes de filtrar (antes a filtragem era em
   espaço gama e escurecia bordas finas de alto contraste).
@@ -277,6 +283,10 @@ barata e menos ideal, e desempenho não foi medido.
 
 ## 7. Limites (sem esconder)
 
+- **O teto de ~720p já estava no vídeo antes da recompressão CRF 24** (uma ida e volta Lanczos a
+  2/3 da escala perde quase nada: 45–46,5 dB), provavelmente um render interno perto de 720p
+  ampliado para 1080p. Uma exportação mais limpa do gerador tiraria os artefatos do CRF 24, mas
+  não traria resolução.
 - **Nada aqui cria detalhe que a fonte não tem.** O ESRGAN reconstrói bordas de forma
   convincente e a textura agora vem do original, mas o master continua sendo um vídeo CRF 24 de
   1916 px com ~1300 px de detalhe real, e as fotos têm 1536–1672 px. Num retina, o hero no fim do
@@ -318,12 +328,52 @@ base `2183b1a`), e o que foi feito com cada achado:
 | Reflexo varrendo o hero é largo por construção | faixa ~20× a barra | baixa | não alterado (só na abertura) |
 | Código morto de lente/espuma/cromática | — | baixa | removido |
 
-## 9. O que ficou de fora (e por quê)
+## 9. Revisão de completude (o que o desfoque, o bloom e o grão escondiam)
 
-- **Textura dos riscos do polimento** (direção dos riscos guardada em RG, filtrada como cor):
-  no polimento sem desfoque, as marcas aparecem na primeira parada como esperado nas capturas;
-  a correção (codificar o ângulo dobrado e gerar os mips fora) fica para uma próxima rodada.
-- **Normais do capô por vértice** (dobras de 3 cm amostradas por 4–6 vértices): o reflexo pode
-  quebrar levemente nas dobras; não foi visível nas capturas desta rodada.
+Um quarto agente conferiu as três auditorias contra o código e as medições, corrigiu três
+afirmações (acima) e apontou etapas que só aparecem depois que a imagem fica nítida:
+
+| Achado | Feito |
+|---|---|
+| Mapa dos micro-riscos: o antisserrilhado do canvas girava a direção guardada em RG (riscos partidos em tracinhos) | ângulo dobrado vezes a presença em torno de 0,5 (a borda só encurta o vetor); 2048 px no perfil alto |
+| Brilhos analíticos amostrados num ponto (degraus e cintilação nas gotas, sem ajuda do MSAA) | a borda do brilho soma a largura do pixel no raio refletido (`barsFootprint`, `fwidth`) |
+| Escala e níveis presos ao DPR do carregamento (janela levada para outra tela, zoom) | o DPR é relido a cada layout e por `matchMedia((resolution))`; a escala acompanha |
+| A "refração" da película deslocava a foto 2,5 px bem na borda do PPF | no máximo meio pixel |
+| Título do hero sobre a traseira do carro | carro mais à direita (deslocamento de 7% para 10%) |
+| MSAA resolvido em HDR linear antes da curva (bordas das barras de luz serrilhadas) | não alterado: o bloom curto cobre a borda das barras; o resto não passa de 1,5 |
+| Extração de quadros sem interpolação cheia de croma (degraus de 2×2 nas cores saturadas) | efeito de segunda ordem (o ESRGAN refaz o croma); comando com `accurate_rnd+full_chroma_int` registrado para extrações futuras |
+| Texto e escurecimento do resultado sobre a roda | não alterado (composição da foto) |
+
+## 10. O que ficou de fora (e por quê)
+
 - **Quadro de refinamento em escala nativa 3× no iPhone**: o pedido fixou o perfil alto em 2.
 - **Fonte nova** (seção 7).
+
+## 11. Verificação visual (e o que ela ainda achou)
+
+Capturas com o código final em `scratchpad/v6/final/` (fora do repositório):
+
+- **Matriz**: 28 momentos (entrada, card, meio e saída de cada serviço; hero, resultado, pedido e
+  endereço) em 1920×1080@1, 2560×1440@1, 1440×900@2 e 390×844@3, perfil alto fixo; folhas de
+  contato e recortes 1:1 (px do aparelho) dos assuntos em foco.
+- **O que o aparelho recebe de fato**: o celular no perfil padrão (escala 1,5, o ponto de partida
+  do iPhone) e o retina nos perfis padrão e baixo, no mesmo momento, para medir o que a escala de
+  render faz com o assunto (tabela abaixo).
+- **ANTES × DEPOIS**: a v5 em produção e a v6.1 no mesmo tamanho de tela (retina e iPhone), sete
+  pares (abertura, lavagem, polimento, camadas, PPF, interior, resultado), cada um com o quadro
+  inteiro e um recorte 1:1 do assunto.
+- **Modos de reserva**: sem WebGL (desktop, iPhone e 360×640), sem JavaScript, e os testes de
+  interação (cards, "Ver antes", separador e película pelo teclado, pontos do interior, pedido,
+  menu, trilho, rolagem horizontal).
+
+Com a imagem nítida, apareceram problemas que o desfoque, o bloom e o grão escondiam. Todos foram
+corrigidos na fonte (no shader ou no gerador da textura, não com filtro por cima):
+
+| Achado | Causa | Feito |
+|---|---|---|
+| Chuvisco de pontos brancos na pintura do polimento (forte no retina, pontos de 2 px no celular) | flocos de 0,67 mm com a inclinação sorteada por célula: perto da câmera cada floco tinha 2 px e brilhava ~90 vezes mais que o vão; menores que um pixel, cada pixel amostrava a normal de uma célula só e acendia ou não | flocos de 0,33 mm; abaixo de um pixel, a média das inclinações (o reflexo das barras espalhado pela largura do sorteio), que é o brilho metálico visto de longe |
+| No celular, micro-riscos com outro desenho, mais grossos | o contador do laço do gerador tinha o mesmo nome da escala (`k`): o mapa de 1024 desenhava arcos duas vezes mais longos que o de 2048; e o tamanho vinha do nome do perfil (o desktop no perfil baixo usava 1024 num canvas de 1800 px) | mesmo desenho em qualquer tamanho; tamanho pela largura do canvas (2048 a partir de 1400 px) |
+| Riscos com quinas, acesos aos pedaços | cada arco era uma sequência de segmentos retos de cor fixa (até 78 px no mapa de 2048): a direção guardada mudava aos saltos de um segmento para o outro, e de perto o risco aceso tinha quinas e trechos separados | cada arco num traço só, com degradê cônico em volta do centro (a direção gira junto com o arco; erro medido 0,09° em média, 0,33° no máximo); o mapa sai 3,4× mais rápido (22 ms contra 74 ms) |
+| Ceramic mais mole fora do perfil alto (o celular começa no padrão) | a transmissão (verniz, coating e gotas redesenham o que está atrás) ficava em meia resolução fora do perfil alto: a cor e os flocos, vistos através do verniz, saíam com metade dos pixels (no retina em perfil padrão, os flocos da cor visivelmente mais grossos) | resolução cheia; cai para a metade só no fim da escada de efeitos, junto com a multiamostragem |
+| Título do resultado sobre o farol no celular em pé | a foto em tela cheia deixava o farol na altura do título; no Safari com as barras à mostra (~660 px) ainda mais | a foto ocupa o alto (76%, ou 64% em tela baixa) e some no fundo; o título fica embaixo do carro |
+| Texto do hero colado na borda sem WebGL ou sem JavaScript no celular | a regra do modo de reserva voltava `left`, mas não `right`, que empurrava o bloco 20 px para a esquerda | `right: auto` |

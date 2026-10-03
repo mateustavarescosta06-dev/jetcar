@@ -148,3 +148,67 @@ sair de cena), corrigida para reagir só ao foco do teclado.
 - Lavagem no celular: recorte quadrado do vídeo (plano: 4:5), com o card embaixo.
 - Resultado: quadro de 3,5 s do master em vez de `finish.webp`, pela auditoria de vídeo.
 - Luz de fundo do Ceramic só aparece no reflexo (o tubo visível cruzava a barra do site).
+
+## v6.1 · Nitidez (media pipeline e rendering pipeline)
+
+Pedido: "a NITIDEZ está inaceitável… CORRIJA A FONTE, NÃO TENTE ESCONDER O PROBLEMA COM CSS OU
+SHADERS". Auditoria completa, com números e testes, em `audit/IMAGE_QUALITY_AUDIT.md`. Ordem
+seguida: nitidez, depois profundidade, movimento e "uau"; nenhum efeito novo antes da nitidez.
+
+### O que mudou
+
+- **Fonte e mídia**: quadros do master extraídos uma vez, sem perdas, em BT.709; Real-ESRGAN com a
+  textura do original devolvida (`detail_blend.py`: o ESRGAN apagava couro, costura, concreto e
+  tela da grade); níveis desktop alto / padrão / celular com enquadramento próprio, todos
+  reduções Lanczos do mesmo intermediário (`build_stills.py`); WebP q92 com sharp_yuv (q95 no carro
+  e no congelado), máscaras sem perdas; scrub H.264 CRF 18 / VP9 CRF 20, sem quadros B, GOP 8/4,
+  marcado BT.709; o código escolhe o nível pelos pixels do aparelho.
+- **Render**: escala alta 2 / padrão 1,5 / baixa 1,25 / piso 1,0 com uma escada medida (tempo de
+  GPU ou quadros perdidos) que derruba efeitos antes da resolução e volta a subir; sem grão; bloom
+  só em fontes de luz; curva de tom que deixa o branco das fotos chegar a 255; desfoque que nunca
+  mistura a meia resolução no assunto em foco; fotos em sRGB; viés de mip −0,5 medido no teste de
+  filtros; código morto da v5 removido.
+- **Por cena**: lavagem com foco no plano da moldura (só as gotas da frente desfocam, sem "favo");
+  polimento sem desfoque, com duas paradas no mesmo ponto (riscos → limpo) e o card 02 na primeira
+  ("A luz encontra a pintura."); Ceramic em materiais físicos (MeshPhysicalMaterial, luzes de área
+  LTC nas posições das barras, mapa de ambiente PMREM, verniz e coating com transmissão, gotas
+  d'água com refração); borda da película do PPF abaixo do limiar do bloom; interior em pixels
+  inteiros na parada.
+- **Pôsteres** (primeiro quadro e modo sem WebGL): 2880×1800, 1440 e 1170×2532, perfil alto, q90.
+- **Depois da revisão de completude** (o que o desfoque, o bloom e o grão escondiam): mapa dos
+  micro-riscos em ângulo dobrado, brilhos analíticos com a largura do pixel, normal do capô por
+  pixel, DPR relido quando muda, "refração" da película limitada a meio pixel, carro do hero mais
+  à direita do título.
+
+### Verificação
+
+- Testes de mídia com números (WebP q88/92/95, CRF 18–24 alinhado, filtros de textura com 630
+  quadros capturados, A/B do ESRGAN no tamanho de exibição, matriz de cor, busca real de quadro
+  no Chromium: 20 buscas aleatórias em cada versão do scrub, todas no quadro certo, 17–65 ms
+  depois do aquecimento; corte vídeo → foto a 40,1 dB no desktop e 37,9 dB no celular).
+- Simulação da escada de qualidade em quatro cenários (GPU rápida, GPU fraca, carregamento lento
+  seguido de folga, iPhone sem timer de GPU), que achou e corrigiu um erro: sem timer, uma GPU que
+  só fazia 30 fps parecia uma tela de 30 Hz.
+- Matriz de capturas com o código final no perfil alto fixo: entrada, card, meio e saída de cada
+  serviço, mais hero, resultado, pedido e endereço (28 momentos) em 1920×1080, 2560×1440,
+  1440×900@2 e 390×844@3, sem erros de console; folhas de contato e recortes 1:1 dos assuntos em
+  foco conferidos. E o que o aparelho recebe de fato: o celular no perfil padrão e o retina nos
+  perfis padrão e baixo (escala de render × assunto em foco, com SSIM e energia de detalhe).
+- Comparação ANTES (v5 em produção) × DEPOIS no mesmo tamanho de tela (retina e iPhone), sete
+  pares com o quadro inteiro e um recorte 1:1 do assunto.
+- Com a imagem nítida, a verificação achou e corrigiu na fonte (auditoria, seção 11): o chuvisco
+  de pontos dos flocos metálicos do polimento, o mapa de micro-riscos do celular com outro desenho
+  (um contador de laço com o nome da escala), riscos com quinas (segmentos retos no lugar de arcos
+  com degradê cônico), o Ceramic em meia resolução fora do perfil alto, o título do resultado
+  sobre o farol no celular e o texto do hero colado na borda nos modos sem WebGL e sem JavaScript.
+- Modos de reserva (sem WebGL no desktop, no iPhone e em 360×640; sem JavaScript) e testes de
+  interação (cards ↔ pedido, "Ver antes", separador e película pelo teclado, pontos do interior,
+  mensagem e Direct, cópia, som, trilho, sem rolagem horizontal).
+
+### Limites
+
+- As fontes não passam de 1916 px e o vídeo tem ~1300 px de detalhe real: o ESRGAN reconstrói
+  bordas e a textura volta do original, mas detalhe novo só com fotos reais ou imagens novas em 4K
+  (créditos só com autorização).
+- Sem aparelhos reais aqui: o Chromium dos testes usa WebGL por software, não decodifica H.264 e
+  não mede fluidez. Falta calibrar a escada no Safari do iPhone e num Android médio.

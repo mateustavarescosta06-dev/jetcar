@@ -26,7 +26,7 @@ FRAMES=43
 mkdir -p "$OUT" "$WORK/src" "$HI" "$WORK/blend" "$WORK/d" "$WORK/m"
 
 # 1. quadros sem perdas, matriz BT.709 (select pelo número do quadro: exato, sem arredondar tempo)
-ffmpeg -v error -y -i "$MASTER" -vf "select='between(n\,126\,168)',scale=in_color_matrix=bt709:in_range=tv:out_range=pc,format=rgb24" \
+ffmpeg -v error -y -i "$MASTER" -vf "select='between(n\,126\,168)',scale=in_color_matrix=bt709:in_range=tv:out_range=pc:flags=lanczos+accurate_rnd+full_chroma_int+full_chroma_inp,format=rgb24" \
   -fps_mode passthrough -start_number 1 "$WORK/src/f%03d.png"
 
 # 2. ampliação (pula os quadros que já existem)

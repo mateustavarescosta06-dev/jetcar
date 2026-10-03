@@ -64,10 +64,11 @@ void main() {
   float edge = uFilm + 0.018 * sin((f.y - 0.2) * 2.6) - 0.012 * f.y;
   float d = f.x - edge;
   float on = smoothstep(-px, px, d) * uFilmOn;
-  // a espessura da película desloca a imagem logo depois da borda (refração)
+  // a espessura da película desloca de leve a imagem logo depois da borda (refração): no máximo
+  // meio pixel, para não reamostrar a foto bem em cima da borda, que é o assunto do PPF
   float band = exp(-max(d, 0.0) / (10.0 * px)) * on;
-  uv.x -= band * 2.5 * px;
-  uv.y += band * 0.8 * px;
+  uv.x -= band * 0.5 * px;
+  uv.y += band * 0.15 * px;
   // sRGB (o hardware já converte para linear); viés −0,5 no mip: acima de 0,71× usa só o nível
   // cheio (nítido como sem mipmap) e abaixo disso não serrilha (teste em audit/IMAGE_QUALITY_AUDIT.md)
   vec3 c = texture2D(tImg, uv, -0.5).rgb;
@@ -218,8 +219,6 @@ export class ProtectAct extends Act {
       if (ok) this.scene.add(this.area.group);
       const env = studioEnvironment(this.engine.renderer);
       for (const m of [...this.slabs.map(s => s.material), this.beadMat]) { m.envMap = env; m.needsUpdate = true; }
-      // celular: a transmissão (verniz, coating, gotas) desenha o fundo de novo; em meia resolução
-      this.engine.renderer.transmissionResolutionScale = this.quality.name === 'high' ? 1 : 0.5;
     });
     // mipmaps: a foto (3200 px) aparece menor que isso, e sem eles cintila quando a câmera mexe
     const get = (url, cs = THREE.SRGBColorSpace) => new Promise(res => new THREE.TextureLoader().load(url, t => { t.colorSpace = cs; t.minFilter = THREE.LinearMipmapLinearFilter; t.generateMipmaps = true; res(t); }, undefined, () => res(null)));
@@ -441,6 +440,9 @@ export class ProtectAct extends Act {
     const beadsOn = p > T.act[0] && p < T.wipe[1];
     this.beads.visible = beadsOn;
     this.beads.count = this.quality.secondary ? this.beadData.length : this.beadData.length >> 1;
+    // a transmissão (verniz, coating, gotas) desenha de novo o que está atrás: é o assunto em foco,
+    // então só cai para meia resolução no fim da escada de efeitos (junto com a multiamostragem)
+    this.engine.renderer.transmissionResolutionScale = this.quality.e >= 5 ? 0.5 : 1;
     if (beadsOn) {
       const D2 = this.beadData;
       const fade = 1 - smooth(span(p, T.close[0], T.close[1]));
