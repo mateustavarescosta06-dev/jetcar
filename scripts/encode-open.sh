@@ -47,16 +47,21 @@ h264() {  # <quadros> <n> <saída> <zonas do x264>
   ffmpeg -v error -y -framerate 24 -start_number 0 -i "$1" -frames:v "$2" -vf "$YUV" -c:v libx264 -profile:v high -preset slow -crf 18 \
     -bf 0 -g 8 -keyint_min 8 -sc_threshold 0 -x264-params "ipratio=1.1:zones=$4" "${TAGS[@]}" -movflags +faststart -an "$3"
 }
-vp9() {  # <quadros> <n> <saída> <crf>
-  ffmpeg -v error -y -framerate 24 -start_number 0 -i "$1" -frames:v "$2" -vf "$YUV" -c:v libvpx-vp9 -crf "$4" -b:v 0 -g 8 -keyint_min 8 \
-    -row-mt 1 -deadline good -cpu-used 1 -auto-alt-ref 0 -lag-in-frames 0 "${TAGS[@]}" -an "$3"
+vp9() {  # <quadros> <primeiro> <n> <saída> <crf>
+  ffmpeg -v error -y -framerate 24 -start_number "$2" -i "$1" -frames:v "$3" -vf "$YUV" -c:v libvpx-vp9 -crf "$5" -b:v 0 -g 8 -keyint_min 8 \
+    -row-mt 1 -deadline good -cpu-used 1 -auto-alt-ref 0 -lag-in-frames 0 "${TAGS[@]}" -an "$4"
 }
-# abertura: a aproximação (0–125) com 70% da taxa; o jato (126–168) inteiro
+# abertura: a aproximação (0–125) com 70% da taxa; o jato (126–168) inteiro. No VP9 (sem zonas)
+# os dois trechos são codificados à parte (CRF 27 e 20) e juntados sem recodificar: 42–46 dB contra
+# os quadros de origem nos dois, ~5,8 MB no total (num CRF só, 21, eram 7 MB)
 h264 "$WORK/d/f%03d.png" 169 "$ROOT/dist/assets/open/open.mp4" "0,125,b=0.7"
-vp9 "$WORK/d/f%03d.png" 169 "$ROOT/dist/assets/open/open.webm" 21
+vp9 "$WORK/d/f%03d.png" 0 126 "$WORK/open-a.webm" 27
+vp9 "$WORK/d/f%03d.png" 126 43 "$WORK/open-b.webm" 20
+printf "file '%s'\nfile '%s'\n" "$WORK/open-a.webm" "$WORK/open-b.webm" > "$WORK/open.txt"
+ffmpeg -v error -y -f concat -safe 0 -i "$WORK/open.txt" -c copy "$ROOT/dist/assets/open/open.webm"
 # final: tudo é câmera recuando
 h264 "$WORK/rev/f%03d.png" 85 "$ROOT/dist/assets/final/final.mp4" "0,84,b=0.75"
-vp9 "$WORK/rev/f%03d.png" 85 "$ROOT/dist/assets/final/final.webm" 22
+vp9 "$WORK/rev/f%03d.png" 0 85 "$ROOT/dist/assets/final/final.webm" 25
 # a foto do fim do filme final (o quadro 0) nos dois níveis do desktop
 python3 - "$WORK/blend/f000.png" "$ROOT/dist/assets/final" <<'EOF'
 import sys, subprocess, os, tempfile
