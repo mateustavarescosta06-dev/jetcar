@@ -77,6 +77,10 @@ const DOF_BLUR = /* glsl */ `
 uniform sampler2D tSrc; uniform vec2 uTexel; uniform float uRadius; uniform int uTaps;
 varying vec2 vUv;
 void main() {
+  // disco girado por pixel (ruído de gradiente intercalado, fixo no pixel): com o mesmo disco em
+  // todo pixel, uma gota pequena e nítida vira "favo" (N cópias dela); girando, as cópias se
+  // espalham num desfoque uniforme
+  float rot = 6.2831853 * fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));
   vec4 c0 = texture2D(tSrc, vUv);
   float w0 = 1.0 / (1.0 + dot(c0.rgb, vec3(0.3333)) * 2.0);
   vec3 acc = c0.rgb * w0; float wsum = w0; float fg = c0.a;
@@ -84,7 +88,7 @@ void main() {
     if (i >= uTaps) break;
     float fi = float(i);
     float r = sqrt(fi / float(uTaps));
-    float th = fi * 2.39996323;
+    float th = fi * 2.39996323 + rot;
     vec2 o = vec2(cos(th), sin(th)) * r * uRadius;
     vec4 s = texture2D(tSrc, vUv + o * uTexel);
     float dist = r * uRadius;
@@ -104,116 +108,53 @@ void main() {
   vec4 s = texture2D(tSharp, vUv);
   vec4 b = texture2D(tBlur, vUv);
   float coc = 1.0 - clamp(s.a, 0.0, 1.0);
-  float m = smoothstep(0.04, 0.3, max(coc, b.a * 0.9));
+  // o que está em foco (coc < 0,15) fica 100% na imagem de resolução cheia: a meia resolução do
+  // desfoque nunca é misturada no assunto (antes bastava coc 0,04 para começar a misturar)
+  float m = smoothstep(0.15, 0.5, max(coc, b.a * 0.9));
   gl_FragColor = vec4(mix(safe(s.rgb), safe(b.rgb), m), 1.0);
 }`;
 
 const COMPOSITE = /* glsl */ `
 uniform sampler2D tScene; uniform sampler2D tBloom;
-uniform float uBloom; uniform float uExposure; uniform float uVignette; uniform float uGrain; uniform float uTime;
-uniform float uWhite; uniform float uBlack; uniform vec2 uRes; uniform float uChroma;
-uniform float uLens; uniform float uLensX; uniform float uLensBig; uniform float uFoam; uniform float uFoamY;
+uniform float uBloom; uniform float uExposure; uniform float uVignette; uniform float uBlack; uniform float uDither;
+uniform float uToneK; uniform float uToneW; uniform vec2 uRes;
 varying vec2 vUv;
 ${COLOR}
 ${SAFE}
-float fh(vec2 p) { vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
-float fn(vec2 p) { vec2 i = floor(p), f = fract(p); vec2 u = f * f * (3.0 - 2.0 * f); return mix(mix(fh(i), fh(i + vec2(1.0, 0.0)), u.x), mix(fh(i + vec2(0.0, 1.0)), fh(i + vec2(1.0, 1.0)), u.x), u.y); }
-float ffbm(vec2 p) { float s = 0.0, a = 0.5; for (int i = 0; i < 5; i++) { s += a * fn(p); p = p * 2.03 + 17.1; a *= 0.5; } return s; }
-// Espuma da lavagem na lente: massa branca fora de foco que se espalha a partir de manchas, com
-// bolhas de vários tamanhos nas bordas (não uma nuvem). Devolve a cobertura e a cor (sRGB).
-vec2 vor(vec2 q) {
-  vec2 iq = floor(q), fq = fract(q);
-  float d1 = 9.0, id = 0.0;
-  for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) {
-    vec2 g = vec2(float(i), float(j));
-    float d = length(g + vec2(fh(iq + g), fh(iq + g + 5.3)) - fq) / (0.6 + 0.4 * fh(iq + g + 11.7));
-    if (d < d1) { d1 = d; id = fh(iq + g + 2.1); }
-  }
-  return vec2(d1, id);
+// Curva de tom: linear até uToneK e ombro acima. Nas cenas de foto (conteúdo já graduado) o
+// ombro começa em 1,0 e o branco da foto chega a 255; nas cenas 3D (HDR) começa em 0,8.
+vec3 tone(vec3 x) {
+  if (uToneW < 1e-3) return min(x, vec3(uToneK));
+  vec3 over = clamp(x - uToneK, 0.0, 8.0 * uToneW);
+  return min(x, vec3(uToneK)) + uToneW * (1.0 - exp(-over / uToneW));
 }
-float lensFoam(vec2 uv, out vec3 fc) {
-  vec2 p = vec2(uv.x * uRes.x / uRes.y, uv.y + uFoamY);
-  float n = ffbm(p * 1.6) * 0.7 + ffbm(p * 4.0 + 7.3) * 0.3;
-  vec2 b1 = vor(p * 7.0), b2 = vor(p * 16.0 + 3.3), b3 = vor(p * 34.0 + 9.1);
-  float t = n - 0.75 * (1.0 - uFoam) + (b2.x - 0.5) * 0.06 + (b3.x - 0.5) * 0.03;
-  float m = smoothstep(-0.008, 0.012, t);
-  float thick = smoothstep(0.0, 0.3, t);
-  float dome = (1.0 - smoothstep(0.55, 0.95, b1.x)) * 0.5 + (1.0 - smoothstep(0.55, 0.95, b2.x)) * 0.35 + (1.0 - smoothstep(0.5, 0.95, b3.x)) * 0.15;
-  float shade = 0.84 + 0.1 * ffbm(p * 3.0 + 1.7) + 0.06 * dome;
-  fc = mix(vec3(0.72, 0.75, 0.79), vec3(0.95, 0.955, 0.96), thick) * shade + pow(max(1.0 - b2.x * 1.8, 0.0), 8.0) * step(0.85, b2.y) * 0.15;
-  return m * (0.72 + 0.28 * thick);
-}
-float sq2(float x) { return x * x; }
-vec2 lhash(vec2 p) { vec3 p3 = fract(vec3(p.xyx) * vec3(0.1031, 0.1030, 0.0973)); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.xx + p3.yz) * p3.zy); }
-// Água passando na frente da lente: gotas (células) que refratam a imagem, numa faixa que
-// atravessa a tela. spec devolve o brilho da borda das gotas.
-vec2 lensWater(vec2 uv, out float spec) {
-  spec = 0.0;
-  vec2 asp = vec2(uRes.x / uRes.y, 1.0);
-  float band = exp(-sq2((uv.x - uLensX) / 0.32)) * uLens;
-  if (band < 0.002) return vec2(0.0);
-  vec2 p = uv * asp * 6.0 + vec2(0.0, uLensX * 0.7);
-  vec2 ip = floor(p), fp = fract(p);
-  vec2 off = vec2(0.0);
-  for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) {
-    vec2 g = vec2(float(i), float(j));
-    vec2 h = lhash(ip + g);
-    float rad = 0.18 + 0.32 * h.y;
-    if (lhash(ip + g + 3.7).x > 0.62) continue;
-    vec2 d = (g + h - fp) / rad;
-    float q = dot(d, d);
-    if (q < 1.0) {
-      float z = sqrt(1.0 - q);
-      off += d * (1.0 - z) * rad * 0.09 + d * 0.012;
-      // brilho pequeno no alto da gota e uma borda quase invisível
-      vec2 hl = d - vec2(-0.35, -0.4);
-      spec += exp(-dot(hl, hl) * 40.0) * 0.5 + smoothstep(0.86, 1.0, q) * 0.05;
-    }
-  }
-  spec *= band;
-  return off * band / asp;
-}
-float hash(vec2 p) { vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
-// Curva de filme: linear até 0,8 e ombro suave acima (preserva o filme e segura as luzes).
-vec3 shoulder(vec3 x) {
-  vec3 k = vec3(0.8);
-  // limitado: exp de números muito negativos dá lixo em alguns drivers (o farol ficava escuro)
-  vec3 over = clamp(x - k, 0.0, 4.0);
-  return min(x, k) + (1.0 - k) * (1.0 - exp(-over / (1.0 - k)));
+// ruído triangular de ±1 nível em 8 bits, fixo no pixel (não muda a cada quadro): só quebra
+// degraus nos degradês escuros; não é grão
+float tri(vec2 p) {
+  vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); float a = fract((p3.x + p3.y) * p3.z);
+  p3 = fract(vec3(p.yxy + 17.0) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); float b = fract((p3.x + p3.y) * p3.z);
+  return a + b - 1.0;
 }
 void main() {
   vec2 d = vUv - 0.5;
-  vec2 uv = vUv;
-  float spec = 0.0;
-  if (uLens > 0.0) uv += lensWater(vUv, spec);
-  if (uLensBig > 0.0) {
-    // uma gota cobrindo a lente: tudo refratado (lupa invertida nas bordas)
-    vec2 q = (uv - 0.5) * vec2(uRes.x / uRes.y, 1.0);
-    float r2 = dot(q, q);
-    uv = 0.5 + (uv - 0.5) * (1.0 - uLensBig * (0.55 - 0.9 * r2));
-  }
-  vec3 c;
-  float chroma = uChroma + uLensBig * 0.004;
-  if (chroma > 0.0) {
-    vec2 o = (uv - 0.5) * chroma;
-    c = vec3(texture2D(tScene, uv - o).r, texture2D(tScene, uv).g, texture2D(tScene, uv + o).b);
-  } else c = texture2D(tScene, uv).rgb;
-  c = safe(c) + safe(texture2D(tBloom, uv).rgb) * uBloom + spec * vec3(0.8, 0.85, 0.9);
+  vec3 c = safe(texture2D(tScene, vUv).rgb) + safe(texture2D(tBloom, vUv).rgb) * uBloom;
   c *= uExposure;
-  c = shoulder(c);
+  c = tone(c);
   float v = smoothstep(0.95, 0.2, length(d * vec2(uRes.x / uRes.y, 1.0)) * 0.9);
   c *= mix(1.0, v, uVignette);
-  c = mix(c, vec3(1.0), uWhite);
   c *= 1.0 - uBlack;
   vec3 s = linearToSrgb(c);
-  if (uFoam > 0.0) { vec3 fc; float fm = lensFoam(vUv, fc); s = mix(s, fc, fm); }
-  float g = hash(vUv * uRes + fract(uTime * 13.17) * 517.0) - 0.5;
-  s += g * uGrain * (0.6 + 0.4 * (1.0 - s));
+  s += tri(gl_FragCoord.xy) * uDither / 255.0;
   gl_FragColor = vec4(s, 1.0);
 }`;
 
-/** Parâmetros de pós-processamento de cada quadro (as cenas ajustam). */
-const POST = { exposure: 1, bloom: 0.6, threshold: 1.0, knee: 0.6, vignette: 0.55, grain: 0.035, white: 0, black: 0, chroma: 0, dof: 0, lens: 0, lensX: 0.5, lensBig: 0, foam: 0, foamY: 0 };
+/**
+ * Parâmetros de pós-processamento de cada quadro (as cenas ajustam).
+ * Bloom só nas fontes de luz de verdade (limiar 4, joelho curto): o reflexo da barra na pintura
+ * (0,4…2,5) não ganha halo. Sem grão: só um pontilhado fixo de ±1 nível contra degraus.
+ * tone: 'photo' (identidade até 1,0, o branco da foto chega a 255) ou 'hdr' (ombro a partir de 0,8).
+ */
+const POST = { exposure: 1, bloom: 0.35, threshold: 4.0, knee: 0.1, vignette: 0.25, black: 0, dither: 1, dof: 0, tone: 'hdr' };
 export const post = { ...POST };
 /** Volta aos valores padrão (cada cena ajusta só o que usa). */
 export function resetPost() { Object.assign(post, POST); }
@@ -252,9 +193,8 @@ export class Engine {
     this.mUp.blending = THREE.AdditiveBlending;
     this.mUp.transparent = true;
     this.mComp = mat(COMPOSITE, {
-      tScene: { value: null }, tBloom: { value: null }, uBloom: { value: 0.6 }, uExposure: { value: 1 }, uVignette: { value: 0.5 },
-      uGrain: { value: 0.03 }, uTime: { value: 0 }, uWhite: { value: 0 }, uBlack: { value: 0 }, uRes: { value: new THREE.Vector2(1, 1) }, uChroma: { value: 0 },
-      uLens: { value: 0 }, uLensX: { value: 0.5 }, uLensBig: { value: 0 }, uFoam: { value: 0 }, uFoamY: { value: 0 },
+      tScene: { value: null }, tBloom: { value: null }, uBloom: { value: 0.35 }, uExposure: { value: 1 }, uVignette: { value: 0.25 },
+      uBlack: { value: 0 }, uDither: { value: 1 }, uToneK: { value: 0.8 }, uToneW: { value: 0.2 }, uRes: { value: new THREE.Vector2(1, 1) },
     });
     this.mDofDown = mat(DOF_DOWN, { tSrc: { value: null }, uTexel: { value: new THREE.Vector2() } });
     this.mDofBlur = mat(DOF_BLUR, { tSrc: { value: null }, uTexel: { value: new THREE.Vector2() }, uRadius: { value: 8 }, uTaps: { value: quality.dofTaps || 24 } });
@@ -262,19 +202,52 @@ export class Engine {
     this.dofRT = [];
     this.rt = null;
     this.bloomRT = [];
-    this.frameMs = 16;
+    // tempo de GPU de verdade, quando o navegador expõe o timer (Chrome e Edge no desktop; o
+    // Safari não): é o que a escada de qualidade usa para decidir; sem ele, os quadros perdidos
+    const gl = this.renderer.getContext();
+    this.gl = gl;
+    this.tq = gl.getExtension('EXT_disjoint_timer_query_webgl2');
+    this.queries = [];
+    this.gpuSamples = [];
+    this.measure = false;
+    this.built = '';
+  }
+
+  /** A escada mudou multiamostragem ou níveis do bloom: os alvos são refeitos no próximo resize. */
+  applyQuality() { this.built = ''; }
+
+  /** Média do tempo de GPU (ms) dos quadros medidos desde a última leitura, ou null. */
+  gpuMs() {
+    if (!this.tq || this.gpuSamples.length < 8) return null;
+    const m = this.gpuSamples.reduce((a, b) => a + b, 0) / this.gpuSamples.length;
+    this.gpuSamples.length = 0;
+    return m;
+  }
+
+  pollTimer() {
+    const gl = this.gl, tq = this.tq;
+    while (this.queries.length) {
+      const q = this.queries[0];
+      if (!gl.getQueryParameter(q, gl.QUERY_RESULT_AVAILABLE)) break;
+      if (!gl.getParameter(tq.GPU_DISJOINT_EXT)) this.gpuSamples.push(gl.getQueryParameter(q, gl.QUERY_RESULT) / 1e6);
+      gl.deleteQuery(q);
+      this.queries.shift();
+    }
+    while (this.queries.length > 6) gl.deleteQuery(this.queries.shift());
+    if (this.gpuSamples.length > 120) this.gpuSamples.splice(0, this.gpuSamples.length - 120);
   }
 
   /** Ajusta o tamanho interno: largura/altura em px CSS e a escala de resolução. */
   resize(w, h, scale) {
     this.scale = scale;
     const W = Math.max(2, Math.round(w * scale)), H = Math.max(2, Math.round(h * scale));
-    if (W === this.size.x && H === this.size.y && this.rt) return;
+    const q = this.quality, built = `${q.msaa}|${q.bloomLevels}`;
+    if (W === this.size.x && H === this.size.y && this.rt && built === this.built) return;
+    this.built = built;
     this.size.set(W, H);
     this.renderer.setSize(W, H, false);
     this.canvas.style.width = `${w}px`;
     this.canvas.style.height = `${h}px`;
-    const q = this.quality;
     this.rt?.dispose();
     this.rt = new THREE.WebGLRenderTarget(W, H, { type: THREE.HalfFloatType, samples: q.msaa, depthBuffer: true, stencilBuffer: false });
     for (const r of this.bloomRT) r.dispose();
@@ -298,8 +271,10 @@ export class Engine {
   }
 
   /** Desenha a cena (ou só compõe, se scene for nulo: tela preta/branca). */
-  render(scene, camera, time) {
-    const r = this.renderer;
+  render(scene, camera) {
+    const r = this.renderer, gl = this.gl, tq = this.tq;
+    let query = null;
+    if (tq && this.measure) { query = gl.createQuery(); gl.beginQuery(tq.TIME_ELAPSED_EXT, query); }
     r.setRenderTarget(this.rt);
     r.clear(true, true, false);
     if (scene) r.render(scene, camera);
@@ -312,6 +287,7 @@ export class Engine {
       this.mDofBlur.uniforms.tSrc.value = h0.texture;
       this.mDofBlur.uniforms.uTexel.value.set(1 / h0.width, 1 / h0.height);
       this.mDofBlur.uniforms.uRadius.value = post.dof * h0.height * 0.022;
+      this.mDofBlur.uniforms.uTaps.value = this.quality.dofTaps;
       this.pass(this.mDofBlur, h1);
       this.mDofMerge.uniforms.tSharp.value = src;
       this.mDofMerge.uniforms.tBlur.value = h1.texture;
@@ -334,7 +310,7 @@ export class Engine {
       for (let i = B.length - 1; i > 0; i--) {
         this.mUp.uniforms.tSrc.value = B[i].texture;
         this.mUp.uniforms.uTexel.value.set(1 / B[i].width, 1 / B[i].height);
-        this.mUp.uniforms.uScatter.value = 0.9;
+        this.mUp.uniforms.uScatter.value = 0.7;
         this.pass(this.mUp, B[i - 1]);
       }
       r.autoClear = true;
@@ -345,17 +321,14 @@ export class Engine {
     u.uBloom.value = B.length ? post.bloom : 0;
     u.uExposure.value = post.exposure;
     u.uVignette.value = post.vignette;
-    u.uGrain.value = post.grain;
-    u.uTime.value = time;
-    u.uWhite.value = post.white;
     u.uBlack.value = post.black;
-    u.uChroma.value = post.chroma;
-    u.uLens.value = post.lens;
-    u.uLensX.value = post.lensX;
-    u.uLensBig.value = post.lensBig;
-    u.uFoam.value = post.foam;
-    u.uFoamY.value = post.foamY;
+    u.uDither.value = post.dither;
+    const photo = post.tone === 'photo';
+    u.uToneK.value = photo ? 1 : 0.8;
+    u.uToneW.value = photo ? 0 : 0.2;
     this.pass(this.mComp, null);
+    if (query) { gl.endQuery(tq.TIME_ELAPSED_EXT); this.queries.push(query); }
+    if (tq) this.pollTimer();
   }
 
   dispose() {
@@ -365,9 +338,40 @@ export class Engine {
   }
 }
 
-/** Perfil de qualidade conforme o aparelho (ajustado depois pelo tempo de quadro medido). */
-export function pickQuality({ mobile, dpr, cores, memory }) {
-  if (mobile || (cores && cores <= 4) || (memory && memory <= 4)) return { name: 'low', msaa: 0, bloomLevels: 4, maxScale: Math.min(dpr, 1.5), minScale: 0.6, parallaxSteps: 2, dofTaps: 16 };
-  if (dpr > 1.6) return { name: 'high', msaa: 4, bloomLevels: 5, maxScale: 1.5, minScale: 0.7, parallaxSteps: 4, dofTaps: 32 };
-  return { name: 'high', msaa: 4, bloomLevels: 5, maxScale: Math.min(dpr, 1.25), minScale: 0.7, parallaxSteps: 4, dofTaps: 32 };
+/**
+ * Qualidade: perfis e escada de degradação.
+ * Escala de render (px do aparelho por px CSS, nunca acima do devicePixelRatio): alto 2, padrão
+ * 1,5, baixo 1,25, piso 1,0. Quando o aparelho não acompanha, a escada desce nesta ordem:
+ * efeitos secundários, níveis do bloom, amostras do desfoque, atmosfera, multiamostragem e, só
+ * depois de tudo isso, a resolução (a nitidez do carro é a última coisa a cair). Para subir, o
+ * caminho inverso: primeiro volta a resolução, depois os efeitos.
+ */
+export const EFFECTS = [
+  {},
+  { secondary: false },                     // metade das gotas e das contas d'água
+  { secondary: false, bloomLevels: 3 },
+  { secondary: false, bloomLevels: 3, dofTaps: 16 },
+  { secondary: false, bloomLevels: 3, dofTaps: 16, atmosphere: false },
+  { secondary: false, bloomLevels: 3, dofTaps: 16, atmosphere: false, msaa: 2 },
+  { secondary: false, bloomLevels: 3, dofTaps: 16, atmosphere: false, msaa: 0 },
+];
+export const SCALES = [2, 1.75, 1.5, 1.25, 1];
+const BASE = { msaa: 4, bloomLevels: 5, dofTaps: 44, secondary: true, atmosphere: true };
+// e = degrau de efeitos, s = degrau de escala; o celular começa no padrão e pode subir para o alto
+const PROFILES = { high: { e: 0, s: 0 }, standard: { e: 0, s: 2 }, low: { e: 3, s: 3 } };
+
+/** Aplica os degraus (e, s) ao objeto de qualidade. */
+export function applyLevel(q) {
+  Object.assign(q, BASE, EFFECTS[q.e]);
+  q.scale = Math.min(q.dpr, SCALES[q.s]);
+}
+
+/** Perfil inicial conforme o aparelho; `pin` (?quality=high|standard|low) fixa o perfil sem escada. */
+export function pickQuality({ mobile, dpr, cores, memory, pin }) {
+  const name = PROFILES[pin] ? pin : mobile ? 'standard' : (cores && cores <= 4) || (memory && memory <= 4) ? 'low' : 'high';
+  const q = { name, pinned: !!PROFILES[pin], dpr, ...PROFILES[name] };
+  applyLevel(q);
+  // escala de referência para escolher o tamanho das fotos (a do perfil, não a do momento)
+  q.maxScale = q.scale;
+  return q;
 }

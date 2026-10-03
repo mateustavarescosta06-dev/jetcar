@@ -9,6 +9,13 @@ import { post } from '../gl/engine.js';
 import { hoodY, hoodGeometry, swirlTexture, StudioLights, sharedUniforms, paintMaterial, polisher, backdrop, typePlane } from '../gl/studio.js';
 import { Act, cardState } from './act.js';
 
+// Linha do tempo (p do ato): movimento -> parada nítida -> card -> movimento -> parada -> saída.
+// As duas passadas da luz param no mesmo ponto do capô (PARK), onde o reflexo cruza os riscos: na
+// primeira parada o card 02 chega e os riscos aparecem; na segunda (data-hold do HTML) o mesmo
+// ponto está limpo, e "Ver antes" compara antes e depois sem mudar o enquadramento.
+const T = { pass1: [0.06, 0.34], card: [0.34, 0.42, 0.93, 0.96], pol: [0.5, 0.66], pass2: [0.66, 0.84], close: [0.92, 0.97] };
+const PARK = 0.5;   // x da barra parada (de 2,4 ali em frente até aqui; abaixo de ~0,3 o reflexo sai do quadro)
+
 export class PolishAct extends Act {
   constructor(el, { engine, quality }) {
     super(el);
@@ -36,7 +43,7 @@ export class PolishAct extends Act {
   }
 
   build(quality) {
-    const low = quality.name === 'low';
+    const low = quality.name !== 'high';
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0, 0, 0);
     this.camera = new THREE.PerspectiveCamera(30, 1, 0.01, 60);
@@ -70,17 +77,19 @@ export class PolishAct extends Act {
 
   key() { return `${Math.round(this.p * 2000)}|${this.before}|${Math.round(this.drag * 50)}`; }
   // só a boina girando anima no tempo (enquanto a politriz passa)
-  get animating() { return this.dirty || (this.p > 0.5 && this.p < 0.7); }
+  get animating() { return this.dirty || (this.p > T.pol[0] && this.p < T.pol[1]); }
 
-  explore(btn) { /* o próprio botão alterna antes/depois */ }
+  // o próprio botão alterna antes/depois; longe da segunda parada, leva até ela (é onde há o
+  // que comparar)
+  explore(btn, { jump }) { if (!state.flat && Math.abs(this.raw - this.hold) > 0.05) jump(this.hold, btn); }
   focusPoint() { return this.hold; }
 
   update() {
     const p = this.p;
-    // o card chega quando a luz termina a primeira passada, na ponta da trajetória
-    cardState(this.card, p, [0.4, 0.5, 0.86, 0.9], 0.14);
+    // o card chega quando a luz para no fim da primeira passada, na ponta da trajetória
+    cardState(this.card, p, T.card, 0.14);
     // saída: a cena fecha numa fenda e sobra só a linha, que encolhe
-    const close = smooth(span(p, 0.88, 0.96)), shrink = smooth(span(p, 0.96, 1));
+    const close = smooth(span(p, T.close[0], T.close[1])), shrink = smooth(span(p, T.close[1], 1));
     const st = this.slit.style;
     st.setProperty('--vis', close > 0.001 && !state.reduce ? 'visible' : 'hidden');
     st.setProperty('--open', (1 - close).toFixed(3));
@@ -109,18 +118,18 @@ export class PolishAct extends Act {
     cam.lookAt(this.tgt);
     sh.uCam.value.copy(cam.position);
     const dist = cam.position.distanceTo(this.tgt);
-    sh.uFocus.value = dist * 0.9;
-    sh.uAperture.value = 0.9;
+    sh.uFocus.value = dist;
+    sh.uAperture.value = 0;
 
     // ——— A linha de luz: barra de LED atravessada sobre o capô ———
     // primeira passada (revela os riscos), a boina passa, segunda passada (mostra a faixa limpa)
-    const pass1 = smoother(span(p, 0.06, 0.46));
-    const pass2 = smoother(span(p, 0.72, 0.98));
-    const inPass2 = p > 0.72;
+    const pass1 = smoother(span(p, T.pass1[0], T.pass1[1]));
+    const pass2 = smoother(span(p, T.pass2[0], T.pass2[1]));
+    const inPass2 = p > T.pass2[0];
     const sweep = inPass2 ? pass2 : pass1;
     const on = smooth(span(p, 0.02, 0.1));
     // a barra corre da frente do capô para trás (o reflexo anda em direção à câmera e ao card)
-    const bx = lerp(2.4, -0.4, sweep);
+    const bx = lerp(2.4, PARK, sweep);
     // o cursor (ou arrastar no toque) inclina a barra poucos graus em torno do centro
     const tilt = (state.reduce ? 0 : pointer.sx * 0.07) + this.drag * 0.07;
     const ax = [Math.sin(tilt), 0, Math.cos(tilt)];
@@ -137,7 +146,8 @@ export class PolishAct extends Act {
     P.uSwirlGain.value = view.portrait ? 1.6 : 3.0;
 
     // a luz de inspeção (riscos) acompanha o centro do reflexo da barra
-    this.tmp.set(bx, 0.95, -0.15 + Math.sin(now * 0.0004) * 0.02);
+    // (sem oscilar no tempo: parada é parada, os riscos não cintilam)
+    this.tmp.set(bx, 0.95, -0.15);
     P.uInsp.value.copy(this.tmp);
     const insp = on * 3.2;
     P.uInspC.value.setRGB(insp, insp * 0.98, insp * 0.95);
@@ -145,7 +155,7 @@ export class PolishAct extends Act {
     P.uInspBar.value = 1;
 
     // ——— Politriz: passa entre as duas passadas da luz e deixa a faixa corrigida ———
-    const pp = span(p, 0.5, 0.7);
+    const pp = span(p, T.pol[0], T.pol[1]);
     this.pol.visible = pp > 0 && pp < 1;
     const zA = 1.0, zB = -1.05;
     if (this.pol.visible) {
@@ -164,15 +174,11 @@ export class PolishAct extends Act {
     // número grande ao fundo, fora de foco
     this.num.material.uniforms.uAlpha.value = env(p, [0.08, 0.3, 0.9, 1.01]);
 
+    // o reflexo da barra na pintura é o assunto: sem desfoque nenhum na cena (o número do fundo
+    // já vem desfocado na própria textura) e bloom só na barra em si, não no reflexo
     post.exposure = 1;
-    post.bloom = 0.7;
-    post.threshold = 0.85;
-    post.knee = 0.5;
-    post.vignette = 0.7;
-    post.grain = view.mobile ? 0.03 : 0.035;
-    post.dof = 1;
-    // entra do preto: a primeira coisa que aparece é a linha
-    post.black = 0;
-    engine.render(this.scene, cam, now / 1000);
+    post.vignette = 0.2;   // o reflexo passa pelo canto de baixo: vinheta fraca
+    post.dof = 0;
+    engine.render(this.scene, cam);
   }
 }

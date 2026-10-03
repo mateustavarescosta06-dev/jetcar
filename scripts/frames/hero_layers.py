@@ -1,15 +1,15 @@
 """Camadas do hero a partir da foto do galpão (poster.webp, o mesmo quadro inicial do filme).
 
-Saídas (em <saida>):
-  plate.webp       a placa limpa: o carro e o reflexo dele no piso removidos (LaMa, Apache-2.0),
-                   na resolução da ampliação 2×
-  car.webp         o carro com alfa real (BiRefNet), recortado no retângulo dele (2×)
-  car-m.webp       o mesmo para celular (1×)
-  normal.webp      normais do carro (Depth Anything V2 Small, Apache-2.0), no mesmo retângulo
+Saídas (em <saida>), sem perdas: os níveis publicados (WebP) saem de scripts/media/build_stills.py
+  plate.png        a placa limpa: o carro e o reflexo dele no piso removidos (LaMa, Apache-2.0),
+                   na resolução da foto ampliada
+  car.png          o carro com alfa real (BiRefNet), recortado no retângulo dele, na mesma resolução
+  normal.webp      normais do carro (Depth Anything V2 Small, Apache-2.0), no mesmo retângulo, 1×
+                   (só se o modelo for passado; com "-" o passo é pulado)
   hero.json        retângulo do carro em UV da foto (para o shader posicionar a textura)
 
-Uso: python3 hero_layers.py poster.png poster2x.png alpha.png lama_fp32.onnx depth_small.onnx <saida>
-(alpha.png sai de cutout.py; poster2x.png de upscale.py)
+Uso: python3 hero_layers.py poster.png poster_alta.png alpha.png lama_fp32.onnx <depth_small.onnx|-> <saida>
+(alpha.png sai de cutout.py; poster_alta.png de upscale.py 4× seguido de detail_blend.py)
 """
 import sys, os, json
 import numpy as np
@@ -38,10 +38,9 @@ box = dict(u0=x0 / W, u1=(x1 + 1) / W, v0=1 - (y1 + 1) / H, v1=1 - y0 / H)   # v
 a2 = cv2.resize(a, (W2, H2), interpolation=cv2.INTER_CUBIC).clip(0, 1)
 s = W2 / W
 X0, X1, Y0, Y1 = int(x0 * s), int((x1 + 1) * s), int(y0 * s), int((y1 + 1) * s)
-car2 = np.dstack([im2[Y0:Y1, X0:X1], (a2[Y0:Y1, X0:X1] * 255).astype(np.uint8)])
-Image.fromarray(car2, 'RGBA').save(os.path.join(out, 'car.webp'), quality=90, method=6)
-car1 = np.dstack([im[y0:y1 + 1, x0:x1 + 1], (a[y0:y1 + 1, x0:x1 + 1] * 255).astype(np.uint8)])
-Image.fromarray(car1, 'RGBA').save(os.path.join(out, 'car-m.webp'), quality=88, method=6)
+# o RGB fica sendo a própria foto também fora do recorte (sem franja escura ao filtrar a textura)
+car2 = np.dstack([im2[Y0:Y1, X0:X1], (a2[Y0:Y1, X0:X1] * 255 + 0.5).astype(np.uint8)])
+Image.fromarray(car2, 'RGBA').save(os.path.join(out, 'car.png'))
 
 # ——— máscara da placa: o carro + o reflexo dele no piso (espelhado na linha de contato) ———
 hard = (a > 0.08).astype(np.uint8)
@@ -73,8 +72,12 @@ fill2 = cv2.resize(res, (W2, H2), interpolation=cv2.INTER_CUBIC)
 fill2 = cv2.GaussianBlur(fill2, (0, 0), 2.0 * s)
 w2 = cv2.resize(cv2.GaussianBlur(hole.astype(np.float32), (0, 0), 6), (W2, H2), interpolation=cv2.INTER_LINEAR)[..., None]
 plate2 = im2.astype(np.float32) / 255.0 * (1 - w2) + fill2 * w2
-Image.fromarray((plate2 * 255 + 0.5).clip(0, 255).astype(np.uint8)).save(os.path.join(out, 'plate.webp'), quality=88, method=6)
-Image.fromarray((plate2 * 255 + 0.5).clip(0, 255).astype(np.uint8)).resize((W, H), Image.LANCZOS).save(os.path.join(out, 'plate-m.webp'), quality=86, method=6)
+Image.fromarray((plate2 * 255 + 0.5).clip(0, 255).astype(np.uint8)).save(os.path.join(out, 'plate.png'))
+json.dump(dict(box=box, contact=1 - contact / H, size=[W, H], hi=[W2, H2]), open(os.path.join(out, 'hero.json'), 'w'), indent=1)
+Image.fromarray((hole * 255).astype(np.uint8)).save(os.path.join(out, '_hole.png'))
+if depth_p == '-':
+    print('ok (sem normais)', box, 'contact', 1 - contact / H)
+    sys.exit(0)
 
 # ——— normais do carro (Depth Anything V2 Small) ———
 dep = ort.InferenceSession(depth_p, providers=['CPUExecutionProvider'])
@@ -104,6 +107,4 @@ flat = np.array([128, 128, 255], np.uint8)
 nimg = np.where(a[..., None] > 0.02, nimg, flat)
 crop = nimg[y0:y1 + 1, x0:x1 + 1]
 Image.fromarray(crop).save(os.path.join(out, 'normal.webp'), lossless=True, quality=100, method=6)
-json.dump(dict(box=box, contact=1 - contact / H, size=[W, H]), open(os.path.join(out, 'hero.json'), 'w'), indent=1)
-Image.fromarray((hole * 255).astype(np.uint8)).save(os.path.join(out, '_hole.png'))
 print('ok', box, 'contact', 1 - contact / H)

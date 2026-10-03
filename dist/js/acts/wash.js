@@ -5,7 +5,7 @@
 // A linha de luz atravessa a água (cada gota acende quando ela passa) e desenha a borda do
 // card 01. No fim, as luzes da oficina apagam.
 import * as THREE from '../../vendor/three.min.js';
-import { $, view, pointer, state, clamp, lerp, span, smooth, smoother, env, rng } from '../core.js';
+import { $, view, pointer, state, clamp, lerp, span, smooth, smoother, env, rng, pickLevel, glWidth } from '../core.js';
 import { post } from '../gl/engine.js';
 import { BARS, COLOR } from '../gl/glsl.js';
 import { StudioLights, typePlane, sharedUniforms } from '../gl/studio.js';
@@ -29,6 +29,7 @@ export class WashAct extends Act {
     this.card = $('.card', el);
     this.ready = !engine;
     this.drag = { x: 0, y: 0 };
+    this.quality = quality;
     let d = null;
     this.stage.addEventListener('pointerdown', e => { if (!e.target.closest('.card')) d = { x: e.clientX - this.drag.x * view.w * 0.3, y: e.clientY - this.drag.y * view.h * 0.3 }; });
     addEventListener('pointermove', e => { if (d) { this.drag.x = clamp((e.clientX - d.x) / (view.w * 0.3), -1, 1); this.drag.y = clamp((e.clientY - d.y) / (view.h * 0.3), -1, 1); this.dirty = true; } });
@@ -38,7 +39,7 @@ export class WashAct extends Act {
   }
 
   build(quality) {
-    const low = quality.name === 'low';
+    const low = quality.name !== 'high';
     this.scene = new THREE.Scene();
     this.scene.background = BG;
     this.camera = new THREE.PerspectiveCamera(32, 1, 0.05, 60);
@@ -64,8 +65,9 @@ export class WashAct extends Act {
         }
         void main() {
           vec2 uv = cover(vUv);
-          vec3 a = srgbToLinear(texture2D(tFrame, uv).rgb);
-          vec3 b = srgbToLinear(texture2D(tStill, uv).rgb);
+          // texturas sRGB: o hardware converte para linear antes de filtrar
+          vec3 a = texture2D(tFrame, uv).rgb;
+          vec3 b = texture2D(tStill, uv, -0.5).rgb;   // viés de mip (ver o teste de filtros)
           vec3 c = mix(a, b, uMix);
           // borda de cima: a linha que veio do hero
           float ey = (1.0 - vUv.y) * (uFrameMax.y - uFrameMin.y) * 900.0;
@@ -121,7 +123,7 @@ export class WashAct extends Act {
           vec2 hit = vW.xy + rd.xy * t;
           vec2 fuv = (hit - uFrameMin) / (uFrameMax - uFrameMin);
           vec3 bg = uBg;
-          if (fuv.x > 0.0 && fuv.x < 1.0 && fuv.y > 0.0 && fuv.y < 1.0) bg = srgbToLinear(texture2D(tStill, cover(fuv)).rgb);
+          if (fuv.x > 0.0 && fuv.x < 1.0 && fuv.y > 0.0 && fuv.y < 1.0) bg = texture2D(tStill, cover(fuv)).rgb;
           float F = fresnel(NdV, 0.02);
           vec3 refl = barsRadiance(vW, reflect(-v, n), 0.0015) + studioAmbient(reflect(-v, n)) * 2.0;
           vec3 col = bg * (1.0 - F) * 0.96 + refl * F;
@@ -142,7 +144,10 @@ export class WashAct extends Act {
   load() {
     if (!this.scene) return Promise.resolve();
     const sfx = view.portrait ? '-m' : '';
-    const still = new Promise(res => new THREE.TextureLoader().load(`assets/wash/freeze${sfx}.webp`, t => { t.colorSpace = THREE.NoColorSpace; t.minFilter = THREE.LinearMipmapLinearFilter; t.generateMipmaps = true; res(t); }, undefined, () => res(null)));
+    // o congelado ocupa 62% da largura do canvas e a câmera avança 10% sobre ele
+    const stillUrl = view.portrait ? 'assets/wash/freeze-m.webp'
+      : pickLevel(glWidth(this.quality) * 0.62 * 1.1, [[1920, 'assets/wash/freeze-1920.webp'], [2560, 'assets/wash/freeze-2560.webp']]);
+    const still = new Promise(res => new THREE.TextureLoader().load(stillUrl, t => { t.colorSpace = THREE.SRGBColorSpace; t.minFilter = THREE.LinearMipmapLinearFilter; t.generateMipmaps = true; res(t); }, undefined, () => res(null)));
     const v = document.createElement('video');
     v.muted = true; v.playsInline = true; v.preload = 'auto';
     v.setAttribute('muted', ''); v.setAttribute('playsinline', '');
@@ -168,7 +173,7 @@ export class WashAct extends Act {
       cv.width = vid.videoWidth; cv.height = vid.videoHeight;
       const g = cv.getContext('2d');
       const tex = new THREE.CanvasTexture(cv);
-      tex.colorSpace = THREE.NoColorSpace;
+      tex.colorSpace = THREE.SRGBColorSpace;
       tex.minFilter = THREE.LinearFilter; tex.generateMipmaps = false;
       const grab = () => { g.drawImage(vid, 0, 0); tex.needsUpdate = true; this.dirty = true; this.frameKey = vid.currentTime; };
       vid.addEventListener('seeked', grab);
@@ -290,8 +295,12 @@ export class WashAct extends Act {
     this.tgt.set(lerp(0, 0.05, look) + px * 0.02, 0, ZF);
     cam.lookAt(this.tgt);
     sh.uCam.value.copy(cam.position);
-    sh.uFocus.value = Math.abs(ZF - cam.position.z) - 1.2;
-    sh.uAperture.value = 0.55;
+    // foco exatamente no plano da moldura (o assunto: roda, água, superfície); só as gotas da
+    // frente, perto da câmera, desfocam (antes o foco ficava 1,2 antes da moldura e a borrava)
+    sh.uFocus.value = cam.position.distanceTo(this.tgt);
+    // abertura grande: a moldura está na distância de foco (coc ~0) e não muda; as gotas perto da
+    // câmera passam do limiar e desfocam por inteiro (com 0,55 ficavam 30% nítidas, uma bolha)
+    sh.uAperture.value = 0.9;
     // a linha de luz atravessa a água (barra vertical que varre da direita para a esquerda)
     const sweep = span(p, 0.47, 0.72);
     const li = env(p, [0.46, 0.5, 0.68, 0.73]) * (state.reduce ? 0 : 1);
@@ -301,6 +310,8 @@ export class WashAct extends Act {
     L.count(2);
     // gotas: aparecem com o congelamento
     this.drops.visible = frz > 0.01;
+    // escada de qualidade: sem os efeitos secundários, metade das gotas
+    this.drops.count = this.quality.secondary ? this.dropData.length : this.dropData.length >> 1;
     if (this.drops.visible) {
       const D = this.dropData;
       for (let i = 0; i < D.length; i++) {
@@ -322,12 +333,9 @@ export class WashAct extends Act {
     // o mesmo preto de onde a fenda do polimento abre
     const out = smooth(span(p, 0.88, 1.0));
     post.exposure = 1 - out;
-    post.bloom = 0.5;
-    post.threshold = 0.95;
-    post.knee = 0.5;
+    post.tone = 'photo';
     post.vignette = 0.2;
-    post.grain = view.mobile ? 0.03 : 0.035;
     post.dof = 0.9 * frz;
-    engine.render(this.scene, cam, now / 1000);
+    engine.render(this.scene, cam);
   }
 }

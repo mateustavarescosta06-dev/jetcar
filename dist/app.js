@@ -5,7 +5,7 @@
 // ato que perde o canvas fica com uma cópia 2D do último quadro (ele está parado na borda).
 import Lenis from './vendor/lenis.min.js';
 import { $, $$, view, pointer, state, clamp } from './js/core.js';
-import { Engine, pickQuality, resetPost } from './js/gl/engine.js';
+import { Engine, pickQuality, resetPost, applyLevel, EFFECTS, SCALES } from './js/gl/engine.js';
 import { HeroAct } from './js/acts/hero.js';
 import { WashAct } from './js/acts/wash.js';
 import { PolishAct } from './js/acts/polish.js';
@@ -37,7 +37,9 @@ measureView();
 
 // ——— WebGL: um renderizador para todas as cenas ———
 let engine = null;
-const quality = pickQuality({ mobile: view.mobile, dpr: view.dpr, cores: navigator.hardwareConcurrency, memory: navigator.deviceMemory });
+// ?quality=high|standard|low fixa o perfil (testes e comparações); sem ele a escada se ajusta
+const pin = new URLSearchParams(location.search).get('quality');
+const quality = pickQuality({ mobile: view.mobile, dpr: view.dpr, cores: navigator.hardwareConcurrency, memory: navigator.deviceMemory, pin });
 const canvas = document.createElement('canvas');
 canvas.className = 'gl';
 canvas.setAttribute('aria-hidden', 'true');
@@ -77,7 +79,7 @@ function warm(a) {
 }
 
 // ——— Layout ———
-let lastW = 0, lastH = 0, dynScale = 1, needDraw = false;
+let lastW = 0, lastH = 0, lastScale = 0, needDraw = false;
 function layout(force = false) {
   measureView();
   for (const a of acts) a.setHeight();
@@ -90,21 +92,64 @@ function layout(force = false) {
   // trechos em fluxo com fundo chapado (a barra fica sólida por cima deles)
   view.flat = $$('.order, .faq, .footer').map(el => { const r = el.getBoundingClientRect(); return [r.top + y, r.bottom + y]; });
   // no celular a barra do navegador muda a altura o tempo todo: só redimensiona em mudanças grandes
-  if (engine && (force || view.w !== lastW || Math.abs(view.h - lastH) > (view.mobile ? 120 : 0))) {
-    lastW = view.w; lastH = view.h;
-    engine.resize(view.w, view.h, clamp(view.dpr, quality.minScale, quality.maxScale) * dynScale);
+  if (engine && (force || view.w !== lastW || Math.abs(view.h - lastH) > (view.mobile ? 120 : 0) || quality.scale !== lastScale)) {
+    lastW = view.w; lastH = view.h; lastScale = quality.scale;
+    engine.resize(view.w, view.h, quality.scale);
     needDraw = true;   // mudar o tamanho apaga o canvas: desenha de novo mesmo com a página parada
     for (const a of glActs) { a.resize?.(engine.size.x, engine.size.y); dropSnap(a); }
   }
 }
 
-// Resolução dinâmica: se o aparelho não acompanha, desenha menos pixels.
-let slow = 0, fast = 0;
-function adapt(ms) {
-  // abaixo de 25 quadros por segundo (um rAF limitado a 30 Hz, como no modo de economia do iPhone, não conta)
-  if (ms > 40) { slow++; fast = 0; } else if (ms < 14) { fast++; slow = 0; } else { slow = Math.max(0, slow - 1); fast = 0; }
-  if (slow > 45 && dynScale > 0.55) { dynScale = Math.max(0.55, dynScale - 0.12); slow = 0; layout(true); }
-  else if (fast > 240 && dynScale < 1) { dynScale = Math.min(1, dynScale + 0.08); fast = 0; layout(true); }
+// ——— Orçamento de quadro: a escada de qualidade (engine.js) ———
+// A cada segundo de desenho ativo compara o custo com o intervalo da tela (60, 90, 120 Hz, ou 30
+// no modo de economia): pelo tempo de GPU quando o navegador mede, senão pelos quadros perdidos.
+// Dois segundos lentos seguidos descem um degrau (efeitos antes da resolução); três segundos
+// folgados sobem um (resolução antes dos efeitos). Um degrau que falhou fica bloqueado por um
+// tempo que quadruplica a cada falha, para a página não ficar testando e engasgando.
+const gov = { dts: [], at: 0, slow: 0, fast: 0, failed: new Map(), refresh: Infinity, quiet: 0 };
+const keyOf = q => `${q.e}|${q.s}`;
+function stepQuality(dir, now) {
+  const q = quality, from = keyOf(q);
+  if (dir < 0) {
+    if (q.e < EFFECTS.length - 1) q.e++;
+    else if (q.s < SCALES.length - 1) q.s++;
+    else return;
+    const f = gov.failed.get(from) || { n: 0 };
+    gov.failed.set(from, { n: f.n + 1, at: now });
+  } else {
+    const e = q.e, s = q.s;
+    if (q.s > 0 && Math.min(q.dpr, SCALES[q.s - 1]) > q.scale) q.s--;
+    else if (q.e > 0) q.e--;
+    else return;
+    const f = gov.failed.get(keyOf(q));
+    if (f && now - f.at < 20000 * 4 ** (f.n - 1)) { q.e = e; q.s = s; return; }
+  }
+  applyLevel(q);
+  engine.applyQuality();
+  layout(true);
+}
+function govern(dt, now) {
+  if (quality.pinned) return;
+  // carregando ou compilando shaders: os quadros perdidos não dizem nada sobre o aparelho
+  if (now < gov.quiet) { gov.dts.length = 0; gov.at = now; return; }
+  gov.dts.push(dt);
+  if (now - gov.at < 1000 || gov.dts.length < 24) return;
+  const sorted = [...gov.dts].sort((a, b) => a - b);
+  // intervalo da tela: o menor visto na visita (com a GPU sobrando, um quadro de 60 Hz mostra
+  // 16,7 ms; se todo quadro levar 33 ms por falta de GPU, a janela sozinha acharia que a tela é
+  // de 30 Hz e nunca veria quadro perdido)
+  gov.refresh = Math.min(gov.refresh, sorted[Math.floor(sorted.length * 0.2)]);
+  const refresh = gov.refresh;
+  const dropped = gov.dts.filter(x => x > refresh * 1.6).length / gov.dts.length;
+  gov.dts.length = 0;
+  gov.at = now;
+  const gpu = engine.gpuMs();
+  const slow = gpu != null ? gpu > refresh * 0.85 : dropped > 0.2;
+  const fast = gpu != null ? gpu < refresh * 0.45 : dropped < 0.02;
+  gov.slow = slow ? gov.slow + 1 : 0;
+  gov.fast = fast ? gov.fast + 1 : 0;
+  if (gov.slow >= 2) { gov.slow = 0; stepQuality(-1, now); }
+  else if (gov.fast >= 3) { gov.fast = 0; stepQuality(1, now); }
 }
 
 // ——— Rolagem suave na roda do mouse; no toque, a nativa ———
@@ -273,8 +318,10 @@ function tick(now) {
     const idle = now - lastActive > 2500;
     skip = idle ? !skip : false;
     if (owner && (!skip || extra) && (active || now - lastActive < 2600 || owner.ambient)) {
-      if (!idle) adapt(dt);
+      if (!idle && !extra && document.visibilityState === 'visible') govern(dt, now);
+      engine.measure = true;
       drawAct(owner, now);
+      engine.measure = false;
     }
   }
   renderUi(y, acts, byId);
@@ -314,13 +361,14 @@ Promise.race([Promise.all([fontsReady, first]), new Promise(r => setTimeout(r, 7
   const rest = acts.filter(a => a.id !== 'hero');
   // cada ato tem até 12 s: um asset que não responde não segura os seguintes
   const timeout = ms => new Promise((_, no) => setTimeout(() => no(new Error('timeout')), ms));
-  rest.reduce((pr, a) => pr.then(() => Promise.race([a.load().then(() => warm(a)), timeout(12000)]).catch(err => console.warn(a.id, err))), Promise.resolve()).then(() => layout(true));
+  const quiet = () => { gov.quiet = performance.now() + 2500; };
+  rest.reduce((pr, a) => pr.then(() => { quiet(); return Promise.race([a.load().then(() => warm(a)), timeout(12000)]).then(quiet).catch(err => console.warn(a.id, err)); }), Promise.resolve()).then(() => layout(true));
 });
 document.fonts?.ready.then(() => layout(true));
 
 // ?debug: estado para os testes; settle() leva tudo ao alvo sem esperar a suavização
 if (/[?&]debug\b/.test(location.search)) window.__jetcar = {
-  state, view, pointer, acts: byId, engine, layout, owner: () => owner?.id,
+  state, view, pointer, acts: byId, engine, quality, layout, owner: () => owner?.id,
   settle() { for (const a of acts) { a.track(scrollY, 16); a.p = a.raw; a.settle?.(); } },
 };
 

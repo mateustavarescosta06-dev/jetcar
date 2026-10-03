@@ -16,6 +16,8 @@ const SPOTS = {
   volante: { u: 0.879, v: 0.33, text: 'Volante: é onde a mão fica o tempo todo. Entra na higienização junto com os comandos em volta.' },
 };
 const ASPECT = 3072 / 2048;
+// recorte do celular (far-m/near-m): u 0,34…1 da foto, altura inteira
+const CROP_M = { u0: 0.34, u1: 1 };
 // janela visível da foto (centro u,v e largura w, em fração da foto): começa na foto inteira e
 // termina na cabine (a área escura atrás da carroceria fica fora do quadro)
 const VIEW = {
@@ -55,6 +57,8 @@ export class InteriorAct extends Act {
     this.bw = r.width || view.w;
     this.bh = r.height || view.h;
     this.V = view.portrait ? VIEW.m : VIEW.d;
+    // a <picture> escolhe o recorte do celular pela mesma condição de view.portrait
+    this.crop = view.portrait ? CROP_M : null;
     // área do card dentro da cabine (um ponto embaixo dele fica escondido)
     const c = this.card.getBoundingClientRect();
     this.cardBox = { l: c.left - r.left - 28, r: c.right - r.left + 28, t: c.top - r.top - 28, b: c.bottom - r.top + 28 };
@@ -67,8 +71,16 @@ export class InteriorAct extends Act {
     return { Wd, Hd, x: this.bw / 2 - win.u * Wd, y: this.bh / 2 - win.v * Hd };
   }
   place(el, f) {
-    css(el, 'width', `${Math.round(f.Wd)}px`);
-    css(el, 'transform', `translate3d(${f.x.toFixed(1)}px, ${f.y.toFixed(1)}px, 0)`);
+    const c = this.crop || { u0: 0, u1: 1 };
+    // posição em pixels inteiros do aparelho: parada, a foto não é reamostrada pela metade de um pixel
+    const d = view.dpr || 1, snap = v => (Math.round(v * d) / d).toFixed(2);
+    css(el, 'width', `${snap(f.Wd * (c.u1 - c.u0))}px`);
+    css(el, 'transform', `translate3d(${snap(f.x + c.u0 * f.Wd)}px, ${snap(f.y)}px, 0)`);
+  }
+  /** Com o recorte, a janela não pode sair dele (a imagem tem que cobrir o palco). */
+  fit(f) {
+    if (this.crop) f.x = clamp(f.x, this.bw - this.crop.u1 * f.Wd, -this.crop.u0 * f.Wd);
+    return f;
   }
 
   update() {
@@ -87,7 +99,7 @@ export class InteriorAct extends Act {
     const A = this.V.from, B = this.V.to;
     const win = { u: lerp(A.u, B.u, push) + px * 0.004, v: lerp(A.v, B.v, push) + py * 0.003, w: lerp(A.w, B.w, push) };
     const nwin = { u: win.u - push * 0.16 + px * 0.009, v: win.v + push * 0.05 + py * 0.006, w: win.w / (1 + push * 1.3) };
-    const f = this.frame(win), n = this.frame(nwin);
+    const f = this.fit(this.frame(win)), n = this.fit(this.frame(nwin));
     this.place(this.far, f);
     this.place(this.near, n);
     css(this.near, 'opacity', (1 - smooth(span(p, 0.5, 0.6))).toFixed(3));

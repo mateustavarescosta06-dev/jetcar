@@ -202,8 +202,18 @@ export function paintMaterial(lights, shared, swirl) {
       ${BARS}
       ${NOISE}
       ${DOF}
+      // Normal do capô por pixel, com as derivadas exatas de hoodY (domo, dois vincos de 3 cm e a
+      // frente que cai). Um espelho dobra o erro de ângulo: com a normal interpolada dos vértices
+      // (grade de 1 cm), o reflexo da barra virava uma linha quebrada ao cruzar os vincos.
+      vec3 hoodNormal(vec2 p) {
+        float dx = -0.12 * p.x / 2.56;
+        if (p.x > 1.12) dx -= 3.0 * (p.x - 1.12);
+        float c = (abs(p.y) - 0.52) / 0.03;
+        float dz = -0.07 * p.y / 1.21 - 0.0045 * exp(-c * c) * 2.0 * c / 0.03 * sign(p.y);
+        return normalize(vec3(-dx, 1.0, -dz));
+      }
       void main() {
-        vec3 n = normalize(vN);
+        vec3 n = hoodNormal(vW.xz);
         vec3 v = normalize(uCam - vW);
         if (dot(n, v) < 0.0) n = -n;
         float NdV = max(dot(n, v), 1e-3);
@@ -603,7 +613,15 @@ export function typePlane(text, shared, { h = 1.4, color = 0.05 } = {}) {
     g.textAlign = 'center';
     g.textBaseline = 'middle';
     g.font = 'italic 800 440px "Barlow Condensed", "Arial Narrow", sans-serif';
-    g.fillText(text, 512, 270);
+    // o número fica atrás do assunto e já vem fora de foco na textura (as cenas de serviço
+    // não desfocam mais a imagem inteira): só a sombra desfocada do texto, desenhado fora do
+    // canvas, cai dentro dele (funciona em todos os navegadores, ao contrário de ctx.filter)
+    g.shadowColor = '#fff';
+    g.shadowBlur = 16;
+    g.shadowOffsetX = 2048;
+    g.fillText(text, 512 - 2048, 270);
+    g.shadowBlur = 0;
+    g.shadowOffsetX = 0;
     tex.needsUpdate = true;
   };
   const tex = new THREE.CanvasTexture(cv);

@@ -82,8 +82,8 @@
     <div class="stage">
       <div class="gl-slot" aria-hidden="true">
         <picture>
-          <source media="(max-width: 760px)" srcset="assets/posters/hero-m.webp">
-          <img class="poster" src="assets/posters/hero-d.webp" alt="" width="1920" height="1200">
+          <source media="(max-width: 760px)" srcset="assets/posters/hero-m.webp" width="1170" height="2532">
+          <img class="poster" src="assets/posters/hero-d1440.webp" srcset="assets/posters/hero-d1440.webp 1440w, assets/posters/hero-d.webp 2880w" sizes="100vw" alt="" width="2880" height="1800">
         </picture>
       </div>
       <i class="scrim hero-scrim" aria-hidden="true"></i>
@@ -104,8 +104,8 @@
     <div class="stage">
       <div class="gl-slot" aria-hidden="true">
         <picture>
-          <source media="(max-width: 760px)" srcset="assets/posters/wash-m.webp">
-          <img class="poster" src="assets/posters/wash-d.webp" alt="" width="1920" height="1200" loading="lazy">
+          <source media="(max-width: 760px)" srcset="assets/posters/wash-m.webp" width="1170" height="2532">
+          <img class="poster" src="assets/posters/wash-d1440.webp" srcset="assets/posters/wash-d1440.webp 1440w, assets/posters/wash-d.webp 2880w" sizes="100vw" alt="" width="2880" height="1800" loading="lazy">
         </picture>
       </div>
       <article class="card" data-card="wash">
@@ -124,19 +124,19 @@
   </section>
 
   <!-- 02 · POLIMENTO: escuro; a luz de inspeção revela as marcas e termina no card. -->
-  <section class="act bay bay-polish" id="polimento" data-act="polish" data-span="2.4" data-span-m="2.0" data-hold="0.78" aria-labelledby="t-polimento">
+  <section class="act bay bay-polish" id="polimento" data-act="polish" data-span="2.4" data-span-m="2.0" data-hold="0.88" aria-labelledby="t-polimento">
     <div class="stage">
       <div class="gl-slot" aria-hidden="true">
         <picture>
-          <source media="(max-width: 760px)" srcset="assets/posters/polish-m.webp">
-          <img class="poster" src="assets/posters/polish-d.webp" alt="" width="1920" height="1200" loading="lazy">
+          <source media="(max-width: 760px)" srcset="assets/posters/polish-m.webp" width="1170" height="2532">
+          <img class="poster" src="assets/posters/polish-d1440.webp" srcset="assets/posters/polish-d1440.webp 1440w, assets/posters/polish-d.webp 2880w" sizes="100vw" alt="" width="2880" height="1800" loading="lazy">
         </picture>
       </div>
       <article class="card" data-card="polish">
         <svg class="card-trace" aria-hidden="true"><rect class="trace-dim" pathLength="1"/><rect class="trace-head" pathLength="1"/></svg>
         <p class="card-num">02<span>Pintura</span></p>
         <h2 class="card-title" id="t-polimento"><span>Polimento</span> <span>e correção</span></h2>
-        <p class="card-lead">O que a luz mostra.</p>
+        <p class="card-lead">A luz encontra a pintura.</p>
         <p class="card-text">A luz de inspeção revela as marcas finas no verniz. O polimento trabalha essa camada para recuperar o brilho, conforme o estado da pintura.</p>
         <div class="card-actions">
           <button class="card-explore" type="button" aria-pressed="false" data-explore="polish">Ver antes<svg><use href="#i-arrow"/></svg></button>
@@ -152,8 +152,8 @@
     <div class="stage">
       <div class="gl-slot" aria-hidden="true">
         <picture>
-          <source media="(max-width: 760px)" srcset="assets/posters/protect-m.webp">
-          <img class="poster" src="assets/posters/protect-d.webp" alt="" width="1920" height="1200" loading="lazy">
+          <source media="(max-width: 760px)" srcset="assets/posters/protect-m.webp" width="1170" height="2532">
+          <img class="poster" src="assets/posters/protect-d1440.webp" srcset="assets/posters/protect-d1440.webp 1440w, assets/posters/protect-d.webp 2880w" sizes="100vw" alt="" width="2880" height="1800" loading="lazy">
         </picture>
       </div>
       <ol class="layer-labels" aria-label="Camadas da pintura, de cima para baixo">
@@ -204,8 +204,16 @@
   <section class="act bay bay-interior" id="interior" data-act="interior" data-span="2.4" data-span-m="2.2" data-hold="0.7" aria-labelledby="t-interior">
     <div class="stage">
       <div class="cabin" aria-hidden="true">
-        <img class="cabin-far" src="assets/interior/far.webp" alt="" width="3072" height="2048" loading="lazy" decoding="async">
-        <img class="cabin-near" src="assets/interior/near.webp" alt="" width="3072" height="2048" loading="lazy" decoding="async">
+        <!-- em pé: recorte próprio (u 0,34…1 da foto, altura inteira); deitado: a foto inteira em dois níveis
+             (a parada mostra 54% da largura da foto na tela toda, por isso 185vw) -->
+        <picture>
+          <source media="(max-aspect-ratio: 9/10)" srcset="assets/interior/far-m.webp" width="2534" height="2560">
+          <img class="cabin-far" src="assets/interior/far-3584.webp" srcset="assets/interior/far-3584.webp 3584w, assets/interior/far-4608.webp 4608w" sizes="185vw" alt="" width="3584" height="2389" loading="lazy" decoding="async">
+        </picture>
+        <picture>
+          <source media="(max-aspect-ratio: 9/10)" srcset="assets/interior/near-m.webp" width="2534" height="2560">
+          <img class="cabin-near" src="assets/interior/near-3584.webp" alt="" width="3584" height="2389" loading="lazy" decoding="async">
+        </picture>
         <i class="cabin-glass"></i>
       </div>
       <div class="spots" role="group" aria-label="Detalhes do interior">
@@ -232,8 +240,8 @@
   <section class="result" id="resultado" aria-labelledby="t-result">
     <figure class="result-figure">
       <picture>
-        <source media="(max-width: 760px)" srcset="assets/result-m.webp">
-        <img src="assets/result-d.webp" alt="Porsche 911 grafite pronto, brilhando no galpão escuro" width="3200" height="1804" loading="lazy" decoding="async">
+        <source media="(max-width: 760px) and (orientation: portrait)" srcset="assets/result-m.webp" width="1800" height="2160">
+        <img src="assets/result-1920.webp" srcset="assets/result-1920.webp 1920w, assets/result-2560.webp 2560w, assets/result-3200.webp 3200w" sizes="max(100vw, 178vh)" alt="Porsche 911 grafite pronto, brilhando no galpão escuro" width="3200" height="1804" loading="lazy" decoding="async">
       </picture>
       <i class="result-trace" aria-hidden="true"></i>
     </figure>

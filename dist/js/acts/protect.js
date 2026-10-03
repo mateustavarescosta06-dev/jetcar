@@ -1,16 +1,19 @@
 // 03 + 04 · PROTEÇÃO (o pico da página).
 // Ceramic: uma amostra da pintura (chapa, primer, cor, verniz e o coating por cima) apoiada no
-// piso do estúdio. Você separa as camadas (arrastando na cena ou no controle); a linha de luz
+// piso do estúdio, em materiais físicos (MeshPhysicalMaterial: metal escovado, primer fosco,
+// metálico grafite, verniz e coating transparentes de verdade, com transmissão e refração),
+// iluminados por luzes de área nas posições das barras do estúdio (gl/physical.js). Você separa as camadas (arrastando na cena ou no controle); a linha de luz
 // desce entre elas, acendendo uma por uma, e depois passa por cima do coating: atrás dela a
 // água forma gotas. As camadas fecham.
 // PPF: a mesma linha varre a tela e revela a frente do carro sem proteção; em seguida ela volta
 // como a borda de uma película transparente que atravessa a carroceria. O card 04 vem preso à
 // borda da película e pousa sobre o card 03, que recua (empilhamento).
 import * as THREE from '../../vendor/three.min.js';
-import { $, $$, view, pointer, state, clamp, lerp, span, smooth, smoother, env, rng } from '../core.js';
+import { $, $$, view, pointer, state, clamp, lerp, span, smooth, smoother, env, rng, pickLevel, glWidth } from '../core.js';
 import { post } from '../gl/engine.js';
 import { COLOR } from '../gl/glsl.js';
-import { StudioLights, sharedUniforms, layerMaterial, dropGeometry, dropMaterial, backdrop, typePlane } from '../gl/studio.js';
+import { StudioLights, sharedUniforms, dropGeometry, backdrop, typePlane } from '../gl/studio.js';
+import { physicalLayer, waterBead, AreaBars, loadLTC, studioEnvironment } from '../gl/physical.js';
 import { Act, cardState } from './act.js';
 
 const W = 1.5, D = 1.0;
@@ -65,7 +68,9 @@ void main() {
   float band = exp(-max(d, 0.0) / (10.0 * px)) * on;
   uv.x -= band * 2.5 * px;
   uv.y += band * 0.8 * px;
-  vec3 c = srgbToLinear(texture2D(tImg, uv).rgb);
+  // sRGB (o hardware já converte para linear); viés −0,5 no mip: acima de 0,71× usa só o nível
+  // cheio (nítido como sem mipmap) e abaixo disso não serrilha (teste em audit/IMAGE_QUALITY_AUDIT.md)
+  vec3 c = texture2D(tImg, uv, -0.5).rgb;
   // a película só existe sobre o carro (recorte); sem recorte, a borda cruza a imagem toda
   float car = mix(1.0, texture2D(tMask, uv).r, uHasMask);
   on *= car;
@@ -85,7 +90,9 @@ void main() {
   float wy = mix(0.18, 0.78, uClimb);
   float cy = (f.y - wy) / 0.004;
   float climb = exp(-cy * cy) * car * smoothstep(0.0, 0.15, uClimb) * (1.0 - smoothstep(0.85, 1.0, uClimb));
-  c += (line * 7.0 + climb * 4.0) * vec3(1.0, 0.99, 0.97);
+  // abaixo do limiar do bloom (4): a borda da película é o assunto e fica uma linha branca
+  // nítida, sem halo (antes 7×, e o brilho espalhava a borda por 25–40 px)
+  c += (line * 3.0 + climb * 2.5) * vec3(1.0, 0.99, 0.97);
   gl_FragColor = vec4(c * uExpo, 1.0);
 }`;
 
@@ -107,6 +114,8 @@ export class ProtectAct extends Act {
     this.filmLabels = $('.film-labels', el);
     this.s = 0; this.f = 0;
     this.userS = null; this.userF = null;
+    this.quality = quality;
+    this.engine = engine;
     this.ready = !engine;
     // controles: o último a mexer vence (rolagem ou a pessoa)
     this.sepInput.addEventListener('input', () => { this.userS = this.sepInput.value / 100; this.userSAt = this.raw; this.dirty = true; });
@@ -138,7 +147,7 @@ export class ProtectAct extends Act {
   }
 
   build(quality) {
-    const low = quality.name === 'low';
+    const low = quality.name !== 'high';
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0, 0, 0);
     this.camera = new THREE.PerspectiveCamera(28, 1, 0.05, 80);
@@ -150,13 +159,12 @@ export class ProtectAct extends Act {
     this.scene.add(sky, floor);
     this.floor = floor; this.sky = sky;
     this.slabs = LAYERS.map(L => {
-      const m = new THREE.Mesh(panelGeometry(L.t, low ? [48, 32] : [72, 48]), layerMaterial(L.kind, this.lights, this.shared));
-      m.renderOrder = L.kind === 'clear' || L.kind === 'film' ? 2 : 0;
-      m.material.uniforms.uDetail.value = 0.24;
-      m.material.uniforms.uPrimer.value.setRGB(0.15, 0.15, 0.145);
+      const m = new THREE.Mesh(panelGeometry(L.t, low ? [48, 32] : [72, 48]), physicalLayer(L.kind, null));
       this.scene.add(m);
       return m;
     });
+    // as barras como luzes de área: entram na cena quando as tabelas LTC carregam (load)
+    this.area = new AreaBars(6);
     // sombra de contato da chapa no piso
     const sh = new THREE.Mesh(new THREE.PlaneGeometry(W * 1.5, D * 1.6), new THREE.ShaderMaterial({
       vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
@@ -170,7 +178,7 @@ export class ProtectAct extends Act {
     // gotas no coating
     const R = rng(41);
     const n = low ? 70 : 120;
-    this.beadMat = dropMaterial(this.lights, this.shared);
+    this.beadMat = waterBead(null);
     this.beads = new THREE.InstancedMesh(dropGeometry(), this.beadMat, n);
     this.beads.frustumCulled = false;
     this.beadData = [];
@@ -205,10 +213,25 @@ export class ProtectAct extends Act {
 
   load() {
     if (!this.scene) return Promise.resolve();
+    // materiais físicos: tabelas das luzes de área e o mapa de ambiente do estúdio
+    const phys = loadLTC().then(ok => {
+      if (ok) this.scene.add(this.area.group);
+      const env = studioEnvironment(this.engine.renderer);
+      for (const m of [...this.slabs.map(s => s.material), this.beadMat]) { m.envMap = env; m.needsUpdate = true; }
+      // celular: a transmissão (verniz, coating, gotas) desenha o fundo de novo; em meia resolução
+      this.engine.renderer.transmissionResolutionScale = this.quality.name === 'high' ? 1 : 0.5;
+    });
     // mipmaps: a foto (3200 px) aparece menor que isso, e sem eles cintila quando a câmera mexe
-    const get = url => new Promise(res => new THREE.TextureLoader().load(url, t => { t.colorSpace = THREE.NoColorSpace; t.minFilter = THREE.LinearMipmapLinearFilter; t.generateMipmaps = true; res(t); }, undefined, () => res(null)));
-    const sfx = view.portrait ? '-m' : '';
-    return Promise.all([get(`assets/protect/front${sfx}.webp`), get(`assets/protect/front-mask${sfx}.webp`)]).then(([img, mask]) => {
+    const get = (url, cs = THREE.SRGBColorSpace) => new Promise(res => new THREE.TextureLoader().load(url, t => { t.colorSpace = cs; t.minFilter = THREE.LinearMipmapLinearFilter; t.generateMipmaps = true; res(t); }, undefined, () => res(null)));
+    // a foto cobre a tela inteira (16:9 em "cover"): nível pela maior dimensão coberta; em pé, o
+    // recorte do celular (altura inteira, centrado no farol e no capô)
+    const portrait = view.portrait;
+    this.loadedFor = portrait;
+    const need = glWidth(this.quality) * Math.max(1, (view.h / view.w) * (1916 / 1080));
+    const imgUrl = portrait ? 'assets/protect/front-m.webp'
+      : pickLevel(need, [[1920, 'assets/protect/front-1920.webp'], [2560, 'assets/protect/front-2560.webp'], [3200, 'assets/protect/front-3200.webp']]);
+    const maskUrl = portrait ? 'assets/protect/front-mask-m.webp' : 'assets/protect/front-mask.webp';
+    return Promise.all([get(imgUrl), get(maskUrl, THREE.NoColorSpace), phys]).then(([img, mask]) => {
       const U = this.photo.material.uniforms;
       U.tImg.value = img;
       U.tMask.value = mask || img;
@@ -220,6 +243,7 @@ export class ProtectAct extends Act {
 
   resize(w, h) {
     if (!this.camera) return;
+    if (this.ready && this.loadedFor != null && this.loadedFor !== view.portrait) this.load();
     this.camera.aspect = w / h;
     this.camera.fov = view.portrait ? 40 : 28;
     // o objeto fica à direita do centro no desktop (o card ocupa a esquerda)
@@ -394,12 +418,29 @@ export class ProtectAct extends Act {
     }
     L.set(3, lineC, lineA, lineHW, lineHL, [lineI, lineI * 0.99, lineI * 0.96], 0.002, lineVis && lineI > 0.05);
     L.count(4);
+    // as mesmas barras como luzes de área para os materiais físicos, viradas para a amostra; a
+    // linha entre as camadas ilumina as duas faces do vão (uma luz para baixo, outra para cima)
+    const A = this.area, mid = [0, midY, 0];
+    // (o reflexo num dielétrico a ~65° é ~10% da luz: a softbox de estúdio é forte de verdade)
+    A.set(0, [rx * 3.2, midY + 2.0, rz * 3.2], [-rz, 0, rx], 0.55, 1.9, [6, 6, 6.15], mid);
+    A.set(1, [2.4, 1.3, 1.2], [0, 1, 0], 0.012, 1.1, [16, 15.8, 15.4], mid);
+    A.set(2, [-1.4, 1.5, -2.4], [1, 0, 0], 0.012, 1.5, [10, 9.8, 9.6], mid);
+    const lc = [lineI * 3, lineI * 2.97, lineI * 2.88];
+    if (this.scanGap != null) {
+      const gap = Math.max(0.006, (view.portrait ? 0.22 : 0.26) * s * 0.5);
+      A.set(3, lineC, lineA, gap, lineHL, lc.map(v => v * 0.5), [lineC[0], lineC[1] - 1, lineC[2] - 0.2]);
+      A.set(4, lineC, lineA, gap, lineHL, lc.map(v => v * 0.5), [lineC[0], lineC[1] + 1, lineC[2] - 0.2]);
+    } else {
+      A.set(3, lineC, lineA, lineHW, lineHL, lc, [lineC[0], topY, 0]);
+      A.off(4);
+    }
 
     // ——— Ativação: gotas se formam atrás da linha ———
     const actK = span(p, T.act[0], T.act[1]);
     const sweepX = lerp(-W * 0.75, W * 0.75, smoother(actK));
     const beadsOn = p > T.act[0] && p < T.wipe[1];
     this.beads.visible = beadsOn;
+    this.beads.count = this.quality.secondary ? this.beadData.length : this.beadData.length >> 1;
     if (beadsOn) {
       const D2 = this.beadData;
       const fade = 1 - smooth(span(p, T.close[0], T.close[1]));
@@ -416,10 +457,10 @@ export class ProtectAct extends Act {
         this.beads.setMatrixAt(i, this.M);
       }
       this.beads.instanceMatrix.needsUpdate = true;
-      this.beadMat.uniforms.uPaint.value.setRGB(0.045, 0.046, 0.05);
     }
-    // o coating "acende" de leve depois da passada da luz
-    this.slabs[4].material.uniforms.uGlow.value = smooth(actK) * 0.5;
+    // o coating "acende" depois da passada da luz: a interferência de filme fino aparece mais
+    // (fica sempre acima de zero, para o shader não recompilar)
+    this.slabs[4].material.iridescence = 0.45 + 0.55 * smooth(actK);
 
     // ——— PPF: a linha varre e revela a foto; depois a película atravessa o carro ———
     const U = this.photo.material.uniforms;
@@ -438,13 +479,13 @@ export class ProtectAct extends Act {
     this.num3.material.uniforms.uAlpha.value = env(p, [0.02, 0.12, T.close[0], T.close[1]]);
 
     // ——— Pós ———
+    // a foto da frente cobrindo a tela: conteúdo graduado, sem desfoque e com o branco em 255;
+    // as camadas 3D: o desfoque só separa o piso e o fundo (o que está em foco fica intacto)
+    const photoOnly = this.photo.visible && U.uWipe.value > 1;
     post.exposure = 1;
-    post.bloom = 0.6;
-    post.threshold = 0.9;
-    post.knee = 0.5;
-    post.vignette = 0.55;
-    post.grain = view.mobile ? 0.03 : 0.035;
-    post.dof = this.photo.visible && U.uWipe.value > 1 ? 0 : 0.8;
-    engine.render(this.scene, cam, now / 1000);
+    post.vignette = photoOnly ? 0.15 : 0.3;
+    post.tone = photoOnly ? 'photo' : 'hdr';
+    post.dof = photoOnly ? 0 : 0.8;
+    engine.render(this.scene, cam);
   }
 }

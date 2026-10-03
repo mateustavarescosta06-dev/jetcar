@@ -8,7 +8,7 @@
 // o reflexo corre pela carroceria (normais do recorte) e o carro fica aceso. Na saída, a linha
 // deita no piso e desce até a borda da tela, onde vira a borda da moldura da lavagem.
 import * as THREE from '../../vendor/three.min.js';
-import { $, view, pointer, state, clamp, lerp, span, smooth, smoother, env } from '../core.js';
+import { $, view, pointer, state, clamp, lerp, span, smooth, smoother, env, glWidth } from '../core.js';
 import { post } from '../gl/engine.js';
 import { BARS, COLOR, NOISE } from '../gl/glsl.js';
 import { StudioLights } from '../gl/studio.js';
@@ -24,6 +24,8 @@ const ZC = -6.8;   // plano do carro
 const ZW = -16;    // parede do fundo
 const ZM = -11.5;  // letreiro
 const ZP = -2.4;   // pilar perto da câmera
+// celular (retrato): plate-m.webp é o miolo da placa em 2× (a câmera em pé vê u 0,17…0,87)
+const PLATE_M = [0.14, 0, 0.9, 1];
 
 const PROJ = /* glsl */ `
 uniform mat4 uPV;
@@ -44,6 +46,7 @@ export class HeroAct extends Act {
     this.copy = $('.hero-copy', el);
     this.ready = !engine;
     this.t0 = null;
+    this.quality = quality;
     if (engine) this.build(quality);
   }
 
@@ -68,14 +71,18 @@ export class HeroAct extends Act {
     const plateMat = (floor) => new THREE.ShaderMaterial({
       vertexShader: VERT,
       fragmentShader: /* glsl */ `
-        uniform sampler2D tPlate; uniform vec3 uCam; uniform float uFloorLine; uniform float uFloorLineI;
+        uniform sampler2D tPlate; uniform vec3 uCam; uniform float uFloorLine; uniform float uFloorLineI; uniform vec4 uCrop;
         varying vec3 vW;
         ${PROJ}
         ${COLOR}
         ${BARS}
         void main() {
-          vec3 c = srgbToLinear(texture2D(tPlate, projUV(vW)).rgb);
-          c = mix(c, vec3(0.0035, 0.0036, 0.004), outside(vW));
+          // a textura pode ser só um recorte da foto (celular): coordenadas da foto -> do recorte
+          vec2 cu = (projRaw(vW) - uCrop.xy) / (uCrop.zw - uCrop.xy);
+          // textura sRGB: o hardware converte para linear antes de filtrar
+          vec3 c = texture2D(tPlate, clamp(cu, vec2(0.0005), vec2(0.9995)), -0.5).rgb;
+          vec2 od = max(-cu, cu - 1.0);
+          c = mix(c, vec3(0.0035, 0.0036, 0.004), max(outside(vW), smoothstep(0.0, 0.22, max(od.x, od.y))));
           ${floor ? `
           // piso brilhante: reflete a barra de luz (uma faixa vertical na frente do carro)
           vec3 v = normalize(uCam - vW);
@@ -88,7 +95,7 @@ export class HeroAct extends Act {
           ` : ''}
           gl_FragColor = vec4(c, 1.0);
         }`,
-      uniforms: { ...L, ...U, tPlate: tex() },
+      uniforms: { ...L, ...U, tPlate: tex(), uCrop: { value: new THREE.Vector4(0, 0, 1, 1) } },
     });
     this.wallMat = plateMat(false);
     this.floorMat = plateMat(true);
@@ -169,7 +176,8 @@ export class HeroAct extends Act {
           ${mirror ? 'P.y = -P.y;' : ''}
           vec2 uv = (projRaw(P) - uBox.xy) / (uBox.zw - uBox.xy);
           if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) discard;
-          vec4 s = texture2D(tCar, uv);
+          // viés −0,5: nítido como o nível cheio acima de 0,71×, sem serrilhar abaixo (teste de filtros)
+          vec4 s = texture2D(tCar, uv, -0.5);
           ${mirror ? `
           // reflexo no piso: borrado e apagando com a distância do contato
           vec2 o = vec2(0.0, 0.05 / (uBox.w - uBox.y) * 0.08);
@@ -178,7 +186,7 @@ export class HeroAct extends Act {
           float fade = exp(-max(-vW.y, 0.0) / 0.45) * 0.22;
           ` : 'float fade = 1.0;'}
           if (s.a < 0.003) discard;
-          vec3 c = srgbToLinear(s.rgb);
+          vec3 c = s.rgb;
           // a linha revela: à esquerda da barra (onde ela já passou) o carro está aceso
           float lit = mix(uDark, 1.0, 1.0 - smoothstep(uTraceX - 0.4, uTraceX + 0.9, P.x));
           vec3 n = normalize(texture2D(tNorm, uv).xyz * 2.0 - 1.0 + vec3(0.0, 0.0, 1e-3));
@@ -227,11 +235,19 @@ export class HeroAct extends Act {
   load() {
     if (!this.scene) return Promise.resolve();
     const loader = new THREE.TextureLoader();
-    const get = url => new Promise(res => loader.load(url, t => { t.colorSpace = THREE.NoColorSpace; t.generateMipmaps = true; t.minFilter = THREE.LinearMipmapLinearFilter; t.anisotropy = 4; res(t); }, undefined, () => res(null)));
-    const m = view.portrait ? '-m' : '';
-    return Promise.all([get(`assets/hero/plate${m}.webp`), get(`assets/hero/car${m}.webp`), get('assets/hero/normal.webp')]).then(([plate, car, norm]) => {
-      this.wallMat.uniforms.tPlate.value = plate;
-      this.floorMat.uniforms.tPlate.value = plate;
+    // fotos em sRGB (filtradas em luz linear); as normais são dados e ficam como estão
+    const get = (url, cs = THREE.SRGBColorSpace) => new Promise(res => loader.load(url, t => { t.colorSpace = cs; t.generateMipmaps = true; t.minFilter = THREE.LinearMipmapLinearFilter; t.anisotropy = 4; res(t); }, undefined, () => res(null)));
+    // nível do carro pela largura do canvas: ele ocupa ~60% dela e cresce 1,6× no avanço da
+    // câmera; em telas largas (2000 px ou mais) o 3× fica perto de 1:1 até o fim do avanço
+    const portrait = view.portrait;
+    this.loadedFor = portrait;
+    const carUrl = !portrait && glWidth(this.quality) >= 2000 ? 'assets/hero/car-3x.webp' : 'assets/hero/car.webp';
+    const plateUrl = portrait ? 'assets/hero/plate-m.webp' : 'assets/hero/plate.webp';
+    return Promise.all([get(plateUrl), get(carUrl), get('assets/hero/normal.webp', THREE.NoColorSpace)]).then(([plate, car, norm]) => {
+      for (const m of [this.wallMat, this.floorMat]) {
+        m.uniforms.tPlate.value = plate;
+        m.uniforms.uCrop.value.set(...(portrait ? PLATE_M : [0, 0, 1, 1]));
+      }
       for (const m of [this.car.material, this.refl.material]) { m.uniforms.tCar.value = car; m.uniforms.tNorm.value = norm; }
       this.ready = !!(plate && car);
     });
@@ -241,6 +257,8 @@ export class HeroAct extends Act {
 
   resize(w, h) {
     if (!this.camera) return;
+    // girou o aparelho: a placa do celular é um recorte, troca pela versão certa
+    if (this.ready && this.loadedFor != null && this.loadedFor !== view.portrait) this.load();
     const cam = this.camera;
     cam.aspect = w / h;
     if (view.portrait) {
@@ -302,13 +320,13 @@ export class HeroAct extends Act {
     U.uFloorLine.value = lerp(ZC - 1.2, cam.position.z - 0.9, smoother(lay));
     U.uFloorLineI.value = lay > 0 ? smooth(span(lay, 0, 0.15)) : 0;
 
+    // atmosfera (feixe e névoa): um dos últimos degraus da escada de qualidade
+    this.atmo.uniforms.uK.value = this.quality.atmosphere ? 1 : 0;
     post.exposure = state.reduce ? 1 : lerp(0.0, 1, smooth(clamp(t / 0.6)));
-    post.bloom = 0.55;
-    post.threshold = 0.95;
-    post.knee = 0.5;
-    post.vignette = 0.5;
-    post.grain = view.mobile ? 0.03 : 0.035;
+    // foto: o branco chega a 255; bloom só na barra de luz e na linha do piso (acima de 4)
+    post.tone = 'photo';
+    post.vignette = 0.25;
     post.dof = 0;
-    engine.render(this.scene, cam, now / 1000);
+    engine.render(this.scene, cam);
   }
 }

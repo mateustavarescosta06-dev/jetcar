@@ -35,6 +35,18 @@ export const state = {
   busy: false,
 };
 
+/**
+ * Nível de uma foto: o menor que cobre `need` px do aparelho (8% de folga); acima do maior, o
+ * maior. levels: [[largura, url], ...] em ordem crescente. Os níveis são reduções do mesmo
+ * intermediário (scripts/frames/build_stills.py), então trocar de nível nunca amplia nada.
+ */
+export function pickLevel(need, levels) {
+  for (const [w, url] of levels) if (w >= need * 0.92) return url;
+  return levels[levels.length - 1][1];
+}
+/** Pixels do aparelho que o canvas terá na largura (no teto do perfil de qualidade). */
+export const glWidth = quality => view.w * Math.min(view.dpr, quality?.maxScale ?? view.dpr);
+
 export const $ = (s, r = document) => r.querySelector(s);
 export const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
 export const f = (v, d = 2) => Math.round(v * 10 ** d) / 10 ** d;
