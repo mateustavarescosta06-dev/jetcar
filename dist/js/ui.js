@@ -175,8 +175,11 @@ export function initUi({ jump, lenis }) {
   refresh();
 
   // o vento do mapa da orla (o silêncio) só anda com ele na tela
-  const quiet = $('.quiet');
-  if (quiet && 'IntersectionObserver' in window) new IntersectionObserver(([e]) => quiet.classList.toggle('is-in', e.isIntersecting)).observe(quiet);
+  // (e a linha de luz no fio dos blocos em fluxo marcados com data-light)
+  if ('IntersectionObserver' in window) {
+    const seen = new IntersectionObserver(entries => { for (const e of entries) e.target.classList.toggle('is-in', e.isIntersecting); });
+    for (const el of $$('.quiet, [data-light]')) seen.observe(el);
+  }
 
   // teclado do celular: ao focar um campo, o iOS rola a página; ignoramos por um instante
   const touchOnly = matchMedia('(hover: none)');

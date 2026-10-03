@@ -337,3 +337,11 @@ luz embaixo da escolhida, os seis serviços em `details` com a foto de cada cena
 depoimentos (trilho com rolagem presa, setas, contador, teclado) e a rota que se desenha no mapa
 inline. Nada disso roda com movimento reduzido. Conferido em 1440, 390 e com movimento reduzido:
 revelações, números, abas, carrossel, serviços e mapa, sem erros.
+
+Quarta passada ("inteira preta, sem detalhe, sem transição; e no site, quando as imagens acabam,
+fundo preto"): as faixas (`.band`) nas duas páginas, cortadas na diagonal como os botões, com
+fundo cinza, foto (o galpão vazio `hero/plate`, o carro do final) ou vermelho; a foto do resultado
+em sangria no cabeçalho do Quem somos; a borda dos valores desenhada pela luz; a foto grande da
+cena ao abrir cada serviço; os depoimentos sobre a foto do galpão; o índice da página no
+cabeçalho. Na principal: Quem somos sobre a foto do galpão, o pedido em faixa cinza entrando na
+diagonal sobre o mapa, as dúvidas com a linha de luz no fio.
