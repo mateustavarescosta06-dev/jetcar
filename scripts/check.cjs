@@ -13,7 +13,7 @@ for (const file of scripts) {
   try { execFileSync(process.execPath, ['--check', file], { stdio: 'pipe' }); }
   catch (e) { failed = true; console.error(`✗ ${path.relative(root, file)}\n${e.stderr}`); }
 }
-const sources = [path.join(dist, 'index.html'), path.join(dist, 'style.css'), path.join(dist, 'app.js'), ...walk(path.join(dist, 'js'))];
+const sources = [path.join(dist, 'index.html'), path.join(dist, 'quem-somos.html'), path.join(dist, 'style.css'), path.join(dist, 'app.js'), ...walk(path.join(dist, 'js'))];
 const text = sources.map(f => fs.readFileSync(f, 'utf8')).join('\n');
 const refs = new Set([...text.matchAll(/(?:assets|vendor)\/[\w./-]+\.(?:webp|png|jpg|svg|mp4|webm|woff2|json|js)/g)].map(m => m[0]));
 // os vídeos dos dois scrubs são escolhidos no código (MP4 ou WebM): as duas variantes precisam existir

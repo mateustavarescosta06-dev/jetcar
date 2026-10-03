@@ -304,3 +304,17 @@ https://jetcar.framer.website/ como fonte; sem redesign, sem assets, sem mexer n
 - Dúvidas: mais duas ("Preciso agendar? Qual é o horário?" e "Como funciona a avaliação?").
 - Preços do site antigo ficaram de fora por decisão (o site novo diz que a equipe passa valor e
   prazo depois de ver o carro).
+
+Página Quem somos separada (`/quem-somos`), pedido "melhore a página de quem somos, coloque mais
+informações, mais depoimentos, mais da história do negócio e dos fundadores":
+
+- Só HTML e CSS com os blocos do site: cabeçalho editorial e ficha (local, horário, contato,
+  especialidade), "No que a JETCAR acredita" (três valores do site antigo), "Como a JETCAR
+  trabalha" (texto e os cinco passos), os cinco serviços com link para cada baia, o depoimento,
+  "Onde e quando" com o mapa da rota, "Antes de levar o carro", chamada e rodapé. Barra sólida
+  própria, sem app.js. `vercel.json` com `cleanUrls` e o servidor local servindo `/x` → `x.html`.
+- O resumo da página principal ficou, com o link "Conhecer a JETCAR"; barra, menu e rodapé
+  apontam para a página.
+- Fundadores, história, ano e mais depoimentos: não existem no site antigo e o Instagram não deu
+  para ler (429). Ficaram de fora; entram quando a JETCAR mandar (nomes e papéis, como e quando
+  começou, depoimentos com nome, carro e serviço, fotos reais com autorização).

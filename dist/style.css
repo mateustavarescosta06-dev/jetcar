@@ -637,3 +637,58 @@ input[type="range"]:focus-visible { outline: 2px solid var(--red-ink); outline-o
   .how { grid-template-columns: minmax(0, 1fr); gap: var(--s3); margin-top: var(--s7); }
   .how li { grid-template-columns: 28px minmax(0, 1fr); align-items: baseline; }
 }
+.about-more { max-width: 1240px; margin: var(--s8) auto 0; }
+
+/* PÁGINA QUEM SOMOS (quem-somos.html): só HTML e CSS, os mesmos tokens e blocos do site */
+.page-bar { grid-template-columns: auto 1fr; }
+.page-main { padding-top: calc(var(--bar) + env(safe-area-inset-top)); }
+.page-head { max-width: 1240px; margin: 0 auto; padding: var(--s11) var(--pad) var(--s9); }
+.page-head h1 { font: 800 clamp(48px, 7vw, 120px)/.9 var(--cond); letter-spacing: -.012em; text-transform: uppercase; text-wrap: balance; }
+.page-head h1 span { display: block; }
+.page-head h1 span + span { color: var(--ink-mute); }
+.page-head .lead { max-width: 64ch; margin-top: var(--s6); font-size: 19px; }
+.page-facts { max-width: 1240px; margin: 0 auto; padding: 0 var(--pad) var(--s10); list-style: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s6); }
+.page-facts li { padding-top: var(--s4); border-top: 1px solid var(--rule-2); }
+.page-facts b { display: block; font: 800 13px/1 var(--cond); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-mute); }
+.page-facts span { display: block; margin-top: var(--s2); font-size: 15.5px; line-height: 1.55; }
+.page-facts a { color: #fff; text-decoration: underline; text-underline-offset: 4px; }
+.page-section { max-width: 1240px; margin: 0 auto; padding: var(--s10) var(--pad); border-top: 1px solid var(--rule); }
+.page-section > .kicker { margin-bottom: var(--s6); }
+.page-section h2 { max-width: 22ch; font: 800 clamp(32px, 3.6vw, 56px)/.95 var(--cond); letter-spacing: -.005em; text-transform: uppercase; text-wrap: balance; }
+.page-cols { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: var(--s7) 7vw; align-items: start; }
+.page-cols .lead + .lead { margin-top: var(--s4); }
+.page-section .how { margin-top: var(--s8); }
+.values { margin-top: var(--s8); }
+.services { margin: var(--s8) 0 0; padding: 0; list-style: none; border-top: 1px solid var(--rule-2); }
+.services li { display: grid; grid-template-columns: 48px minmax(0, .55fr) minmax(0, 1fr) auto; gap: var(--s3) var(--s6); align-items: baseline; padding: var(--s5) 0; border-bottom: 1px solid var(--rule); }
+.services b { font: italic 800 17px/1 var(--cond); color: var(--red-ink); }
+.services h3 { font: 800 24px/1.05 var(--cond); text-transform: uppercase; }
+.services p { font-size: 15.5px; line-height: 1.55; color: var(--ink-soft); }
+.services .link { min-height: 0; font-size: 15px; white-space: nowrap; }
+.quotes { display: grid; gap: var(--s8); }
+.quotes .quote { margin-top: 0; }
+.place { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: var(--s8); align-items: center; }
+.place-map { aspect-ratio: 16 / 10; overflow: hidden; box-shadow: inset 0 0 0 1px var(--rule); }
+.place-map img { width: 100%; height: 100%; object-fit: cover; object-position: 60% 50%; }
+.place .lead { margin-top: var(--s4); }
+.place .hours { margin-top: var(--s2); text-transform: uppercase; }
+.place .actions { margin-top: var(--s7); }
+.cta { max-width: 1240px; margin: 0 auto; padding: var(--s10) var(--pad) var(--s11); border-top: 1px solid var(--rule); display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--s7); align-items: center; }
+.cta h2 { max-width: 16ch; font: 800 clamp(34px, 4.4vw, 68px)/.95 var(--cond); text-transform: uppercase; text-wrap: balance; }
+@media (max-width: 1080px) {
+  .page-bar .bar-link { display: block; }
+  .page-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .services li { grid-template-columns: 40px minmax(0, 1fr); }
+  .services h3, .services p, .services .link { grid-column: 2; }
+}
+@media (max-width: 760px) {
+  .page-bar .bar-link { display: none; }
+  .page-head { padding: var(--s10) var(--pad) var(--s8); }
+  .page-head h1 { font-size: clamp(40px, 11vw, 56px); }
+  .page-head .lead { font-size: 17px; }
+  .page-facts { grid-template-columns: minmax(0, 1fr); gap: var(--s4); padding-bottom: var(--s9); }
+  .page-section { padding: var(--s9) var(--pad); }
+  .page-cols { grid-template-columns: minmax(0, 1fr); }
+  .place { grid-template-columns: minmax(0, 1fr); gap: var(--s6); }
+  .cta { grid-template-columns: minmax(0, 1fr); padding-bottom: var(--s10); }
+}
