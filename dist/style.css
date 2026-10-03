@@ -105,7 +105,7 @@ h1, h2, h3 { font-family: var(--cond); font-weight: 800; text-transform: upperca
 .bar-brand { justify-self: start; display: inline-flex; align-items: center; min-height: 44px; }
 .bar-brand img { width: 84px; height: auto; }
 .bar-actions { justify-self: end; display: flex; align-items: center; gap: var(--s2); }
-.bar-link { padding: 10px var(--s3); font: 600 13px/1 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-soft); transition: color .16s var(--ease); }
+.bar-link { padding: 10px var(--s3); font: 600 13px/1 var(--sans); letter-spacing: .14em; text-transform: uppercase; white-space: nowrap; color: var(--ink-soft); transition: color .16s var(--ease); }
 .bar-link:hover { color: #fff; }
 .bar-icon { display: grid; place-items: center; width: 44px; height: 44px; color: var(--ink-soft); transition: color .16s var(--ease); }
 .bar-icon:hover { color: #fff; }
@@ -595,3 +595,45 @@ input[type="range"]:focus-visible { outline: 2px solid var(--red-ink); outline-o
 .reduced .stage { min-height: var(--svh); }
 .reduced .paint-before { transition: none; }
 .reduced .wash-photo .reel-box, .reduced .wash-detail { transition: none; }
+
+/* QUEM SOMOS · editorial, sem mídia (o conteúdo do site antigo; mesmos tokens do pedido e das dúvidas) */
+.about { position: relative; padding: var(--s11) var(--pad); background: var(--canvas); border-top: 1px solid var(--rule); }
+.about-grid, .why, .quote { max-width: 1240px; margin: 0 auto; }
+.about-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, .85fr); gap: var(--s8) 7vw; align-items: start; }
+.about h2 { font: 800 clamp(40px, 5.2vw, 84px)/.92 var(--cond); letter-spacing: -.01em; text-transform: uppercase; text-wrap: balance; }
+.about h2 span { display: block; }
+.about h2 span + span { color: var(--ink-mute); }
+.about-main .lead { max-width: 58ch; margin-top: var(--s5); }
+.about-facts { margin-top: var(--s2); }
+.about-facts li { grid-template-columns: 120px minmax(0, 1fr); }
+.why { margin-top: var(--s10); }
+.why-list { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s7); counter-reset: why; }
+.why-list li { padding-top: var(--s4); border-top: 1px solid var(--rule-2); counter-increment: why; }
+.why-list li::before { content: counter(why, decimal-leading-zero); display: block; margin-bottom: var(--s3); font: italic 800 17px/1 var(--cond); color: var(--red-ink); }
+.why-list b { display: block; font: 800 22px/1.1 var(--cond); letter-spacing: .01em; text-transform: uppercase; }
+.why-list span { display: block; margin-top: var(--s2); font-size: 15.5px; line-height: 1.55; color: var(--ink-soft); }
+.quote { margin-top: var(--s10); padding-left: var(--s6); border-left: 2px solid var(--red); }
+.quote blockquote { margin: 0; }
+.quote p { max-width: 60ch; font: 500 clamp(19px, 1.6vw, 24px)/1.45 var(--sans); color: var(--ink); text-wrap: pretty; }
+.quote figcaption { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s2) var(--s4); margin-top: var(--s4); font-size: 14px; color: var(--ink-mute); }
+.quote figcaption b { font: 800 15px/1 var(--cond); letter-spacing: .1em; text-transform: uppercase; color: var(--ink); }
+/* COMO FUNCIONA · os cinco passos no alto do pedido */
+.how { max-width: 1240px; margin: var(--s8) auto 0; padding: var(--s6) 0 0; list-style: none; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--s5); border-top: 1px solid var(--rule); }
+.how li { display: grid; gap: var(--s2); align-content: start; }
+.how b { font: italic 800 17px/1 var(--cond); color: var(--red-ink); }
+.how span { font: 800 17px/1.15 var(--cond); letter-spacing: .02em; text-transform: uppercase; }
+.route-copy .hours { margin-top: var(--s2); text-transform: uppercase; }
+@media (max-width: 1080px) {
+  .why-list { gap: var(--s5); }
+  .how { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 760px) {
+  .about { padding: var(--s10) var(--pad); }
+  .about-grid { grid-template-columns: minmax(0, 1fr); gap: var(--s7); }
+  .about h2 { font-size: clamp(36px, 10vw, 48px); }
+  .about-facts li { grid-template-columns: 96px minmax(0, 1fr); }
+  .why, .quote { margin-top: var(--s8); }
+  .why-list { grid-template-columns: minmax(0, 1fr); }
+  .how { grid-template-columns: minmax(0, 1fr); gap: var(--s3); margin-top: var(--s7); }
+  .how li { grid-template-columns: 28px minmax(0, 1fr); align-items: baseline; }
+}

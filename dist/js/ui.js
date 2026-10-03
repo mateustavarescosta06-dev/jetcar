@@ -50,6 +50,7 @@ const carInput = $('#car-model');
 const messageEl = $('#message-text');
 const status = $('#copy-status');
 const orderEl = $('[data-order]');
+const waLink = $('#send-whatsapp');   // o WhatsApp leva a mesma mensagem pronta
 const WANTS = {
   lavagem: 'lavagem técnica',
   pintura: 'polimento e correção de pintura',
@@ -94,6 +95,7 @@ function buildMessage() {
 }
 function refresh() {
   messageEl.textContent = buildMessage();
+  if (waLink) waLink.href = `https://wa.me/5581997515541?text=${encodeURIComponent(buildMessage())}`;
   const wants = picked();
   // os cards mostram o que já está no pedido
   for (const b of $$('.card-add')) b.setAttribute('aria-pressed', String(wants.includes(b.dataset.want)));

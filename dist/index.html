@@ -52,6 +52,7 @@
   <!-- Celular e tablet: a mesma linha, fina, embaixo da barra (a baia atual fica marcada no menu). -->
   <i class="bar-trace" aria-hidden="true"><i></i><b></b><b></b><b></b><b></b><b></b></i>
   <div class="bar-actions">
+    <a class="bar-link" href="#sobre">Quem somos</a>
     <a class="bar-link" href="#endereco">Endereço</a>
     <button class="bar-icon bar-sound" type="button" aria-pressed="false"><span class="sr-only">Som ambiente</span><svg><use href="#i-mute"/></svg></button>
     <a class="btn btn-sm" href="#agendar"><span>Agendar</span></a>
@@ -65,13 +66,15 @@
     <a href="#ceramic"><b>03</b>Ceramic Coating</a>
     <a href="#ppf"><b>04</b>PPF</a>
     <a href="#interior"><b>05</b>Higienização interna</a>
+    <a href="#sobre">Quem somos</a>
     <a href="#agendar">Agendar</a>
     <a href="#endereco">Endereço</a>
     <a href="#duvidas">Dúvidas</a>
   </nav>
   <div class="menu-foot">
     <a class="btn" href="https://ig.me/m/jetcarbv" target="_blank" rel="noopener noreferrer"><span>Falar no Direct</span><svg><use href="#i-arrow-ur"/></svg></a>
-    <p>Rua José Trajano, Boa Viagem<br>Recife, Pernambuco</p>
+    <p>Rua José Trajano, 196, Boa Viagem<br>Recife, Pernambuco</p>
+    <a class="link" href="https://wa.me/5581997515541" target="_blank" rel="noopener noreferrer">WhatsApp (81) 99751-5541</a>
   </div>
 </div>
 
@@ -379,11 +382,48 @@
   </section>
 
   <!-- ORDEM DE SERVIÇO · precisão, sem espetáculo. -->
+  <!-- QUEM SOMOS · editorial, sem mídia: o que o site antigo (jetcar.framer.website) dizia da
+       JETCAR, só o confirmado lá ou já existente aqui. Sem ano, equipe, números ou certificações. -->
+  <section class="about" id="sobre" aria-labelledby="t-about">
+    <div class="about-grid">
+      <div class="about-main">
+        <p class="kicker">JETCAR</p>
+        <h2 id="t-about"><span>Cuidado automotivo</span> <span>feito nos detalhes.</span></h2>
+        <p class="lead">A JETCAR é uma oficina de estética automotiva em Boa Viagem, no Recife. Para a equipe, cada carro é um trabalho de detalhe: o olhar não vai só para a sujeira, mas para o acabamento, a proteção e o conforto de quem usa o carro todo dia.</p>
+        <p class="lead">Nada é padrão. Cada carro recebe um cuidado planejado para o estado da pintura, o uso diário e o nível de proteção que você quer, com máquinas próprias de estética automotiva, iluminação que mostra a pintura como ela está e produtos profissionais aplicados com técnica.</p>
+      </div>
+      <ul class="quiet-facts about-facts">
+        <li><b>Local</b><span>Rua José Trajano, 196, Boa Viagem, Recife.</span></li>
+        <li><b>Horário</b><span>Segunda a sexta, 08h às 17h. Sábado, 07h às 17h.</span></li>
+        <li><b>Especialidade</b><span>Estética e proteção automotiva: lavagem técnica, polimento, Ceramic Coating, PPF e higienização interna.</span></li>
+      </ul>
+    </div>
+    <div class="why">
+      <p class="kicker">Por que JETCAR</p>
+      <ol class="why-list">
+        <li><b>Avaliação antes do serviço</b><span>Você conta como o carro está e a equipe olha a pintura antes de indicar qualquer coisa. O serviço é definido pelo estado do carro, não por um pacote pronto.</span></li>
+        <li><b>Acabamento, proteção e conforto</b><span>Não é só tirar a sujeira. Cada etapa prepara a superfície para a seguinte: a lavagem antes do polimento, a correção antes do coating ou da película.</span></li>
+        <li><b>Ferramenta e luz certas</b><span>Máquinas específicas de estética automotiva, iluminação que revela os riscos e produtos profissionais aplicados com técnica, para um resultado consistente e seguro para a pintura.</span></li>
+      </ol>
+    </div>
+    <figure class="quote">
+      <blockquote><p>“Fiz a correção de pintura e o revestimento cerâmico na Jetcar e o resultado me surpreendeu. O carro parece outro, o brilho é absurdo e a lavagem ficou muito mais fácil. Atendimento atencioso do início ao fim.”</p></blockquote>
+      <figcaption><b>Rafael S.</b><span>Audi TT · correção de pintura e Ceramic Coating</span></figcaption>
+    </figure>
+  </section>
+
   <section class="order" id="agendar" aria-labelledby="t-order">
     <div class="order-head">
       <h2 id="t-order">Monte o seu pedido</h2>
-      <p class="lead">O carro, o que você quer melhorar e os serviços. A mensagem fica pronta para o Direct. Preço e prazo a equipe passa depois de ver o carro.</p>
+      <p class="lead">O carro, o que você quer melhorar e os serviços. A mensagem fica pronta para o Direct ou o WhatsApp. Preço e prazo a equipe passa depois de ver o carro.</p>
     </div>
+    <ol class="how" aria-label="Como funciona">
+      <li><b>01</b><span>Conte como está o carro</span></li>
+      <li><b>02</b><span>A equipe avalia</span></li>
+      <li><b>03</b><span>Definimos o serviço</span></li>
+      <li><b>04</b><span>A JETCAR executa o tratamento</span></li>
+      <li><b>05</b><span>Você recebe as orientações de cuidado</span></li>
+    </ol>
     <form class="config" id="config" novalidate>
       <fieldset class="step">
         <legend><b>01</b>Qual é o seu carro?</legend>
@@ -418,10 +458,11 @@
         <p class="message" id="message-text"></p>
         <div class="step-actions">
           <a class="btn" id="send-message" href="https://ig.me/m/jetcarbv" target="_blank" rel="noopener noreferrer"><span>Agendar pelo Direct</span><svg><use href="#i-arrow-ur"/></svg></a>
+          <a class="link" id="send-whatsapp" href="https://wa.me/5581997515541" target="_blank" rel="noopener noreferrer">Ou pelo WhatsApp<svg><use href="#i-arrow-ur"/></svg></a>
           <button type="button" class="link" id="copy-message">Só copiar a mensagem</button>
         </div>
         <p class="fine" id="copy-status" role="status" aria-live="polite"></p>
-        <p class="fine">Nada é enviado por este site: a mensagem vai pelo seu Instagram.</p>
+        <p class="fine">Nada é enviado por este site: a mensagem vai pelo seu Instagram ou pelo seu WhatsApp.</p>
       </div>
     </form>
   </section>
@@ -433,9 +474,10 @@
       <i class="scrim route-scrim" aria-hidden="true"></i>
       <div class="route-copy">
         <p class="kicker">Endereço</p>
-        <h2 id="t-route">Rua José Trajano, Boa Viagem</h2>
-        <p class="lead">Recife, Pernambuco. A poucas quadras da Praia de Boa Viagem.</p>
+        <h2 id="t-route">Rua José Trajano, 196</h2>
+        <p class="lead">Boa Viagem, Recife, Pernambuco. A poucas quadras da Praia de Boa Viagem.</p>
         <p class="coords"><span class="sr-only">Coordenadas: </span>08°07′14″S · 34°53′58″O</p>
+        <p class="coords hours">Seg a sex 08h às 17h · Sáb 07h às 17h</p>
         <p class="route-order" data-order hidden></p>
         <div class="actions">
           <a class="btn" href="#agendar" data-route-cta><span>Agendar</span><svg><use href="#i-arrow"/></svg></a>
@@ -456,8 +498,10 @@
       <details><summary><span class="q">Qual serviço eu devo escolher?</span><i aria-hidden="true"></i></summary><p>Conte como o carro está e o que te incomoda nele. A equipe avalia e indica o que faz sentido.</p></details>
       <details><summary><span class="q">Qual a diferença entre Ceramic Coating e PPF?</span><i aria-hidden="true"></i></summary><p>O Ceramic Coating é um revestimento aplicado sobre a pintura. O PPF é uma película transparente colocada por cima dela. Dá para usar um, outro ou os dois.</p></details>
       <details><summary><span class="q">Quanto custa e quanto tempo demora?</span><i aria-hidden="true"></i></summary><p>Depende do carro, do estado dele e do serviço. A equipe passa valor e prazo depois de avaliar.</p></details>
-      <details><summary><span class="q">Como eu agendo?</span><i aria-hidden="true"></i></summary><p>Pelo Instagram <a href="https://www.instagram.com/jetcarbv/" target="_blank" rel="noopener noreferrer">@jetcarbv</a>. Se quiser, monte o pedido aqui no site e a mensagem vai pronta para o Direct.</p></details>
-      <details><summary><span class="q">Onde vocês ficam?</span><i aria-hidden="true"></i></summary><p>Na Rua José Trajano, em Boa Viagem, Recife, a poucas quadras da praia. <a href="https://maps.apple/p/uRv~vCQ0G1zNn4" target="_blank" rel="noopener noreferrer">Abrir no mapa</a>.</p></details>
+      <details><summary><span class="q">Como eu agendo?</span><i aria-hidden="true"></i></summary><p>Pelo Instagram <a href="https://www.instagram.com/jetcarbv/" target="_blank" rel="noopener noreferrer">@jetcarbv</a> ou pelo WhatsApp <a href="https://wa.me/5581997515541" target="_blank" rel="noopener noreferrer">(81) 99751-5541</a>. Se quiser, monte o pedido aqui no site e a mensagem vai pronta.</p></details>
+      <details><summary><span class="q">Preciso agendar? Qual é o horário?</span><i aria-hidden="true"></i></summary><p>Sim, o atendimento é com hora marcada: combine pelo Direct ou pelo WhatsApp. A JETCAR abre de segunda a sexta, das 08h às 17h, e no sábado, das 07h às 17h.</p></details>
+      <details><summary><span class="q">Como funciona a avaliação?</span><i aria-hidden="true"></i></summary><p>Você conta como o carro está e o que te incomoda nele. A equipe olha o estado da pintura, o uso que o carro tem no dia a dia e o nível de proteção que você quer, e aí indica o serviço, o valor e o prazo.</p></details>
+      <details><summary><span class="q">Onde vocês ficam?</span><i aria-hidden="true"></i></summary><p>Na Rua José Trajano, 196, em Boa Viagem, Recife, a poucas quadras da praia. <a href="https://maps.apple/p/uRv~vCQ0G1zNn4" target="_blank" rel="noopener noreferrer">Abrir no mapa</a>.</p></details>
     </div>
   </section>
 </main>
@@ -471,8 +515,8 @@
     </div>
     <div class="footer-cols">
       <div class="footer-steps"><h3>Etapas</h3><a href="#lavagem">01 Lavagem técnica</a><a href="#polimento">02 Polimento</a><a href="#ceramic">03 Ceramic Coating</a><a href="#ppf">04 PPF</a><a href="#interior">05 Higienização interna</a></div>
-      <div><h3>Contato</h3><a href="https://www.instagram.com/jetcarbv/" target="_blank" rel="noopener noreferrer">Instagram @jetcarbv</a><a href="https://ig.me/m/jetcarbv" target="_blank" rel="noopener noreferrer">Direct</a><a href="#agendar">Agendar</a></div>
-      <div><h3>Endereço</h3><p>Rua José Trajano<br>Boa Viagem, Recife, PE</p><p class="coords"><span class="sr-only">Coordenadas: </span>08°07′14″S · 34°53′58″O</p><a href="https://maps.apple/p/uRv~vCQ0G1zNn4" target="_blank" rel="noopener noreferrer">Abrir no mapa</a></div>
+      <div><h3>Contato</h3><a href="https://www.instagram.com/jetcarbv/" target="_blank" rel="noopener noreferrer">Instagram @jetcarbv</a><a href="https://ig.me/m/jetcarbv" target="_blank" rel="noopener noreferrer">Direct</a><a href="https://wa.me/5581997515541" target="_blank" rel="noopener noreferrer">WhatsApp (81) 99751-5541</a><a href="#agendar">Agendar</a></div>
+      <div><h3>JETCAR</h3><a href="#sobre">Quem somos</a><p>Rua José Trajano, 196<br>Boa Viagem, Recife, PE</p><p class="coords"><span class="sr-only">Coordenadas: </span>08°07′14″S · 34°53′58″O</p><p>Seg a sex 08h às 17h<br>Sáb 07h às 17h</p><a href="https://maps.apple/p/uRv~vCQ0G1zNn4" target="_blank" rel="noopener noreferrer">Abrir no mapa</a></div>
     </div>
     <div class="footer-bottom">
       <span>© 2026 JETCAR Estética Automotiva. Fotos e vídeo ilustrativos. Mapa: dados © OpenStreetMap (ODbL).</span>

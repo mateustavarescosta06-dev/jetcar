@@ -289,3 +289,18 @@ sem assets novos):
 - Conferido (Chromium por software, desktop e celular): nas cinco passagens o ato seguinte está
   preso 0,12 tela antes, o anterior apaga de −0,11 a 0 e some em +0,02, sem imagem dupla; os dois
   scrubs continuam fundindo quadros e parados mostram o quadro exato; sem erros de console.
+
+Atualização de conteúdo (pedido: "complementar as informações do negócio", com o site antigo
+https://jetcar.framer.website/ como fonte; sem redesign, sem assets, sem mexer nos atos):
+
+- Quem somos (`#sobre`, entre o final e o pedido): "Cuidado automotivo feito nos detalhes", dois
+  parágrafos a partir do site antigo, a ficha (local com o número 196, horários, especialidade),
+  "Por que JETCAR" com três diferenciais sustentados pela fonte (avaliação antes do serviço;
+  acabamento, proteção e conforto; ferramenta e luz certas) e o depoimento de Rafael S. (Audi TT)
+  copiado de lá. Sem ano, equipe, números ou certificações (a fonte não tem).
+- "Quem somos" na barra, no menu e no rodapé. "Como funciona" (cinco passos) no alto do pedido.
+- Práticas: WhatsApp (81) 99751-5541 no pedido (com a mesma mensagem pronta), no menu, nas
+  dúvidas e no rodapé; número 196 e horários no endereço, nas dúvidas e no rodapé.
+- Dúvidas: mais duas ("Preciso agendar? Qual é o horário?" e "Como funciona a avaliação?").
+- Preços do site antigo ficaram de fora por decisão (o site novo diz que a equipe passa valor e
+  prazo depois de ver o carro).
