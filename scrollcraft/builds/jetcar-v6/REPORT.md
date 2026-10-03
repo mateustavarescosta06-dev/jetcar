@@ -212,3 +212,31 @@ seguida: nitidez, depois profundidade, movimento e "uau"; nenhum efeito novo ant
   (créditos só com autorização).
 - Sem aparelhos reais aqui: o Chromium dos testes usa WebGL por software, não decodifica H.264 e
   não mede fluidez. Falta calibrar a escada no Safari do iPhone e num Android médio.
+
+## v6.2 · Ritmo, fluidez e variedade (sem redesenho)
+
+Pedido: "Menos movimento. Melhor movimento." Dois scrubs no máximo (a abertura e o final), cenas
+ligadas por cortes no mesmo quadro em vez de movimento constante, um único pico (o Ceramic) com
+silêncio antes dele, cada card entrando de um jeito. Plano, score, verificação e a revisão de ritmo
+em `PLAN-v62.md` (seções 9 e 10).
+
+### O que mudou
+
+- Vídeo: de um trecho em moldura na lavagem para dois filmes na tela inteira, só onde o plano
+  precisa de movimento: a abertura (a câmera chega ao capô e a água bate) e o final (o recuo do carro
+  pronto ao galpão do começo). Cada um termina numa foto nítida do mesmo quadro. No celular, só o
+  jato num quadrado; o final sem vídeo.
+- Lavagem, Polimento, PPF e Interior viraram fotos e HTML (janelas móveis só com `transform`);
+  WebGL só na abertura (até o vídeo assumir) e no Ceramic. Pesado e leve se alternam.
+- Passagens no lugar: o ato seguinte fica preso por baixo do anterior com o mesmo quadro (hero →
+  lavagem, lavagem → polimento, Ceramic → PPF, PPF → interior, resultado → final).
+- Silêncio tipográfico antes do pico; o pedido em quatro passos.
+- Fluidez: Lenis com `lerp` 0,15 e roda 1:1, progresso dos atos com 30 ms (antes 70), altura do
+  palco medida no layout (antes cada ato forçava um layout por quadro), estilos escritos só quando
+  mudam; vídeo baixado perto, buscas só com o ato visível, solto longe.
+- Total preso: 13,0 telas no desktop (v6.1: 14,9) e 10,2 no celular.
+
+### Não verificado
+
+- Fluidez real (o renderizador por software não mede): o Ceramic, as janelas móveis do polimento e
+  a busca de quadros dos dois scrubs no Safari do iPhone e num Android médio.

@@ -1,4 +1,4 @@
-// Pôsteres das cenas 3D (usados sem WebGL e enquanto a cena carrega): abre o site, leva cada
+// Pôsteres das cenas 3D, o hero e o Ceramic (usados sem WebGL e enquanto a cena carrega): abre o site, leva cada
 // ato até o ponto de leitura, esconde o que é HTML por cima (cards, rótulos, controles, barra)
 // e fotografa o palco. Desktop em 1440×900 a 2× (2880×1800, e uma redução para 1440 px) e
 // celular em 390×844 a 3× (1170×2532), no perfil de qualidade alto fixo (?quality=high), sem grão,
@@ -14,7 +14,7 @@ const { chromium } = require(process.env.PLAYWRIGHT_PATH || 'playwright');
 const BASE = process.argv[2] || 'http://localhost:3000';
 const OUT = path.resolve(__dirname, '../dist/assets/posters');
 // os mesmos pontos de leitura do movimento reduzido (data-hold no HTML)
-const ACTS = [['hero', 0.0], ['wash', 0.8], ['polish', 0.88], ['protect', 0.3]];
+const ACTS = [['hero', 0.0], ['ceramic', 0.38]];
 const MODES = {
   d: { viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2 },
   m: { viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true },
@@ -30,7 +30,7 @@ const webp = (src, dst, extra = []) => execFileSync(CWEBP, ['-quiet', '-m', '6',
     await page.goto(`${BASE}/?debug&quality=high`, { waitUntil: 'load' });
     await page.waitForFunction(() => document.documentElement.classList.contains('is-ready'), null, { timeout: 60000 });
     await page.waitForTimeout(4000);
-    await page.addStyleTag({ content: '.bar,.card,.hero-copy,.hero-scrim,.layer-labels,.separator,.film-control,.film-labels,.slit,.stack{visibility:hidden!important}' });
+    await page.addStyleTag({ content: '.bar,.card,.hero-copy,.hero-scrim,.layer-labels,.separator,.slit,.seam{visibility:hidden!important}' });
     for (const [id, p] of ACTS) {
       if (process.env.ONLY && process.env.ONLY !== `${id}-${suffix}`) continue;
       const y = await page.evaluate(([id, p]) => { const a = window.__jetcar.acts[id]; return a.top + a.travel * p; }, [id, p]);

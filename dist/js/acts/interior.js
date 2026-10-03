@@ -85,6 +85,14 @@ export class InteriorAct extends Act {
     const reach = (this.sh / 2) * Math.tan(TILT) + 24;
     this.xL = -reach; this.xR = (s.width || view.w) + reach;
     this.loupeSize = this.loupe.offsetWidth || 180;
+    // tamanho de cada camada na parada (o fim da chegada): a largura fica fixa e a chegada é só escala
+    this.baseFar = this.frame(this.V.to).Wd;
+    this.baseNear = this.frame(this.nearWin(this.V.to, 1, 0, 0)).Wd;
+  }
+
+  /** Janela da moldura da porta (perto): anda mais que a cabine e cresce, até sair do quadro. */
+  nearWin(win, push, px, py) {
+    return { u: win.u - push * 0.1 + px * 0.006, v: win.v + push * 0.03 + py * 0.004, w: win.w / (1 + push * 0.6) };
   }
 
   /** Janela da foto → posição e tamanho do <img> na tela (a janela cobre o palco). */
@@ -93,12 +101,15 @@ export class InteriorAct extends Act {
     const Hd = Wd / ASPECT;
     return { Wd, Hd, x: this.bw / 2 - win.u * Wd, y: this.bh / 2 - win.v * Hd };
   }
-  place(el, f) {
+  place(el, f, base) {
     const c = this.crop || { u0: 0, u1: 1 };
-    // posição em pixels inteiros do aparelho: parada, a foto não é reamostrada pela metade de um pixel
+    // largura fixa (a da parada, escrita só no layout); a chegada é só escala, por transform
+    const w0 = base * (c.u1 - c.u0);
+    if (el._w !== w0) { el._w = w0; el.style.width = `${w0.toFixed(2)}px`; }
+    const s = f.Wd / base, x = f.x + c.u0 * f.Wd;
+    // parada (escala 1): posição em pixels inteiros do aparelho, a foto não é reamostrada pela metade
     const d = view.dpr || 1, snap = v => (Math.round(v * d) / d).toFixed(2);
-    css(el, 'width', `${snap(f.Wd * (c.u1 - c.u0))}px`);
-    css(el, 'transform', `translate3d(${snap(f.x + c.u0 * f.Wd)}px, ${snap(f.y)}px, 0)`);
+    css(el, 'transform', Math.abs(s - 1) < 1e-4 ? `translate3d(${snap(x)}px, ${snap(f.y)}px, 0)` : `translate3d(${x.toFixed(2)}px, ${f.y.toFixed(2)}px, 0) scale(${s.toFixed(5)})`);
   }
   /** Com o recorte, a janela não pode sair dele (a imagem tem que cobrir o palco). */
   fit(f) {
@@ -121,11 +132,10 @@ export class InteriorAct extends Act {
     const px = state.reduce ? 0 : pointer.sx, py = state.reduce ? 0 : pointer.sy;
     const A = this.V.from, B = this.V.to;
     const win = { u: lerp(A.u, B.u, push) + px * 0.003, v: lerp(A.v, B.v, push) + py * 0.002, w: lerp(A.w, B.w, push) };
-    const nwin = { u: win.u - push * 0.1 + px * 0.006, v: win.v + push * 0.03 + py * 0.004, w: win.w / (1 + push * 0.6) };
-    const f = this.fit(this.frame(win)), n = this.fit(this.frame(nwin));
+    const f = this.fit(this.frame(win)), n = this.fit(this.frame(this.nearWin(win, push, px, py)));
     this.f = f;
-    this.place(this.far, f);
-    this.place(this.near, n);
+    this.place(this.far, f, this.baseFar);
+    this.place(this.near, n, this.baseNear);
     css(this.near, 'opacity', state.flat ? '0' : (1 - smooth(span(p, T.near[0], T.near[1]))).toFixed(3));
 
     // pontos: aparecem depois que a câmera para; o primeiro acende sozinho e o card nasce dele

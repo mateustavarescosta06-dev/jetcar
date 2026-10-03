@@ -151,3 +151,72 @@ película sendo aplicada, o portão abrindo com o carro saindo no final, macros 
 - Movimento reduzido, sem WebGL, sem JavaScript, teclado e console.
 - Performance: trabalho por quadro em cada capítulo, WebGL desenhando só no hero e no Ceramic,
   vídeo sem buscas fora da tela.
+
+## 9. Como ficou (implementação)
+
+Mudanças em relação ao score da seção 3, decididas na construção:
+
+- **Hero e Lavagem em dois atos** ligados por uma passagem no lugar (`data-handoff="0"`): o hero
+  termina na foto do último quadro do filme e a Lavagem, presa por baixo, começa na mesma foto. O
+  hero entrega o WebGL ao vídeo no quadro 0 (a câmera da composição volta à câmera original do
+  filme, o letreiro, o pilar, a atmosfera e o título saem, e o canvas apaga sobre o vídeo parado
+  no mesmo quadro; deslocamento medido entre os dois: zero). No celular o filme é só o jato, num
+  quadrado.
+- **A linha entre Lavagem e Polimento** nasce na borda mais clara do jato (o fio d'água do bico
+  até o capô, inclinado ~29°) e mantém essa inclinação no Polimento. A foto apaga em volta dela; o
+  Polimento começa no preto com a mesma linha (passagem no lugar).
+- **Polimento em HTML**: três renders alinhados da cena da v6.1 (pintura limpa, micro-riscos acesos
+  pelo máximo de três posições da luz de inspeção, reflexo da barra) em janelas móveis. Ida: a luz
+  de inspeção (riscos inteiros rente à linha, marcados por onde ela passou). Volta: a pintura fica
+  limpa atrás dela e o card 02 aparece quando ela passa por ele (recorte pela linha). Depois a barra
+  acende (o reflexo perfeito) e a cena apaga no preto do silêncio.
+- **Ceramic → PPF**: a cena apaga e sobra uma costura vertical de luz (`--seam`); no PPF a costura é
+  a borda da película. **PPF → Interior**: a película escurece em vidro, o Interior começa no mesmo
+  vidro e a linha o limpa.
+- **Resultado e Final em dois atos**: o resultado é a pausa (foto parada, título); o final começa
+  preso por baixo no mesmo quadro 84 e recua até o quadro 0, que troca pela foto nítida e recebe a
+  marca. No celular o final não tem vídeo (menos vídeo no celular): a foto fica e a marca aparece.
+- **Pedido em quatro passos**: carro → o que melhorar (brilho, marcas, proteção, limpeza, interior,
+  não sei) → serviços (sugeridos pelo passo anterior, a pessoa muda) → contato.
+- Lavagem com **dois planos** (Depth Anything V2 Small, máscara de borda bem suave: o carro chega
+  1,4% mais perto que o fundo ao longo do ato; no começo as camadas coincidem com o quadro do filme).
+
+## 10. Verificação
+
+- **Passagens**: hero (fim) × lavagem (começo) 68 dB (a mesma foto); WebGL × vídeo no quadro 0 sem
+  deslocamento (correlação de fase 0,0 px); Ceramic (fim) × PPF (começo) e PPF × Interior no mesmo
+  lugar nas capturas de desktop e celular.
+- **Sem vídeo** (MP4/WebM bloqueados): o hero fica com o avanço em WebGL da v6.1 e entra na foto do
+  jato depois de um escuro; o final corta pelo escuro da foto do resultado para a do galpão (a fusão
+  das duas mostrava dois carros: corrigido). Resposta ao teste: SIM, o site continua inteiro.
+- **Desempenho** (rastreio passo a passo numa tela pequena, para o renderizador por software dar
+  conta): quadros WebGL só no hero até o vídeo assumir e no Ceramic; depois do Ceramic, nenhum (antes
+  da correção ele seguia desenhando quadros pretos por baixo do PPF: palco que saiu da frente agora
+  não conta como visível). O vídeo da abertura é solto duas telas depois do hero; o do final só baixa
+  2,5 telas antes e é solto depois; buscas de quadro só com o ato visível.
+- **Modos parados** (movimento reduzido, sem WebGL, sem JavaScript): todas as baias legíveis, cada
+  uma no ponto de leitura, cards empilhados; nenhuma linha ou véu sobrando.
+- **Teclado**: a ordem do Tab segue a página (barra, hero, cada card com os controles da sua baia,
+  pedido, endereço, dúvidas, rodapé) e o foco leva o ato ao ponto onde o controle aparece.
+
+### Revisão de ritmo
+
+A página inteira rolada em passos de meia tela (1280×800 e 390×844), lendo a sequência como alguém
+que só rola:
+
+| Trecho | Primeira leitura | O que mudou |
+|---|---|---|
+| Hero → Lavagem → Polimento | denso e variado: composição, filme, foto com card, linha, pintura | nada |
+| Polimento → silêncio | o preto e a tipografia funcionam como respiro antes do pico | nada |
+| Ceramic | longo demais: oito quadros seguidos com a mesma composição (camadas e card) | 3,4 → 3,0 telas (2,8 → 2,5 no celular); continua o maior capítulo |
+| PPF, Interior | cada um com começo, interação e saída próprios | 1,5 → 1,2 e 1,5 → 1,3 |
+| Resultado → Final | o mesmo carro por umas três telas (pausa + começo do recuo): parece parado | 0,7 → 0,5 e 1,8 → 1,4 |
+| Endereço | a rota cabe em menos rolagem | 1,0 → 0,9 |
+
+Total preso no desktop: 15,3 → **13,0 telas** (v6.1: 14,9); celular: **10,2**. Nenhum trecho com
+movimento contínuo além dos dois filmes; dois capítulos parecidos em seguida só no resultado →
+final, que é a mesma imagem de propósito (o corte invisível), agora mais curto.
+
+Mídia por tempo de tela no desktop (aproximado, ~17 telas): vídeo ~15% (os dois filmes), foto
+~35%, 3D ~20% (o Ceramic, o pico com o maior espaço, e a abertura antes do filme), HTML e
+tipografia ~30%. O 3D passou um pouco do alvo (10–15%) porque o pico precisa do maior trecho.

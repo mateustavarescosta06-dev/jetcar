@@ -78,6 +78,8 @@ export class Act {
     if (this.handsOff && this.stage) {
       const gone = !state.flat && this.travel > 0 && y > this.top + this.travel + 0.5;
       if (gone !== this.gone) { this.gone = gone; this.stage.classList.toggle('is-gone', gone); }
+      // saiu da frente: não conta como visível (não desenha, não busca quadro, solta o canvas)
+      if (gone) { this.visible = false; this.vis = 0; }
     }
     if (state.flat || state.jumping) this.p = this.raw;
     else {

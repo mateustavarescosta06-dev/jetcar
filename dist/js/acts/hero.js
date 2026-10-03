@@ -84,7 +84,7 @@ export class HeroAct extends Act {
   get glNeeded() {
     if (!this.gl) return false;
     const ph = PH[view.portrait ? 'm' : 'd'];
-    return this.p < ph.xf[1] + 0.005 || !this.videoOn;
+    return this.p < ph.xf[1] + 0.005 || !this.useVideo;
   }
   get videoOn() { return !!this.scrub && this.scrub.state === 'ready' && !state.flat; }
 
@@ -370,12 +370,19 @@ export class HeroAct extends Act {
     if (state.flat) return;
     // o canvas apaga sobre o vídeo (desktop: o vídeo já está no quadro 0 por baixo; celular: mergulho
     // no escuro e o quadrado do jato aparece). Sem vídeo, o WebGL segue até a foto final.
-    const on = this.videoOn;
+    // o modo (filme ou WebGL) só muda antes da passagem: se o vídeo terminar de baixar com a pessoa
+    // já no meio do filme, a cena não pula de uma imagem para a outra
+    const ready = this.videoOn;
+    if (p <= ph.xf[1] || !ready) this.useVideo = ready;
+    const on = this.useVideo;
     const xf = smooth(span(p, ph.xf[0], ph.xf[1]));
     const frz = smooth(span(p, ph.freeze[0], ph.freeze[1]));
     const st = this.stage;
-    const glA = on ? (view.portrait ? 1 - smooth(span(p, ph.xf[0], lerp(ph.xf[0], ph.xf[1], 0.5))) : 1 - xf) : 1 - frz;
-    const reelA = on ? (view.portrait ? smooth(span(p, lerp(ph.xf[0], ph.xf[1], 0.5), ph.xf[1])) : 1) : frz;
+    // sem vídeo: o avanço em WebGL vai até perto do fim e a foto do jato entra depois de um escuro
+    // (fundir as duas mostraria o carro duas vezes)
+    const dip = 1 - smooth(span(p, ph.freeze[0] - 0.07, ph.freeze[0] - 0.01));
+    const glA = on ? (view.portrait ? 1 - smooth(span(p, ph.xf[0], lerp(ph.xf[0], ph.xf[1], 0.5))) : 1 - xf) : dip;
+    const reelA = on ? (view.portrait ? smooth(span(p, lerp(ph.xf[0], ph.xf[1], 0.5), ph.xf[1])) : 1) : 1 - dip;
     css(st, '--gl-a', glA.toFixed(3));
     css(st, '--reel-a', reelA.toFixed(3));
     css(st, '--still-a', frz.toFixed(3));
@@ -397,7 +404,7 @@ export class HeroAct extends Act {
     this.dirty = false;
     const p = this.p, cam = this.camera, U = this.U, L = this.lights;
     const ph = PH[view.portrait ? 'm' : 'd'];
-    const on = this.videoOn;
+    const on = this.useVideo;
     // ——— Câmera ———
     // com o vídeo: da composição de abertura ao quadro 0 do filme (lente, posição e ponteiro);
     // sem vídeo (não carregou): o avanço da v6.1 pelo galpão até a foto do jato

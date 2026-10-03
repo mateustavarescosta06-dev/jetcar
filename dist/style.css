@@ -294,7 +294,7 @@ input[type="range"]:focus-visible { outline: 2px solid var(--red-ink); outline-o
 .slit i { position: absolute; left: 0; right: 0; top: 50%; height: 1px; margin-top: -.5px; background: #fff; box-shadow: 0 0 8px 1px var(--halo); transform: scaleX(var(--line, 1)); opacity: var(--line-a, 1); }
 /* ——— 05 Interior: a foto em camadas, os pontos e a lupa parada ao lado deles ——— */
 .cabin { position: absolute; inset: 0; overflow: hidden; background: #050506; }
-.cabin img { position: absolute; left: 0; top: 0; width: 100%; height: auto; max-width: none; will-change: transform; }
+.cabin img { position: absolute; left: 0; top: 0; width: 100%; height: auto; max-width: none; transform-origin: 0 0; will-change: transform; }
 .spots { position: absolute; inset: 0; pointer-events: none; }
 .spot { position: absolute; left: var(--sx, 0); top: var(--sy, 0); display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px 0 0; transform: translate(-22px, -50%); pointer-events: var(--pe, none); opacity: var(--a, 0); color: #fff; }
 .spot:focus-visible { opacity: 1 !important; }
@@ -324,7 +324,8 @@ input[type="range"]:focus-visible { outline: 2px solid var(--red-ink); outline-o
 .result-copy > * { opacity: var(--a, 1); }
 
 /* ——— Final: o segundo filme e a marca ——— */
-.act-final .reel-end img { opacity: inherit; }
+/* as fotos ficam em <picture> (display: contents): a opacidade escrita no <picture> passa para o <img> */
+.act-final .reel-end img, .act-final .reel-start img { opacity: inherit; }
 .reel-end { opacity: 0; }
 .final-scrim { opacity: 0; }
 .final-copy { position: absolute; left: var(--pad); bottom: calc(var(--chrome) + 8vh); }

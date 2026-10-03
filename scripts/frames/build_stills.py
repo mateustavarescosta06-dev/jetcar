@@ -11,8 +11,8 @@ Qualidade escolhida no teste q88/92/95 (audit/IMAGE_QUALITY_AUDIT.md): q92 nas f
 do hero e no congelamento da lavagem (o assunto em foco de cada cena); máscaras sem perdas.
 
 Uso: python3 scripts/frames/build_stills.py <pasta_dos_intermediarios> [<saida=dist/assets>] [so=hero,wash,...]
-A pasta precisa ter: hero/car.png, hero/plate.png (4×), freeze.png, ppf.png, result.png (2×, já com
-detail_blend), ppf_alpha.png (1×) e interior/far.png, interior/near.png (4×).
+A pasta precisa ter: hero/car.png, hero/plate.png (4×), freeze.png, result.png (2×, já com
+detail_blend) e interior/far.png, interior/near.png (4×). O PPF sai de build_ppf.py.
 Precisa de Pillow e do cwebp (variável CWEBP ou no PATH).
 """
 import os, sys, subprocess, tempfile
@@ -88,17 +88,7 @@ if want('wash'):
     # "Ver de perto" (v6.2): as gotas no capô no tamanho do intermediário (u 0,55…0,95, v 0,30…0,75)
     webp(crop_frac(fr, 0.55, 0.30, 0.95, 0.75), 'wash/detail.webp', 95)
 
-# ——— PPF: a frente do carro e a máscara da carroceria ———
-if want('ppf'):
-    fr = Image.open(os.path.join(src, 'ppf.png')).convert('RGB')                  # 3832×2160
-    for w in (3200, 2560, 1920):
-        webp(lanczos(fr, (w, w * fr.height / fr.width)), f'protect/front-{w}.webp', 92)
-    m = Image.open(os.path.join(src, 'ppf_alpha.png')).convert('L').convert('RGB')  # 1916×1080
-    webp(m, 'protect/front-mask.webp', lossless=True)
-    # celular: altura inteira (a tela em pé mostra a foto pela altura), centrado no farol e no
-    # capô, largura para telas de 0,46 a 0,9 de proporção
-    webp(crop_frac(fr, 0.246, 0, 0.754, 1), 'protect/front-m.webp', 92)
-    webp(crop_frac(m, 0.246, 0, 0.754, 1), 'protect/front-mask-m.webp', lossless=True)
+# ——— PPF: desde a v6.2 sai de build_ppf.py (sem e com a película, no mesmo enquadramento) ———
 
 # ——— RESULTADO (HTML, <picture> com srcset) ———
 if want('result'):

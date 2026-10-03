@@ -17,6 +17,7 @@ export class FinalAct extends Act {
     super(el);
     this.reel = $('.reel', el);
     this.video = $('.reel-video', el);
+    this.start = $('.reel-start', el);
     this.end = $('.reel-end', el);
     this.copy = $('.final-copy', el);
     this.scrim = $('.final-scrim', el);
@@ -49,17 +50,23 @@ export class FinalAct extends Act {
   focusPoint(el) { return this.copy.contains(el) ? this.hold : null; }
 
   update(dt = 16) {
-    const p = this.p, video = this.videoOn;
+    const p = this.p;
+    // o modo (filme ou fotos) só muda antes do recuo começar: o vídeo que termina de baixar no meio
+    // do ato não troca a imagem de repente
+    if (p <= T.scrub[0] + 0.02 || !this.videoOn) this.useVideo = this.videoOn;
+    const video = this.useVideo;
     const ph = view.portrait ? TM : T;
     const copy = state.flat ? 1 : smooth(span(p, ph.copy[0], ph.copy[1]));
     css(this.copy, '--a', copy.toFixed(3));
     css(this.copy, 'pointer-events', copy > 0.5 ? '' : 'none');
     css(this.scrim, 'opacity', copy.toFixed(3));
-    if (view.portrait || state.flat) { css(this.end, 'opacity', state.flat ? '1' : '0'); return; }
-    // o filme pela rolagem; sem vídeo (ainda baixando ou falhou), a foto do começo dissolve na do fim
+    if (view.portrait || state.flat) { css(this.end, 'opacity', state.flat ? '1' : '0'); css(this.start, 'opacity', '1'); return; }
+    // o filme pela rolagem; sem vídeo (ainda baixando ou falhou), corte pelo escuro entre a foto do
+    // começo e a do fim (uma fusão das duas mostraria dois carros ao mesmo tempo)
     const s = span(p, T.scrub[0], T.scrub[1]);
     if (video && this.visible) this.scrub.seek(s * this.scrub.dur, dt);
-    const sharp = video ? smooth(span(p, T.sharp[0], T.sharp[1])) : smooth(s);
-    css(this.end, 'opacity', sharp.toFixed(3));
+    css(this.start, 'opacity', video ? '1' : (1 - smooth(span(s, 0.38, 0.5))).toFixed(3));
+    const end = video ? smooth(span(p, T.sharp[0], T.sharp[1])) : smooth(span(s, 0.56, 0.72));
+    css(this.end, 'opacity', end.toFixed(3));
   }
 }
