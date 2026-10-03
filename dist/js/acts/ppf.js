@@ -49,6 +49,8 @@ export class PpfAct extends Act {
     this.f0 = clamp(1 - (sx - this.px) / this.pw);
     this.sh = this.stageH || view.h;
     this.flOffW = this.flOff.offsetWidth; this.flOnW = this.flOn.offsetWidth;
+    // a borda é inclinada: os rótulos se medem pela posição dela na altura deles
+    this.flDx = (this.flOff.offsetTop + this.flOff.offsetHeight / 2 - this.ph / 2) * Math.tan(TILT);
   }
 
   holdFor() { return this.hold; }
@@ -88,10 +90,11 @@ export class PpfAct extends Act {
     css(this.card, '--tx', state.flat ? '0px' : `${(-(1 - a) * 28).toFixed(1)}px`);
     // rótulos dos dois lados da borda (cada um só aparece se cabe inteiro do seu lado)
     const labels = state.flat ? 1 : open * (1 - smooth(span(p, T.out[0], T.out[1])));
-    css(this.flOff, 'opacity', (x - 16 - this.flOffW >= 12 ? labels : 0).toFixed(3));
-    css(this.flOn, 'opacity', (this.pw - x - 16 - this.flOnW >= 12 && this.f > 0.02 ? labels : 0).toFixed(3));
-    css(this.flOff, 'transform', `translate3d(${(x - 16 - this.flOffW).toFixed(1)}px,0,0)`);
-    css(this.flOn, 'transform', `translate3d(${(x + 16).toFixed(1)}px,0,0)`);
+    const lx = x + (this.flDx || 0);
+    css(this.flOff, 'opacity', (lx - 16 - this.flOffW >= 12 ? labels : 0).toFixed(3));
+    css(this.flOn, 'opacity', (this.pw - lx - 16 - this.flOnW >= 12 && this.f > 0.02 ? labels : 0).toFixed(3));
+    css(this.flOff, 'transform', `translate3d(${(lx - 16 - this.flOffW).toFixed(1)}px,0,0)`);
+    css(this.flOn, 'transform', `translate3d(${(lx + 16).toFixed(1)}px,0,0)`);
     // saída: a película vira vidro e o vidro ocupa a tela
     css(this.glass, 'opacity', state.flat ? '0' : smooth(span(p, T.glass[0], T.glass[1])).toFixed(3));
   }

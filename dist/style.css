@@ -515,6 +515,10 @@ input[type="range"]:focus-visible { outline: 2px solid var(--red-ink); outline-o
   .result-copy { bottom: calc(var(--chrome) + 6vh + env(safe-area-inset-bottom)); left: var(--pad); right: var(--pad); }
   .result-scrim { width: 100%; height: 55%; background: linear-gradient(0deg, rgba(8, 8, 9, .85), rgba(8, 8, 9, 0)); }
 }
+/* tablet em pé: o quadrado da lavagem ocupa o alto; o card vai para baixo dele */
+@media (min-width: 761px) and (max-aspect-ratio: 9/10) {
+  .bay-wash .card { top: auto; margin-top: 0; bottom: calc(var(--chrome) + var(--pad)); }
+}
 /* tela baixa (Safari do iPhone com as barras à mostra, ~660 px): a foto ocupa menos altura */
 @media (max-width: 760px) and (orientation: portrait) and (max-height: 700px) { .result-figure, .act-final .reel-box { bottom: 36%; } }
 

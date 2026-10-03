@@ -50,8 +50,8 @@ export class PolishAct extends Act {
   }
   setBefore(on) {
     this.before = on;
+    // o rótulo fica "Ver antes"; o estado é o aria-pressed (o botão fica vermelho quando ligado)
     this.beforeBtn.setAttribute('aria-pressed', String(on));
-    this.beforeBtn.firstChild.textContent = on ? 'Ver depois' : 'Ver antes';
     this.paint.classList.toggle('is-before', on);
   }
 
