@@ -371,4 +371,5 @@ Conferido em 1440×900 e 390×844: rolagem contínua e salto em cada costura (fi
 pedido → endereço → dúvidas → rodapé, e as faixas do Quem somos), respostas deslizando, a troca
 de página nos dois sentidos (desktop e celular), a linha de leitura de 0 a 1, movimento reduzido
 pelo sistema e pelo botão (faixas abertas, conteúdo visível, troca direta), sem JavaScript
-(faixas abertas), largura da página igual à da tela no celular, sem erros no console.
+(faixas abertas), largura da página igual à da tela no celular, sem erros no console. Aprovada
+("Pode fazer o merge") e publicada em produção.
