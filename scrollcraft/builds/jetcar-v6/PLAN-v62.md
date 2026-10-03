@@ -328,3 +328,12 @@ com "sem surpresa em preço ou prazo" e "horário marcado, sem fila", o e-mail, 
 frequência). A página ganhou os números, "Como começou", "Quem faz a JETCAR", os seis serviços
 com os textos longos e "Perguntas sobre os serviços"; o resumo da principal ganhou experiência e
 equipe, e o rodapé o e-mail. Continua sendo um depoimento só: é o que existe na fonte.
+
+Terceira passada ("deixa essa página bonita, enche ela de detalhe, coloca interações"): os três
+depoimentos estavam no chunk JS do carrossel do site antigo (o extrator só via o primeiro). A
+página ganhou `js/page.js`: revelação por rolagem, a linha de luz nos fios dos blocos e na foto
+do galpão (a varredura na foto do cabeçalho), números que contam, as cinco etapas em abas com a
+luz embaixo da escolhida, os seis serviços em `details` com a foto de cada cena, o carrossel de
+depoimentos (trilho com rolagem presa, setas, contador, teclado) e a rota que se desenha no mapa
+inline. Nada disso roda com movimento reduzido. Conferido em 1440, 390 e com movimento reduzido:
+revelações, números, abas, carrossel, serviços e mapa, sem erros.

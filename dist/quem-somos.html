@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b0b0c">
 <title>Quem somos · JETCAR Estética Automotiva</title>
-<meta name="description" content="A JETCAR é uma oficina de estética automotiva em Boa Viagem, Recife, há mais de cinco anos: como começou, quem faz, como trabalha, o que faz, onde fica e o que você precisa saber antes de levar o carro.">
+<meta name="description" content="A JETCAR é uma oficina de estética automotiva em Boa Viagem, Recife, há mais de cinco anos: como começou, quem faz, como trabalha, o que faz, o que dizem os clientes, onde fica e o que você precisa saber antes de levar o carro.">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="pt_BR">
 <meta property="og:title" content="Quem somos · JETCAR">
@@ -20,12 +20,14 @@
 <link rel="preload" href="assets/fonts/barlow-condensed-800.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/barlow-condensed-800-italic.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="style.css">
+<script>document.documentElement.classList.add('js')</script>
 </head>
 <body class="page">
 <a class="skip" href="#conteudo">Ir direto para o conteúdo</a>
 <svg class="sprite" aria-hidden="true" focusable="false">
   <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h15M13 6l6 6-6 6"/></symbol>
   <symbol id="i-arrow-ur" viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8"/></symbol>
+  <symbol id="i-left" viewBox="0 0 24 24"><path d="M20 12H5M11 6l-6 6 6 6"/></symbol>
   <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 20V5M6 11l6-6 6 6"/></symbol>
 </svg>
 
@@ -42,97 +44,161 @@
 <main id="conteudo" class="page-main">
 
   <!-- Tudo aqui vem do site antigo da JETCAR (jetcar.framer.website: início, Sobre nós, Contato,
-       Serviços e as páginas de serviço) ou do site atual. Nada inventado. O site antigo não dá o
-       nome do fundador nem o ano de abertura, e tem um único depoimento. -->
+       Serviços, as páginas de serviço e o carrossel de depoimentos) ou do site atual. Nada
+       inventado. O site antigo não dá o nome do fundador nem o ano de abertura. As fotos são as
+       ilustrações do próprio site (o rodapé avisa). -->
   <section class="page-head" aria-labelledby="t-page">
-    <p class="kicker">JETCAR · Quem somos</p>
-    <h1 id="t-page"><span>Cuidado automotivo</span> <span>feito nos detalhes.</span></h1>
-    <p class="lead">A JETCAR é uma oficina de estética automotiva na Rua José Trajano, em Boa Viagem, no Recife, a poucas quadras da praia. Há mais de cinco anos, lavagem técnica, polimento e correção de pintura, Ceramic Coating, PPF e higienização interna, com uma regra que vale para tudo: cada carro é um trabalho de detalhe.</p>
+    <div class="page-head-copy" data-reveal>
+      <p class="kicker">JETCAR · Quem somos</p>
+      <h1 id="t-page"><span>Cuidado automotivo</span> <span>feito nos detalhes.</span></h1>
+      <p class="lead">Uma oficina de estética automotiva na Rua José Trajano, em Boa Viagem, no Recife, a poucas quadras da praia. Há mais de cinco anos, lavagem técnica, polimento e correção de pintura, Ceramic Coating, PPF e higienização interna, com uma regra que vale para tudo: cada carro é um trabalho de detalhe.</p>
+      <div class="actions">
+        <a class="btn" href="/#agendar"><span>Agendar</span><svg><use href="#i-arrow"/></svg></a>
+        <a class="link" href="#servicos">Ver os serviços<svg><use href="#i-arrow"/></svg></a>
+      </div>
+    </div>
+    <figure class="page-head-photo" data-reveal>
+      <img src="assets/result-1920.webp" srcset="assets/result-1920.webp 1920w, assets/result-2560.webp 2560w" sizes="(max-width: 760px) 100vw, 46vw" alt="Porsche 911 grafite pronto, brilhando no galpão escuro" width="3200" height="1804" decoding="async">
+      <i class="sweep" aria-hidden="true"></i>
+    </figure>
   </section>
+
   <ul class="numbers" aria-label="A JETCAR em números">
-    <li><b>5+</b><span>anos de experiência</span></li>
-    <li><b>10</b><span>profissionais na equipe</span></li>
-    <li><b>6</b><span>serviços de estética e proteção</span></li>
-    <li><b>0</b><span>fila: atendimento com hora marcada</span></li>
+    <li data-reveal><b data-n="5" data-suffix="+">5+</b><span>anos de experiência</span></li>
+    <li data-reveal><b data-n="10">10</b><span>profissionais na equipe</span></li>
+    <li data-reveal><b data-n="6">6</b><span>serviços de estética e proteção</span></li>
+    <li data-reveal><b data-n="3">3</b><span>clientes falando aqui embaixo</span></li>
   </ul>
-  <ul class="page-facts">
+  <ul class="page-facts" data-reveal>
     <li><b>Local</b><span>Rua José Trajano, 196<br>Boa Viagem, Recife, PE</span></li>
     <li><b>Horário</b><span>Segunda a sexta, 08h às 17h<br>Sábado, 07h às 17h</span></li>
     <li><b>Contato</b><span><a href="https://www.instagram.com/jetcarbv/" target="_blank" rel="noopener noreferrer">Instagram @jetcarbv</a><br><a href="https://wa.me/5581997515541" target="_blank" rel="noopener noreferrer">WhatsApp (81) 99751-5541</a><br><a href="mailto:contato@jetcarestetica.com.br">contato@jetcarestetica.com.br</a></span></li>
-    <li><b>Especialidade</b><span>Estética automotiva de alto nível: serviços premium, equipamentos de ponta e acabamento que fala por nós</span></li>
+    <li><b>Atendimento</b><span>Com hora marcada, sem fila. A equipe confirma pelo WhatsApp.</span></li>
   </ul>
 
-  <section class="page-section" aria-labelledby="t-story">
+  <section class="page-section" id="historia" aria-labelledby="t-story" data-reveal>
     <p class="kicker">Como começou</p>
-    <div class="page-cols">
-      <h2 id="t-story">Tratar cada carro como se fosse nosso.</h2>
-      <div>
+    <div class="story">
+      <figure class="story-photo">
+        <img src="assets/posters/hero-d1440.webp" alt="O Porsche 911 no galpão da JETCAR, sob a luz da linha" width="1440" height="900" loading="lazy" decoding="async">
+        <i class="trace-line" aria-hidden="true"></i>
+      </figure>
+      <div class="story-copy">
+        <h2 id="t-story">Tratar cada carro como se fosse nosso.</h2>
         <figure class="quote story-quote">
           <blockquote><p>“A Jetcar nasceu com uma ideia clara: tratar cada carro como se fosse nosso, cuidando de cada detalhe da pintura, por dentro e por fora.”</p></blockquote>
           <figcaption><b>Fundador da JETCAR</b></figcaption>
         </figure>
         <p class="lead">Dessa ideia vieram mais de cinco anos de trabalho em Boa Viagem, com processos técnicos e produtos profissionais em cada etapa. Lavagem detalhada, correção de pintura e proteção cerâmica são feitas com foco na segurança do verniz e em um resultado consistente.</p>
         <p class="lead">A estrutura acompanha: um box preparado para estética automotiva, com boa iluminação e equipamentos específicos para polimento e lavagem. Mais rapidez no serviço, sem descuidar da pintura.</p>
+        <ul class="tags" aria-label="Como a JETCAR se define">
+          <li>Estética automotiva de alto nível</li><li>Serviços premium</li><li>Equipamentos de ponta</li><li>Acabamento que fala por nós</li>
+        </ul>
       </div>
     </div>
   </section>
 
-  <section class="page-section" aria-labelledby="t-values">
+  <section class="page-section" aria-labelledby="t-values" data-reveal>
     <p class="kicker">No que a JETCAR acredita</p>
     <h2 id="t-values">Não olhamos só para a sujeira.</h2>
     <ol class="why-list values">
-      <li><b>Cada carro é um trabalho de detalhe</b><span>Não existe serviço padrão. O que vai ser feito depende do estado da pintura, do uso que o carro tem no dia a dia e do nível de proteção que você quer.</span></li>
-      <li><b>Acabamento, proteção e conforto</b><span>Limpar é o começo. O trabalho está em preparar a superfície, corrigir o que dá para corrigir e proteger o que foi recuperado, por fora e por dentro.</span></li>
-      <li><b>O carro como um investimento</b><span>A JETCAR cuida do carro como algo que vale a pena preservar: pintura protegida contra sol, chuva e sujeira, interior cuidado e uma lavagem mais fácil depois.</span></li>
+      <li data-reveal><b>Cada carro é um trabalho de detalhe</b><span>Não existe serviço padrão. O que vai ser feito depende do estado da pintura, do uso que o carro tem no dia a dia e do nível de proteção que você quer.</span></li>
+      <li data-reveal><b>Acabamento, proteção e conforto</b><span>Limpar é o começo. O trabalho está em preparar a superfície, corrigir o que dá para corrigir e proteger o que foi recuperado, por fora e por dentro.</span></li>
+      <li data-reveal><b>O carro como um investimento</b><span>A JETCAR cuida do carro como algo que vale a pena preservar: pintura protegida contra sol, chuva e sujeira, interior cuidado e uma lavagem mais fácil depois.</span></li>
     </ol>
   </section>
 
-  <section class="page-section" aria-labelledby="t-team">
+  <section class="page-section" id="equipe" aria-labelledby="t-team" data-reveal>
     <p class="kicker">Quem faz a JETCAR</p>
     <div class="page-cols">
       <h2 id="t-team">Dez profissionais. Três deles à frente do trabalho.</h2>
       <p class="lead">Uma equipe de dez pessoas cuida de cada etapa, da chegada do carro à entrega. Quem coordena, detalha e executa:</p>
     </div>
     <ol class="team">
-      <li><b>João</b><span>Coordenador de Estética</span></li>
-      <li><b>Rafael</b><span>Especialista em Detalhamento</span></li>
-      <li><b>Marcos</b><span>Técnico em Estética Automotiva</span></li>
+      <li data-reveal><i aria-hidden="true">J</i><b>João</b><span>Coordenador de Estética</span></li>
+      <li data-reveal><i aria-hidden="true">R</i><b>Rafael</b><span>Especialista em Detalhamento</span></li>
+      <li data-reveal><i aria-hidden="true">M</i><b>Marcos</b><span>Técnico em Estética Automotiva</span></li>
     </ol>
   </section>
 
-  <section class="page-section" aria-labelledby="t-method">
+  <section class="page-section" id="como-funciona" aria-labelledby="t-method" data-reveal>
     <p class="kicker">Como a JETCAR trabalha</p>
     <div class="page-cols">
       <h2 id="t-method">Tudo alinhado antes, sem surpresa em preço ou prazo.</h2>
-      <div>
-        <p class="lead">Na JETCAR o processo é simples: você agenda, a equipe avalia o carro na chegada e indica o serviço ideal para o estado da pintura. Tudo alinhado antes, sem surpresa em preço ou prazo. Horário marcado, sem fila.</p>
-        <p class="lead">Cada etapa prepara a seguinte: a lavagem técnica antes do polimento, a correção da pintura antes do Ceramic Coating ou do PPF. O trabalho é feito com máquinas específicas de estética automotiva e produtos profissionais, seguros para a pintura e para o interior, aplicados com técnica.</p>
-        <p class="lead">Na entrega, a equipe explica como fica a manutenção do que foi feito e o que você precisa saber para cuidar do carro no dia a dia.</p>
+      <p class="lead">Na JETCAR o processo é simples: você agenda, a equipe avalia o carro na chegada e indica o serviço ideal para o estado da pintura. Escolha uma etapa para ver o que acontece nela.</p>
+    </div>
+    <div class="steps">
+      <div class="steps-tabs" role="tablist" aria-label="As cinco etapas">
+        <button role="tab" id="st-1" aria-controls="sp-1" aria-selected="true" type="button"><b>01</b><span>Agendamento</span></button>
+        <button role="tab" id="st-2" aria-controls="sp-2" aria-selected="false" type="button"><b>02</b><span>Inspeção do carro</span></button>
+        <button role="tab" id="st-3" aria-controls="sp-3" aria-selected="false" type="button"><b>03</b><span>Definição do serviço</span></button>
+        <button role="tab" id="st-4" aria-controls="sp-4" aria-selected="false" type="button"><b>04</b><span>Serviço</span></button>
+        <button role="tab" id="st-5" aria-controls="sp-5" aria-selected="false" type="button"><b>05</b><span>Entrega</span></button>
+        <i class="steps-rail" aria-hidden="true"><i class="steps-lit"></i></i>
+      </div>
+      <div class="steps-panels">
+        <div role="tabpanel" id="sp-1" aria-labelledby="st-1" tabindex="0"><p>Você marca pelo Direct, pelo WhatsApp ou pelo e-mail, ou monta o pedido no site e manda a mensagem pronta. A equipe confirma tudo com você pelo WhatsApp. Horário marcado, sem fila.</p></div>
+        <div role="tabpanel" id="sp-2" aria-labelledby="st-2" tabindex="0" hidden><p>Na chegada, a equipe avalia o carro: o estado da pintura, o uso que ele tem no dia a dia e o nível de proteção que você quer. Com a iluminação certa, os riscos e as marcas aparecem.</p></div>
+        <div role="tabpanel" id="sp-3" aria-labelledby="st-3" tabindex="0" hidden><p>Só então vem a indicação: o serviço ideal para o estado da pintura, com preço e prazo alinhados antes de começar. Sem surpresa.</p></div>
+        <div role="tabpanel" id="sp-4" aria-labelledby="st-4" tabindex="0" hidden><p>Cada etapa prepara a seguinte: a lavagem antes do polimento, a correção antes do coating ou da película. Máquinas específicas, produtos profissionais e técnica, dentro dos limites do verniz. Uma lavagem leva de 20 a 40 minutos; um polimento, de 6 a 12 horas.</p></div>
+        <div role="tabpanel" id="sp-5" aria-labelledby="st-5" tabindex="0" hidden><p>Você recebe o carro com as orientações de cuidado: como fica a manutenção do que foi feito e o que fazer no dia a dia para o resultado durar.</p></div>
       </div>
     </div>
-    <ol class="how" aria-label="As cinco etapas">
-      <li><b>01</b><span>Agendamento</span></li>
-      <li><b>02</b><span>Inspeção do carro</span></li>
-      <li><b>03</b><span>Definição do serviço</span></li>
-      <li><b>04</b><span>Serviço</span></li>
-      <li><b>05</b><span>Entrega e orientações de cuidado</span></li>
-    </ol>
   </section>
 
-  <section class="page-section" aria-labelledby="t-services">
+  <section class="page-section" id="servicos" aria-labelledby="t-services" data-reveal>
     <p class="kicker">O que a JETCAR faz</p>
     <h2 id="t-services">Seis serviços, uma ordem que faz sentido.</h2>
-    <ol class="services">
-      <li><b>01</b><h3>Lavagem técnica</h3><p>Lavagem externa completa feita à mão, com shampoos automotivos de pH equilibrado e secagem correta, para limpar sem agredir a pintura e sem deixar marcas de água. Normalmente é o primeiro passo antes de qualquer outro serviço.</p><a class="link" href="/#lavagem">Ver no site<svg><use href="#i-arrow"/></svg></a></li>
-      <li><b>02</b><h3>Polimento e correção de pintura</h3><p>A luz de inspeção revela as marcas finas no verniz. Com máquinas apropriadas, boinas específicas e compostos de corte e refino, o polimento técnico remove grande parte dos riscos leves, marcas circulares e oxidação, sempre dentro dos limites do verniz.</p><a class="link" href="/#polimento">Ver no site<svg><use href="#i-arrow"/></svg></a></li>
-      <li><b>03</b><h3>Ceramic Coating</h3><p>Revestimento cerâmico aplicado sobre o verniz depois da preparação da pintura. Intensifica o brilho, facilita a lavagem e ajuda a proteger contra sol, chuva e sujeira do dia a dia. Conforme a necessidade do carro, a proteção pode ser com selante.</p><a class="link" href="/#ceramic">Ver no site<svg><use href="#i-arrow"/></svg></a></li>
-      <li><b>04</b><h3>PPF, película de proteção</h3><p>Paint Protection Film: uma película transparente aplicada sobre a pintura, nas áreas do carro que você combinar com a equipe.</p><a class="link" href="/#ppf">Ver no site<svg><use href="#i-arrow"/></svg></a></li>
-      <li><b>05</b><h3>Higienização interna</h3><p>Aspiração minuciosa de carpetes e estofados, limpeza de painéis, portas, consoles e vidros, removendo poeira, manchas leves e odores. Couro, acabamentos, superfícies e detalhes: o tipo de revestimento muda o cuidado, então conte o que tem no seu.</p><a class="link" href="/#interior">Ver no site<svg><use href="#i-arrow"/></svg></a></li>
-      <li><b>06</b><h3>Remoção de odores</h3><p>Tratamento para eliminar cheiro de cigarro, mofo, comida, animais e outros odores fortes, atacando a fonte do problema para deixar o interior limpo e fresco de novo.</p><a class="link" href="/#agendar">Pedir no agendamento<svg><use href="#i-arrow"/></svg></a></li>
-    </ol>
+    <p class="lead">Abra cada um para ver o que é feito.</p>
+    <div class="svcs">
+      <details class="svc" data-reveal>
+        <summary><b>01</b><div class="svc-head"><h3>Lavagem técnica</h3><em>Feita à mão, sem agredir a pintura. De 20 a 40 minutos.</em></div><img src="assets/wash/freeze-1920.webp" alt="" width="1920" height="1082" loading="lazy" decoding="async"><i aria-hidden="true"></i></summary>
+        <div class="svc-body">
+          <p>Mais do que jogar água e sabão: um processo manual que remove sujeira acumulada, poeira e contaminantes da superfície da carroceria, com shampoos automotivos de pH equilibrado, técnica suave e secagem correta, sem marcas de água. Normalmente é o primeiro passo antes de qualquer outro serviço.</p>
+          <ul><li>Remoção de sujeira, poeira e resíduos de asfalto</li><li>Lavagem manual, mais segura para o verniz</li><li>Shampoos automotivos e produtos de alta performance</li><li>Secagem correta, sem manchas de água</li><li>Preparo ideal para ceras e proteções</li></ul>
+          <a class="link" href="/#lavagem">Ver a cena no site<svg><use href="#i-arrow"/></svg></a>
+        </div>
+      </details>
+      <details class="svc" data-reveal>
+        <summary><b>02</b><div class="svc-head"><h3>Polimento e correção de pintura</h3><em>Corrige riscos leves, marcas de lavagem e opacidade. De 6 a 12 horas.</em></div><img src="assets/polish/refl-1920.webp" alt="" width="1920" height="1080" loading="lazy" decoding="async"><i aria-hidden="true"></i></summary>
+        <div class="svc-body">
+          <p>A luz de inspeção revela as marcas finas no verniz. Com máquinas apropriadas, boinas específicas e compostos de corte e refino, o polimento técnico faz a remoção controlada dos defeitos superficiais e devolve profundidade, brilho e clareza à cor, sempre dentro dos limites do verniz. Riscos muito profundos podem não sumir por completo, mas ficam bem menos aparentes.</p>
+          <ul><li>Redução ou remoção de micro-riscos e marcas circulares</li><li>Menos oxidação e aspecto apagado</li><li>Mais profundidade de cor e brilho</li><li>Acabamento uniforme</li><li>Preparo da superfície para o Ceramic Coating ou o PPF</li></ul>
+          <a class="link" href="/#polimento">Ver a cena no site<svg><use href="#i-arrow"/></svg></a>
+        </div>
+      </details>
+      <details class="svc" data-reveal>
+        <summary><b>03</b><div class="svc-head"><h3>Ceramic Coating</h3><em>Revestimento sobre o verniz: mais brilho, lavagem mais fácil, proteção.</em></div><img src="assets/posters/ceramic-d1440.webp" alt="" width="1440" height="900" loading="lazy" decoding="async"><i aria-hidden="true"></i></summary>
+        <div class="svc-body">
+          <p>Camada protetora de alta durabilidade aplicada sobre o verniz, depois da preparação da pintura. Intensifica o brilho, facilita a lavagem e ajuda a proteger contra sol, chuva, sujeira do dia a dia, fezes de aves e insetos. Conforme a necessidade do carro, a proteção pode ser com selante em vez do cerâmico. Na entrega, a equipe explica como fica a manutenção.</p>
+          <a class="link" href="/#ceramic">Ver a cena no site<svg><use href="#i-arrow"/></svg></a>
+        </div>
+      </details>
+      <details class="svc" data-reveal>
+        <summary><b>04</b><div class="svc-head"><h3>PPF, película de proteção</h3><em>Película transparente sobre a pintura, nas áreas que você combinar.</em></div><img src="assets/ppf/film-d.webp" alt="" width="1533" height="1555" loading="lazy" decoding="async"><i aria-hidden="true"></i></summary>
+        <div class="svc-body">
+          <p>Paint Protection Film: uma película transparente aplicada sobre a pintura, nas áreas do carro que você combinar com a equipe. Dá para usar o PPF, o Ceramic Coating ou os dois.</p>
+          <a class="link" href="/#ppf">Ver a cena no site<svg><use href="#i-arrow"/></svg></a>
+        </div>
+      </details>
+      <details class="svc" data-reveal>
+        <summary><b>05</b><div class="svc-head"><h3>Higienização interna</h3><em>Aspiração minuciosa, painéis, portas, consoles e vidros.</em></div><img src="assets/interior/far-m.webp" alt="" width="2534" height="2560" loading="lazy" decoding="async"><i aria-hidden="true"></i></summary>
+        <div class="svc-body">
+          <p>Higienização completa do interior: aspiração minuciosa de carpetes e estofados, limpeza de painéis, portas, consoles e vidros, removendo poeira, manchas leves e odores. Couro, acabamentos, superfícies e detalhes: o tipo de revestimento muda o cuidado, então conte o que tem no seu.</p>
+          <a class="link" href="/#interior">Ver a cena no site<svg><use href="#i-arrow"/></svg></a>
+        </div>
+      </details>
+      <details class="svc" data-reveal>
+        <summary><b>06</b><div class="svc-head"><h3>Remoção de odores</h3><em>Cigarro, mofo, comida, animais: atacando a fonte.</em></div><img src="assets/interior/far-m.webp" alt="" width="2534" height="2560" loading="lazy" decoding="async" class="alt"><i aria-hidden="true"></i></summary>
+        <div class="svc-body">
+          <p>Tratamento para eliminar cheiro de cigarro, mofo, comida, animais e outros odores fortes. A equipe ataca a fonte do problema e deixa o interior limpo, fresco e confortável de novo.</p>
+          <a class="link" href="/#agendar">Pedir no agendamento<svg><use href="#i-arrow"/></svg></a>
+        </div>
+      </details>
+    </div>
   </section>
 
-  <section class="page-section" aria-labelledby="t-sfaq">
+  <section class="page-section" aria-labelledby="t-sfaq" data-reveal>
     <p class="kicker">Perguntas sobre os serviços</p>
     <h2 id="t-sfaq">Prazos, frequência e o que esperar.</h2>
     <div class="faq-list page-faq">
@@ -148,24 +214,42 @@
     <p class="about-more"><a class="link" href="/#duvidas">Outras perguntas comuns<svg><use href="#i-arrow"/></svg></a></p>
   </section>
 
-  <section class="page-section" aria-labelledby="t-clients">
+  <section class="page-section" id="clientes" aria-labelledby="t-clients" data-reveal>
     <p class="kicker">O que dizem os clientes</p>
-    <h2 id="t-clients" class="sr-only">Depoimentos</h2>
+    <div class="page-cols">
+      <h2 id="t-clients">Três clientes, três serviços.</h2>
+      <p class="lead">Os depoimentos publicados pela JETCAR. Passe para o lado ou use as setas.</p>
+    </div>
     <div class="quotes">
-      <figure class="quote">
-        <blockquote><p>“Fiz a correção de pintura e o revestimento cerâmico na Jetcar e o resultado me surpreendeu. O carro parece outro, o brilho é absurdo e a lavagem ficou muito mais fácil. Atendimento atencioso do início ao fim. Recomendo sem pensar duas vezes.”</p></blockquote>
-        <figcaption><b>Rafael S.</b><span>Audi TT · correção de pintura e Ceramic Coating</span></figcaption>
-      </figure>
+      <div class="quotes-track" tabindex="0" aria-label="Depoimentos">
+        <figure class="quote qcard">
+          <blockquote><p>“Fiz a correção de pintura e o revestimento cerâmico na Jetcar e o resultado me surpreendeu. O carro parece outro, o brilho é absurdo e a lavagem ficou muito mais fácil. Atendimento atencioso do início ao fim. Recomendo sem pensar duas vezes.”</p></blockquote>
+          <figcaption><i aria-hidden="true">R</i><b>Rafael S.</b><span>Audi TT · correção de pintura e Ceramic Coating</span><em aria-label="5 de 5">★★★★★</em></figcaption>
+        </figure>
+        <figure class="quote qcard">
+          <blockquote><p>“Uso o carro todo dia para trabalho e já tinha muitos micro-riscos e marcas de lavagem. Depois do serviço da Jetcar, a pintura ficou uniforme, com brilho forte e sem aquelas marcas que me incomodavam. Valeu cada minuto que o carro ficou parado.”</p></blockquote>
+          <figcaption><i aria-hidden="true">C</i><b>Carlos A.</b><span>Jeep · polimento técnico</span><em aria-label="5 de 5">★★★★★</em></figcaption>
+        </figure>
+        <figure class="quote qcard">
+          <blockquote><p>“Levei meu carro para uma higienização interna completa e lavagem detalhada. Quando peguei de volta, parecia carro de loja: cheiro agradável, tudo muito bem limpo e sem aqueles detalhes esquecidos. Dá para ver o cuidado em cada parte do serviço.”</p></blockquote>
+          <figcaption><i aria-hidden="true">J</i><b>Juliana M.</b><span>Lamborghini · higienização interna e lavagem detalhada</span><em aria-label="5 de 5">★★★★★</em></figcaption>
+        </figure>
+      </div>
+      <div class="quotes-nav">
+        <button type="button" class="qbtn" data-prev aria-label="Depoimento anterior"><svg><use href="#i-left"/></svg></button>
+        <span class="quotes-count" aria-live="polite">01 / 03</span>
+        <button type="button" class="qbtn" data-next aria-label="Próximo depoimento"><svg><use href="#i-arrow"/></svg></button>
+      </div>
     </div>
   </section>
 
-  <section class="page-section" aria-labelledby="t-place">
+  <section class="page-section" id="onde" aria-labelledby="t-place" data-reveal>
     <p class="kicker">Onde e quando</p>
     <div class="place">
-      <div class="place-map"><img src="assets/route.svg" alt="Mapa de Boa Viagem com a rota pela Avenida Boa Viagem até a Rua José Trajano" width="1600" height="1000" loading="lazy"></div>
+      <div class="place-map" data-map="assets/route.svg" data-reveal><img src="assets/route.svg" alt="Mapa de Boa Viagem com a rota pela Avenida Boa Viagem até a Rua José Trajano" width="1600" height="1000" loading="lazy"></div>
       <div>
         <h2 id="t-place">Rua José Trajano, 196</h2>
-        <p class="lead">Boa Viagem, Recife, Pernambuco. A poucas quadras da Praia de Boa Viagem.</p>
+        <p class="lead">Boa Viagem, Recife, Pernambuco. A poucas quadras da Praia de Boa Viagem: entrando pela orla, são poucos minutos até a porta.</p>
         <p class="coords"><span class="sr-only">Coordenadas: </span>08°07′14″S · 34°53′58″O</p>
         <p class="coords hours">Seg a sex 08h às 17h · Sáb 07h às 17h</p>
         <div class="actions">
@@ -177,17 +261,17 @@
     </div>
   </section>
 
-  <section class="page-section" aria-labelledby="t-know">
+  <section class="page-section" aria-labelledby="t-know" data-reveal>
     <p class="kicker">Antes de levar o carro</p>
     <h2 id="t-know">Bom saber.</h2>
     <ol class="why-list values">
-      <li><b>Agende antes</b><span>O atendimento é com hora marcada, sem fila. Combine pelo Direct, pelo WhatsApp ou pelo e-mail, ou monte o pedido no site e mande a mensagem pronta. A equipe confirma tudo com você pelo WhatsApp.</span></li>
-      <li><b>Conte como o carro está</b><span>Riscos, manchas, opacidade, o interior: quanto mais você contar, mais precisa fica a avaliação na chegada.</span></li>
-      <li><b>Preço e prazo vêm depois da avaliação</b><span>Dependem do carro, do estado dele e do serviço. A equipe passa os dois antes de começar, e nada muda sem combinar com você.</span></li>
+      <li data-reveal><b>Agende antes</b><span>O atendimento é com hora marcada, sem fila. Combine pelo Direct, pelo WhatsApp ou pelo e-mail, ou monte o pedido no site e mande a mensagem pronta. A equipe confirma tudo com você pelo WhatsApp.</span></li>
+      <li data-reveal><b>Conte como o carro está</b><span>Riscos, manchas, opacidade, o interior: quanto mais você contar, mais precisa fica a avaliação na chegada.</span></li>
+      <li data-reveal><b>Preço e prazo vêm depois da avaliação</b><span>Dependem do carro, do estado dele e do serviço. A equipe passa os dois antes de começar, e nada muda sem combinar com você.</span></li>
     </ol>
   </section>
 
-  <section class="cta" aria-labelledby="t-cta">
+  <section class="cta" aria-labelledby="t-cta" data-reveal>
     <h2 id="t-cta">Quer saber o que o seu carro precisa?</h2>
     <div class="actions">
       <a class="btn" href="/#agendar"><span>Montar o pedido</span><svg><use href="#i-arrow"/></svg></a>
@@ -210,8 +294,9 @@
     </div>
     <div class="footer-bottom">
       <span>© 2026 JETCAR Estética Automotiva. Fotos e vídeo ilustrativos. Mapa: dados © OpenStreetMap (ODbL).</span>
-      <span class="footer-tools"><a href="#conteudo">Voltar ao topo<svg><use href="#i-up"/></svg></a></span>
+      <span class="footer-tools"><button type="button" class="motion" aria-pressed="false">Reduzir movimento</button><a href="#conteudo">Voltar ao topo<svg><use href="#i-up"/></svg></a></span>
     </div>
   </footer>
+<script type="module" src="js/page.js"></script>
 </body>
 </html>
