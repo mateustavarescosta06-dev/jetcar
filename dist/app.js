@@ -96,6 +96,7 @@ function layout(force = false) {
     a.el.style.zIndex = String(20 - i);
     const next = acts[i + 1];
     a.handsOff = !!(next && next.handoff != null && !state.flat);
+    a.overlap = a.handsOff ? next.handoff : 0;
     if (a.handoff != null) a.el.style.marginTop = state.flat ? '' : `${-Math.round(view.h + a.handoff * view.svh)}px`;
   });
   const y = scrollY;

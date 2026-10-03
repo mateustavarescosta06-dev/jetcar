@@ -87,7 +87,7 @@ export class PpfAct extends Act {
     const open = state.flat ? 1 : smooth(span(p, T.open[0], T.open[1]));
     css(this.cover, 'opacity', (1 - open).toFixed(3));
     const a = cardState(this.card, p, [T.card[0], T.card[1], T.out[0], T.out[1]], 0.1);
-    css(this.card, '--tx', state.flat ? '0px' : `${(-(1 - a) * 28).toFixed(1)}px`);
+    css(this.card, '--tx', state.flat ? '0px' : `${(-(1 - a) * 16).toFixed(1)}px`);
     // rótulos dos dois lados da borda (cada um só aparece se cabe inteiro do seu lado)
     const labels = state.flat ? 1 : open * (1 - smooth(span(p, T.out[0], T.out[1])));
     const lx = x + (this.flDx || 0);

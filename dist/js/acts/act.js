@@ -24,11 +24,12 @@ export class Act {
     this.leave = 0;         // 0 enquanto preso, 1 quando o palco saiu por cima
     this.snap = null;       // cópia 2D do último quadro (quando outro ato usa o canvas)
     this.snapKey = null;
-    this.lag = 45;          // suavização do progresso (ms): o Lenis já suaviza a roda, isto assenta os degraus da rolagem
+    this.lag = 24;          // suavização do progresso (ms): o Lenis já suaviza a roda, isto só assenta os degraus da rolagem
     // passagem no lugar: o ato seguinte começa preso por baixo deste (data-handoff = quantas telas
     // antes do fim), com o mesmo quadro; quando este termina, some, e o corte não aparece
     this.handoff = el.dataset.handoff != null ? Number(el.dataset.handoff) : null;
     this.handsOff = false;  // o próximo ato é uma passagem no lugar (o app marca)
+    this.overlap = 0;       // telas em que este palco apaga sobre o próximo, já preso por baixo (o handoff dele)
   }
 
   /** Precisa do WebGL agora (o app só dá o canvas para quem precisa). */
@@ -76,8 +77,13 @@ export class Act {
     this.raw = this.progressAt(y);
     // terminou e o próximo já está por baixo com o mesmo quadro: sai da frente
     if (this.handsOff && this.stage) {
-      const gone = !state.flat && this.travel > 0 && y > this.top + this.travel + 0.5;
+      const end = this.top + this.travel;
+      const gone = !state.flat && this.travel > 0 && y > end + 0.5;
       if (gone !== this.gone) { this.gone = gone; this.stage.classList.toggle('is-gone', gone); }
+      // a passagem: o próximo já anda por baixo e este apaga por cima nas últimas telas (overlap)
+      const over = this.overlap * view.svh;
+      const fade = state.flat || over <= 0 ? 1 : clamp((end - y) / over);
+      css(this.stage, 'opacity', fade < 1 ? fade.toFixed(3) : '');
       // saiu da frente: não conta como visível (não desenha, não busca quadro, solta o canvas)
       if (gone) { this.visible = false; this.vis = 0; }
     }

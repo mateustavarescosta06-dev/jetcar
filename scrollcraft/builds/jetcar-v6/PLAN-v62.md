@@ -270,3 +270,22 @@ página". A tela tinha só o título e uma legenda, com a metade direita vazia.
   fino e texto curto, sem números nem promessas; e "A seguir: 03 Ceramic Coating, 04 PPF".
 - O título fica do mesmo tamanho no desktop grande e cabe com a ficha numa tela de 1440×900.
 - Gerador: `scripts/data/build_coast_svg.py`.
+
+Quick polish pass (pedido: "mesmo site, mesmo design, só mais rápido e fluido"; sem redesign,
+sem assets novos):
+
+- Menos suavização acumulada: progresso dos atos assentado em 24 ms (antes 45); a fusão entre
+  quadros dos scrubs em 30 ms (antes 40). O Lenis fica como está.
+- Atos mais curtos (desktop / celular): hero 1,9 / 1,3; lavagem 1,05 / 0,9; polimento 1,45 / 1,2;
+  PPF 1,17 / 1,1; interior 1,26 / 1,1; resultado 0,4. Ceramic, final e endereço iguais. A foto do
+  último quadro do hero fica pronta um pouco antes (freeze em 0,88–0,93).
+- Sobreposição entre capítulos com o mecanismo que já existia: `data-handoff="0.12"` na lavagem,
+  no polimento, no PPF e no interior. O ato seguinte prende 0,12 tela antes e já anda; o palco
+  anterior apaga por cima dele nessas 0,12 telas (`overlap` em `act.js`) e some no fim. O final
+  continua em 0 (o quadro é o mesmo do resultado; sem sobreposição não há ghosting).
+- Cards assentam: deslocamento de entrada 16 px (antes 22); o card da lavagem sobe 20 px em vez
+  de 42% da tela, com escala 1,02 em vez de 1,05, e chega em 0,04–0,20 do ato; o do PPF desliza
+  16 px em vez de 28.
+- Conferido (Chromium por software, desktop e celular): nas cinco passagens o ato seguinte está
+  preso 0,12 tela antes, o anterior apaga de −0,11 a 0 e some em +0,02, sem imagem dupla; os dois
+  scrubs continuam fundindo quadros e parados mostram o quadro exato; sem erros de console.

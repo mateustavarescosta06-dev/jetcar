@@ -9,7 +9,7 @@ import { $, view, state, span, smooth, smoother, css, clamp } from '../core.js';
 import { Act, cardState } from './act.js';
 import { measureJet, jet, placeTrace } from '../win.js';
 
-const T = { card: [0.04, 0.26], out: [0.54, 0.64], glint: [0.58, 0.68], grow: [0.66, 0.84], shade: [0.7, 0.96] };
+const T = { card: [0.04, 0.2], out: [0.54, 0.64], glint: [0.58, 0.68], grow: [0.66, 0.84], shade: [0.7, 0.96] };
 // região do recorte de perto, em fração do quadro (scripts/frames/build_stills.py)
 const DETAIL = { u0: 0.55, v0: 0.3, u1: 0.95, v1: 0.75 };
 const SQUARE = [0.2505, 0.8142];
@@ -74,8 +74,8 @@ export class WashAct extends Act {
     const a = cardState(this.card, p, [T.card[0], T.card[1], T.out[0], T.out[1]], 0.1);
     const k = state.flat ? 1 : smoother(span(p, T.card[0], T.card[1]));
     const e = state.flat ? 0 : smooth(span(p, T.out[0], T.out[1]));
-    css(this.card, '--ty', `${((1 - k) * view.h * 0.42 - e * 18).toFixed(1)}px`);
-    css(this.card, '--sc', (1 + (1 - k) * 0.05).toFixed(4));
+    css(this.card, '--ty', `${((1 - k) * 20 - e * 14).toFixed(1)}px`);
+    css(this.card, '--sc', (1 + (1 - k) * 0.02).toFixed(4));
     css(this.card, 'opacity', state.flat ? '' : clamp(smooth(span(p, T.card[0], T.card[0] + 0.08)) * (1 - e)).toFixed(3));
     // longe do ponto de leitura a aproximação desfaz (a saída é sempre com a foto inteira)
     if (this.zoom && !state.flat && Math.abs(this.raw - this.hold) > 0.2) this.setZoom(false);

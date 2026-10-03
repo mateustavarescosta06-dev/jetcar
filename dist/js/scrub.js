@@ -15,7 +15,7 @@
 //   o WebM onde toca.
 import { state } from './core.js';
 
-const TAU = 40;   // ms: constante de tempo da fusão entre quadros
+const TAU = 30;   // ms: constante de tempo da fusão entre quadros
 const FORMAT = (async () => {
   const v = document.createElement('video');
   const can = { webm: !!v.canPlayType('video/webm; codecs="vp9"'), mp4: !!v.canPlayType('video/mp4; codecs="avc1.64002A"') };

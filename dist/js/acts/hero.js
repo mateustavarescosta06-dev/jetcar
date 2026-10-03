@@ -34,8 +34,8 @@ const PLATE_M = [0.14, 0, 0.9, 1];
 // apaga sobre o vídeo parado no quadro 0 (desktop) ou mergulha no escuro (celular); scrub: o
 // filme; freeze: o vídeo troca pela foto 4K do último quadro.
 const PH = {
-  d: { copy: [0.03, 0.12], settle: [0.02, 0.13], xf: [0.13, 0.17], scrub: [0.17, 0.9], freeze: [0.9, 0.95] },
-  m: { copy: [0.04, 0.13], settle: [0.04, 0.14], xf: [0.14, 0.22], scrub: [0.22, 0.88], freeze: [0.88, 0.94] },
+  d: { copy: [0.03, 0.12], settle: [0.02, 0.13], xf: [0.13, 0.17], scrub: [0.17, 0.88], freeze: [0.88, 0.93] },
+  m: { copy: [0.04, 0.13], settle: [0.04, 0.14], xf: [0.14, 0.22], scrub: [0.22, 0.86], freeze: [0.86, 0.92] },
 };
 // clipes (scripts/encode-open.sh): desktop f0→f168 do master com um quadro calculado entre cada dois
 // (48 por segundo de filme; aproximação até o índice 250, jato depois); celular: o recorte quadrado

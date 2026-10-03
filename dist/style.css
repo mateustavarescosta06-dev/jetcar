@@ -183,7 +183,7 @@ main { position: relative; }
 .hero-copy:focus-within > * { opacity: 1; transform: none; }
 
 /* ——— Cards: editorial de configurador. Fundo chapado, cantos retos, a borda é a luz. ——— */
-.card { position: absolute; z-index: 3; width: min(408px, calc(100vw - 2 * var(--pad))); padding: var(--s7) var(--s7) var(--s6); background: var(--surface); color: var(--ink); opacity: var(--a, 0); transform: translate3d(0, calc((1 - var(--a, 0)) * 22px), 0); pointer-events: var(--pe, none); }
+.card { position: absolute; z-index: 3; width: min(408px, calc(100vw - 2 * var(--pad))); padding: var(--s7) var(--s7) var(--s6); background: var(--surface); color: var(--ink); opacity: var(--a, 0); transform: translate3d(0, calc((1 - var(--a, 0)) * 16px), 0); pointer-events: var(--pe, none); }
 .card-trace { position: absolute; left: -1px; top: -1px; width: calc(100% + 2px); height: calc(100% + 2px); overflow: visible; pointer-events: none; }
 .card-trace rect { x: .5px; y: .5px; width: calc(100% - 1px); height: calc(100% - 1px); fill: none; vector-effect: non-scaling-stroke; }
 .trace-dim { stroke: rgba(255, 255, 255, .24); stroke-width: 1; stroke-dasharray: 1 1; stroke-dashoffset: calc(1 - var(--draw, 0)); }
@@ -511,7 +511,7 @@ input[type="range"]:focus-visible { outline: 2px solid var(--red-ink); outline-o
   .card-text { margin-top: 4px; font-size: 14px; line-height: 1.5; }
   .card-actions { margin-top: var(--s3); padding-top: 2px; }
   .card-hint { margin-top: 6px; font-size: 12.5px; }
-  .bay-ppf .card { width: auto; transform: translate3d(0, calc((1 - var(--a, 0)) * 22px), 0); }
+  .bay-ppf .card { width: auto; transform: translate3d(0, calc((1 - var(--a, 0)) * 16px), 0); }
   .ppf-photo { width: 100%; }
   .film-control { margin-top: var(--s2); }
   .film-control input { height: 36px; }
