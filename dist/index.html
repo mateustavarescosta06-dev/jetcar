@@ -21,7 +21,7 @@
 <link rel="preload" href="assets/fonts/barlow-condensed-800-italic.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="modulepreload" href="vendor/three.min.js">
 <link rel="stylesheet" href="style.css">
-<script>document.documentElement.classList.replace('no-js', 'js')</script>
+<script>document.documentElement.classList.replace('no-js', 'js'); addEventListener('pagereveal', e => { try { if (localStorage.getItem('jetcar-motion') === 'reduce') e.viewTransition?.skipTransition(); } catch {} });</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"AutoWash","name":"JETCAR Estética Automotiva","description":"Lavagem técnica, polimento, Ceramic Coating, PPF e higienização interna.","address":{"@type":"PostalAddress","streetAddress":"Rua José Trajano","addressLocality":"Recife","addressRegion":"PE","addressCountry":"BR"},"geo":{"@type":"GeoCoordinates","latitude":-8.12055,"longitude":-34.89937},"hasMap":"https://maps.apple/p/uRv~vCQ0G1zNn4","sameAs":["https://www.instagram.com/jetcarbv/"]}</script>
 </head>
 <body>
@@ -493,7 +493,9 @@
     </div>
   </section>
 
-  <section class="faq" id="duvidas" aria-labelledby="t-faq" data-light>
+  <section class="faq band band-photo band-photo-left" id="duvidas" aria-labelledby="t-faq">
+    <img class="band-bg" src="assets/polish/refl-1920.webp" alt="" width="1920" height="1080" loading="lazy" decoding="async">
+    <i class="band-scrim" aria-hidden="true"></i>
     <div class="faq-head">
       <h2 id="t-faq">Perguntas comuns</h2>
       <p class="lead">Não achou a sua? Manda no Direct que a equipe responde.</p>

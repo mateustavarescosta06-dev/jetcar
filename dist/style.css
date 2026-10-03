@@ -102,6 +102,7 @@ h1, h2, h3 { font-family: var(--cond); font-weight: 800; text-transform: upperca
 .bar::before { content: ""; position: absolute; inset: 0 0 -40px; z-index: -1; background: linear-gradient(180deg, rgba(8, 8, 9, .62), rgba(8, 8, 9, 0)); opacity: var(--bar-shade, 0); transition: opacity .3s var(--ease); pointer-events: none; }
 .bar.is-shade { --bar-shade: 1; }
 .bar.is-page::before, .no-js .bar::before { background: rgba(11, 11, 12, .96); inset: 0; border-bottom: 1px solid var(--rule); }
+.bar.is-page, .no-js .bar { --bar-shade: 1; }
 .bar-brand { justify-self: start; display: inline-flex; align-items: center; min-height: 44px; }
 .bar-brand img { width: 84px; height: auto; }
 .bar-actions { justify-self: end; display: flex; align-items: center; gap: var(--s2); }
@@ -289,6 +290,7 @@ main { position: relative; }
 .footer .coords { margin: 0; padding: 0 0 4px; font-size: 12px; color: rgba(255, 255, 255, .78); }
 /* a chegada: uma faixa quadriculada discreta no alto do rodapé, o fim do percurso */
 .finish { position: absolute; left: 0; right: 0; top: 0; height: 8px; opacity: .22; background: repeating-conic-gradient(#fff 0 25%, transparent 0 50%) 0 0 / 8px 8px; pointer-events: none; }
+main:has(> .band:last-child) + .footer .finish { transform-origin: 0 0; transform: rotate(1.5deg); transform: rotate(atan2(var(--cut), 100vw)); }
 
 /* ——— 04 PPF: a macro à esquerda da costura, o card ao lado ——— */
 .ppf-photo { position: absolute; left: 0; top: 0; bottom: 0; width: var(--seam); overflow: hidden; background: #060607; }
@@ -643,7 +645,7 @@ input[type="range"]:focus-visible { outline: 2px solid var(--red-ink); outline-o
    os botões, para o conteúdo depois dos atos não virar um bloco preto só. A linha de luz percorre
    o fio de cima dos blocos pretos quando eles entram (js: .is-in). */
 :root { --cut: clamp(14px, 2.6vw, 44px); }
-.band { position: relative; z-index: 1; margin: calc(var(--cut) * -1) 0; padding: calc(var(--s10) + var(--cut)) var(--pad); clip-path: polygon(0 0, 100% var(--cut), 100% 100%, 0 calc(100% - var(--cut))); }
+.band { position: relative; z-index: 21; overflow: hidden; overflow: clip; margin: calc(var(--cut) * -1) 0; padding: calc(var(--s10) + var(--cut)) var(--pad); clip-path: polygon(0 0, 100% var(--cut), 100% 100%, 0 calc(100% - var(--cut))); transition: clip-path 1s cubic-bezier(.16, .84, .3, 1); }
 .band + .band { margin-top: 0; }
 .band-inner { max-width: 1240px; margin: 0 auto; }
 .band-surface { background: var(--surface); }
@@ -654,7 +656,7 @@ input[type="range"]:focus-visible { outline: 2px solid var(--red-ink); outline-o
 .band-red .kicker::before { background: #fff; }
 .band-red .lead { color: rgba(255, 255, 255, .86); }
 .band-photo { background: #000; color: var(--ink); isolation: isolate; }
-.band-bg { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; object-position: 50% 50%; }
+.band-bg { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; object-position: 50% 50%; transition: transform 2.6s cubic-bezier(.2, .6, .2, 1); }
 .band-scrim { position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, rgba(11, 11, 12, .94) 0%, rgba(11, 11, 12, .82) 45%, rgba(11, 11, 12, .55) 100%), linear-gradient(180deg, rgba(11, 11, 12, .55), transparent 30%, transparent 70%, rgba(11, 11, 12, .7)); }
 .band-photo-low .band-scrim { background: linear-gradient(180deg, rgba(11, 11, 12, .88) 0%, rgba(11, 11, 12, .72) 55%, rgba(11, 11, 12, .9) 100%); }
 .band-photo-low .band-bg { object-position: 50% 70%; }
@@ -666,10 +668,55 @@ input[type="range"]:focus-visible { outline: 2px solid var(--red-ink); outline-o
 .band-inner > .lead { margin-top: var(--s4); }
 /* a linha de luz no fio de cima de um bloco preto, quando ele entra */
 [data-light] { position: relative; }
-[data-light]::after, .page-section::after { content: ""; position: absolute; left: var(--pad); right: var(--pad); top: -1px; height: 1px; background: linear-gradient(90deg, transparent, #fff 45%, #fff 55%, transparent); background-size: 24% 100%; background-repeat: no-repeat; background-position: -30% 0; opacity: 0; box-shadow: 0 0 8px 1px var(--halo); pointer-events: none; }
-.js [data-light].is-in::after, .js .page-section.is-in::after { animation: trace-run 1.4s var(--ease) .15s 1 both; }
+[data-light]::after, .page-section:not(.band)::after { content: ""; position: absolute; left: var(--pad); right: var(--pad); top: -1px; height: 1px; background: linear-gradient(90deg, transparent, #fff 45%, #fff 55%, transparent); background-size: 24% 100%; background-repeat: no-repeat; background-position: -30% 0; opacity: 0; box-shadow: 0 0 8px 1px var(--halo); pointer-events: none; }
+.js [data-light].is-in::after, .js .page-section:not(.band).is-in::after { animation: trace-run 1.4s var(--ease) .15s 1 both; }
 @keyframes trace-run { 0% { opacity: 0; background-position: -30% 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { opacity: 0; background-position: 130% 0; } }
-.reduced [data-light]::after, .reduced .page-section::after, .band::after { display: none; }
+.reduced [data-light]::after, .reduced .page-section:not(.band)::after { display: none; }
+/* a faixa abre na diagonal ao chegar (uma vez; js .is-open, um pouco antes de entrar na tela): a
+   borda de baixo desce rápido e assenta, à frente da rolagem, então o vazio por baixo não aparece;
+   a luz corre pela borda de cima e a foto assenta devagar. O conteúdo sobe um pouco quando a faixa
+   já está na tela (.is-in). A faixa em si nunca some: o fundo dela é o que separa as seções. Quem
+   fecha as faixas é o próprio script que as abre (html.bands): se ele não rodar, ficam abertas. */
+.bands .band:not(.is-open) { clip-path: polygon(0 0, 100% var(--cut), 100% var(--cut), 0 0); }
+.bands .band-photo:not(.is-open) .band-bg { transform: scale(1.07); }
+.js .band[data-reveal] { opacity: 1; transform: none; }
+.band > :not(.band-bg, .band-scrim, .band-trace) { transition: opacity .7s var(--ease) .08s, transform .8s var(--ease) .08s; }
+.bands .band:not(.is-in) > :not(.band-bg, .band-scrim, .band-trace) { opacity: 0; transform: translate3d(0, 16px, 0); }
+.band::after { content: ""; position: absolute; z-index: 2; left: 0; top: 0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent, #fff 45%, #fff 55%, transparent); background-size: 26% 100%; background-repeat: no-repeat; background-position: -30% 0; box-shadow: 0 0 10px 1px var(--halo); opacity: 0; transform-origin: 0 0; transform: rotate(1.5deg); transform: rotate(atan2(var(--cut), 100vw)); pointer-events: none; }
+.bands .band.is-open::after { animation: trace-run 1.5s var(--ease) .1s 1 both; }
+.reduced .band, .reduced .band-bg, .reduced .band > * { transition: none !important; }
+.reduced .band > :not(.band-bg, .band-scrim, .band-trace) { opacity: 1 !important; transform: none !important; }
+.reduced .band { clip-path: polygon(0 0, 100% var(--cut), 100% 100%, 0 calc(100% - var(--cut))) !important; }
+.reduced .band-bg { transform: none !important; }
+.reduced .band::after { display: none; }
+.band-photo-left .band-scrim { background: linear-gradient(90deg, rgba(11, 11, 12, .3) 0%, rgba(11, 11, 12, .62) 34%, rgba(11, 11, 12, .9) 56%, rgba(11, 11, 12, .95) 100%), linear-gradient(180deg, rgba(11, 11, 12, .4), transparent 30%, transparent 75%, rgba(11, 11, 12, .6)); }
+.band-photo-left .band-bg { object-position: 0% 70%; }
+.faq.band { border-top: 0; }
+@media (max-width: 760px) {
+  .band-photo-left .band-scrim { background: linear-gradient(180deg, rgba(11, 11, 12, .5) 0%, rgba(11, 11, 12, .84) 28%, rgba(11, 11, 12, .93) 100%); }
+  .band-photo-left .band-bg { object-position: 8% 0%; }
+}
+
+/* respostas que abrem deslizando, e a linha de luz no fio da pergunta aberta (onde o navegador anima
+   o conteúdo do details; nos outros, abre na hora como antes) */
+.faq-list details, .svc { position: relative; interpolate-size: allow-keywords; }
+.faq-list details::details-content, .svc::details-content { block-size: 0; overflow-y: clip; transition: block-size .45s var(--ease), content-visibility .45s allow-discrete; }
+.faq-list details[open]::details-content, .svc[open]::details-content { block-size: auto; }
+.faq-list details::after, .svc::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px; background: #fff; box-shadow: 0 0 8px 1px var(--halo); transform: scaleX(0); transform-origin: 0 50%; transition: transform .7s var(--ease); pointer-events: none; }
+.faq-list details[open]::after, .svc[open]::after { transform: scaleX(1); }
+.reduced .faq-list details::details-content, .reduced .svc::details-content, .reduced .faq-list details::after, .reduced .svc::after { transition: none; }
+
+/* entre as páginas (principal e Quem somos): a nova entra num corte diagonal, como os botões e as
+   faixas; a barra fica no lugar. Sem suporte, a navegação é a de sempre. */
+@view-transition { navigation: auto; }
+.bar { view-transition-name: bar; }
+::view-transition-old(root) { animation: vt-old .7s cubic-bezier(.7, 0, .2, 1) both; }
+::view-transition-new(root) { animation: vt-new .7s cubic-bezier(.7, 0, .2, 1) both; }
+/* o navegador soma as duas imagens (feito para a fusão padrão): aqui a nova cobre a antiga */
+::view-transition-old(root), ::view-transition-new(root) { mix-blend-mode: normal; }
+@keyframes vt-old { to { opacity: .3; transform: translate3d(0, -3%, 0); } }
+@keyframes vt-new { from { clip-path: polygon(0 100%, 100% calc(100% + 3 * var(--cut)), 100% calc(100% + 3 * var(--cut)), 0 100%); } to { clip-path: polygon(0 calc(-3 * var(--cut)), 100% 0, 100% 100%, 0 100%); } }
+@media (prefers-reduced-motion: reduce) { @view-transition { navigation: none; } }
 @media (max-width: 760px) { .band { padding: calc(var(--s9) + var(--cut)) var(--pad); } }
 
 /* a página principal depois dos atos: Quem somos numa faixa com a foto do galpão, o pedido numa
@@ -689,6 +736,7 @@ input[type="range"]:focus-visible { outline: 2px solid var(--red-ink); outline-o
    contam, etapas em abas, serviços que abrem com a foto da cena, depoimentos em trilho e a rota que
    se desenha. Com movimento reduzido (html.reduced) tudo aparece pronto. */
 .page-bar { grid-template-columns: auto 1fr; }
+.page-progress { position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: #fff; box-shadow: 0 0 8px 1px var(--halo); transform-origin: 0 50%; transform: scaleX(0); pointer-events: none; }
 .page-main { padding-top: calc(var(--bar) + env(safe-area-inset-top)); overflow: hidden; }
 .js [data-reveal] { opacity: 0; transform: translate3d(0, 14px, 0); transition: opacity .7s var(--ease), transform .7s var(--ease); }
 .js [data-reveal].is-in { opacity: 1; transform: none; }

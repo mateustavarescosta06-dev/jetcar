@@ -345,3 +345,30 @@ em sangria no cabeçalho do Quem somos; a borda dos valores desenhada pela luz; 
 cena ao abrir cada serviço; os depoimentos sobre a foto do galpão; o índice da página no
 cabeçalho. Na principal: Quem somos sobre a foto do galpão, o pedido em faixa cinza entrando na
 diagonal sobre o mapa, as dúvidas com a linha de luz no fio.
+
+Quinta passada ("continue melhorando"; o que pesava na crítica eram as transições):
+- As faixas abrem na diagonal ao chegar (uma vez): a borda de baixo desce à frente da rolagem
+  (`cubic-bezier(.16, .84, .3, 1)`, disparada um pouco antes de a faixa entrar, então o vazio por
+  baixo dela nunca aparece rolando; num salto de âncora, a abertura aparece inteira), a luz corre
+  pela borda de cima, a foto assenta (de 1,07 para 1) e o conteúdo sobe 16 px quando a faixa já
+  está na tela. A faixa em si nunca some (antes, no Quem somos, a seção inteira ficava
+  transparente até entrar e deixava uma faixa preta embaixo da tela). As faixas ficam acima dos
+  atos (z-index 21), então o corte diagonal aparece por cima da cena que termina.
+- Entre a principal e o Quem somos: a página nova entra num corte diagonal no mesmo ângulo das
+  faixas e a barra fica parada (view transitions entre documentos; sem suporte, a troca é a de
+  sempre; com movimento reduzido, troca direta).
+- As dúvidas da principal viraram uma faixa com a foto do reflexo da pintura (`polish/refl-1920`,
+  a luz à esquerda, atrás do título); as respostas, aqui e nos serviços e perguntas do Quem somos,
+  abrem deslizando, com a linha de luz acesa no fio da pergunta aberta.
+- Quem somos: a linha de leitura embaixo da barra; a barra ficou sólida (o fundo dela estava
+  invisível desde a primeira versão e o texto passava por cima do logo). Na principal, a barra
+  também fica sólida sobre o bloco Quem somos (faltava na lista de trechos em fluxo do `app.js`).
+- A faixa quadriculada de chegada segue a diagonal das dúvidas no alto do rodapé.
+- Achado no teste: a foto que assenta (escala 1,07) alargava a página principal em 15 px no
+  celular, o navegador encolhia a página inteira para caber e a transição de volta abortava
+  (`InvalidStateError`). As faixas recortam o que vaza (`overflow: clip`).
+Conferido em 1440×900 e 390×844: rolagem contínua e salto em cada costura (final → quem somos →
+pedido → endereço → dúvidas → rodapé, e as faixas do Quem somos), respostas deslizando, a troca
+de página nos dois sentidos (desktop e celular), a linha de leitura de 0 a 1, movimento reduzido
+pelo sistema e pelo botão (faixas abertas, conteúdo visível, troca direta), sem JavaScript
+(faixas abertas), largura da página igual à da tela no celular, sem erros no console.

@@ -179,7 +179,19 @@ export function initUi({ jump, lenis }) {
   if ('IntersectionObserver' in window) {
     const seen = new IntersectionObserver(entries => { for (const e of entries) e.target.classList.toggle('is-in', e.isIntersecting); });
     for (const el of $$('.quiet, [data-light]')) seen.observe(el);
-  }
+    // as faixas: abrem na diagonal um pouco antes de entrar (.is-open) e o conteúdo assenta quando
+    // elas já estão na tela (.is-in), uma vez
+    const once = (cls, rootMargin) => {
+      const io = new IntersectionObserver(entries => { for (const e of entries) if (e.isIntersecting) { e.target.classList.add(cls); io.unobserve(e.target); } }, { rootMargin });
+      for (const el of $$('.band')) io.observe(el);
+    };
+    once('is-open', '0px 0px 10% 0px');
+    once('is-in', '0px 0px -12% 0px');
+    document.documentElement.classList.add('bands');
+  } else for (const el of $$('.band')) el.classList.add('is-open', 'is-in');
+  // entre as páginas: com "reduzir movimento" ligado aqui, a transição é pulada (a página nova
+  // confere o mesmo no pagereveal, no <head>)
+  addEventListener('pageswap', e => { if (state.reduce) e.viewTransition?.skipTransition(); });
 
   // teclado do celular: ao focar um campo, o iOS rola a página; ignoramos por um instante
   const touchOnly = matchMedia('(hover: none)');

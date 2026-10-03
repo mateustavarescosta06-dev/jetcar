@@ -20,7 +20,7 @@
 <link rel="preload" href="assets/fonts/barlow-condensed-800.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/barlow-condensed-800-italic.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="style.css">
-<script>document.documentElement.classList.add('js')</script>
+<script>document.documentElement.classList.add('js'); addEventListener('pagereveal', e => { try { if (localStorage.getItem('jetcar-motion') === 'reduce') e.viewTransition?.skipTransition(); } catch {} });</script>
 </head>
 <body class="page">
 <a class="skip" href="#conteudo">Ir direto para o conteúdo</a>
@@ -39,6 +39,7 @@
     <a class="bar-link" href="/#endereco">Endereço</a>
     <a class="btn btn-sm" href="/#agendar"><span>Agendar</span></a>
   </div>
+  <i class="page-progress" aria-hidden="true"></i>
 </header>
 
 <main id="conteudo" class="page-main">

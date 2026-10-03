@@ -106,7 +106,7 @@ function layout(force = false) {
   view.scrollMax = Math.max(1, html.scrollHeight - innerHeight);
   view.pageY = $('#resultado').getBoundingClientRect().top + y;
   // trechos em fluxo com fundo chapado (a barra fica sólida por cima deles)
-  view.flat = $$('.quiet, .order, .faq, .footer').map(el => { const r = el.getBoundingClientRect(); return [r.top + y, r.bottom + y]; });
+  view.flat = $$('.quiet, .about, .order, .faq, .footer').map(el => { const r = el.getBoundingClientRect(); return [r.top + y, r.bottom + y]; });
   // no celular a barra do navegador muda a altura o tempo todo: só redimensiona em mudanças grandes
   if (engine && (force || view.w !== lastW || Math.abs(view.h - lastH) > (view.mobile ? 120 : 0) || quality.scale !== lastScale)) {
     lastW = view.w; lastH = view.h; lastScale = quality.scale;

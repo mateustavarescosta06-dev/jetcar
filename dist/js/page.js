@@ -20,7 +20,7 @@ function setReduce(flag, remember) {
   html.classList.toggle('reduced', flag);
   motionButton?.setAttribute('aria-pressed', String(flag));
   if (remember) try { localStorage.setItem('jetcar-motion', flag ? 'reduce' : 'full'); } catch {}
-  if (flag) for (const el of $$('[data-reveal]')) el.classList.add('is-in');
+  if (flag) for (const el of $$('[data-reveal], .band')) el.classList.add('is-in');
 }
 setReduce(reduce, false);
 motionButton?.addEventListener('click', () => setReduce(!reduce, true));
@@ -30,6 +30,33 @@ const seen = new IntersectionObserver(entries => {
   for (const e of entries) if (e.isIntersecting) { e.target.classList.add('is-in'); seen.unobserve(e.target); e.target.dispatchEvent(new CustomEvent('reveal')); }
 }, { rootMargin: '0px 0px -12% 0px', threshold: 0.05 });
 for (const el of $$('[data-reveal]')) seen.observe(el);
+
+// ——— Faixas: abrem na diagonal um pouco antes de entrar (uma vez); o conteúdo assenta com a
+// revelação (as que não têm data-reveal entram na mesma observação) ———
+const opened = new IntersectionObserver(entries => {
+  for (const e of entries) if (e.isIntersecting) { e.target.classList.add('is-open'); opened.unobserve(e.target); }
+}, { rootMargin: '0px 0px 10% 0px' });
+for (const el of $$('.band')) opened.observe(el);
+for (const el of $$('.band:not([data-reveal])')) seen.observe(el);
+html.classList.add('bands');
+
+// ——— A linha de luz embaixo da barra: quanto da página já foi lido ———
+const progress = $('.page-progress');
+let pending = 0;
+const measure = () => {
+  pending = 0;
+  const max = document.documentElement.scrollHeight - innerHeight;
+  progress.style.transform = `scaleX(${max > 0 ? Math.min(1, scrollY / max).toFixed(4) : 0})`;
+};
+if (progress) {
+  addEventListener('scroll', () => { pending ||= requestAnimationFrame(measure); }, { passive: true });
+  addEventListener('resize', () => { pending ||= requestAnimationFrame(measure); });
+  measure();
+}
+
+// ——— Entre as páginas: com "reduzir movimento" ligado aqui, a transição é pulada (a página nova
+// confere o mesmo no pagereveal, no <head>) ———
+addEventListener('pageswap', e => { if (reduce) e.viewTransition?.skipTransition(); });
 
 // ——— Números ———
 const ease = t => 1 - (1 - t) ** 3;
