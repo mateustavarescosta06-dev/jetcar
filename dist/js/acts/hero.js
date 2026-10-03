@@ -37,11 +37,12 @@ const PH = {
   d: { copy: [0.03, 0.12], settle: [0.02, 0.13], xf: [0.13, 0.17], scrub: [0.17, 0.9], freeze: [0.9, 0.95] },
   m: { copy: [0.04, 0.13], settle: [0.04, 0.14], xf: [0.14, 0.22], scrub: [0.22, 0.88], freeze: [0.88, 0.94] },
 };
-// clipes (scripts/encode-open.sh): desktop f0→f168 do master (aproximação 0–125, jato 126–168);
-// celular: o recorte quadrado do jato f126→f168 (scripts/encode-wash.sh)
+// clipes (scripts/encode-open.sh): desktop f0→f168 do master com um quadro calculado entre cada dois
+// (48 por segundo de filme; aproximação até o índice 250, jato depois); celular: o recorte quadrado
+// do jato f126→f168 com dois calculados entre cada dois (72 por segundo; scripts/encode-wash.sh)
 const CLIP = {
-  d: { mp4: 'assets/open/open.mp4', webm: 'assets/open/open.webm', frames: 169, split: [125 / 168, 0.55] },
-  m: { mp4: 'assets/wash/scrub-m.mp4', webm: 'assets/wash/scrub-m.webm', frames: 43, split: null },
+  d: { mp4: 'assets/open/open.mp4', webm: 'assets/open/open.webm', frames: 337, fps: 48, split: [250 / 336, 0.55] },
+  m: { mp4: 'assets/wash/scrub-m.mp4', webm: 'assets/wash/scrub-m.webm', frames: 127, fps: 72, split: null },
 };
 
 const PROJ = /* glsl */ `
@@ -357,7 +358,7 @@ export class HeroAct extends Act {
     this.update(16);
     if (this.scrub) this.scrub.t = this.scrub.target;
     this.update(16);
-    return new Promise(r => { const v = this.video; if (!v || !v.seeking) return r(); v.addEventListener('seeked', () => r(), { once: true }); });
+    return this.scrub ? this.scrub.done() : Promise.resolve();
   }
 
   update(dt) {

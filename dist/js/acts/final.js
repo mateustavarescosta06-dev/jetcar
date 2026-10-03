@@ -8,7 +8,7 @@ import { $, view, state, span, smooth, css } from '../core.js';
 import { Act } from './act.js';
 import { Scrub } from '../scrub.js';
 
-const CLIP = { mp4: 'assets/final/final.mp4', webm: 'assets/final/final.webm', frames: 85 };
+const CLIP = { mp4: 'assets/final/final.mp4', webm: 'assets/final/final.webm', frames: 169, fps: 48 };
 const T = { scrub: [0.05, 0.8], sharp: [0.8, 0.86], copy: [0.8, 0.95] };
 const TM = { copy: [0.12, 0.5] };
 
@@ -44,7 +44,7 @@ export class FinalAct extends Act {
     this.update(16);
     if (this.scrub) this.scrub.t = this.scrub.target;
     this.update(16);
-    return new Promise(r => { const v = this.video; if (!v || !v.seeking) return r(); v.addEventListener('seeked', () => r(), { once: true }); });
+    return this.scrub ? this.scrub.done() : Promise.resolve();
   }
 
   focusPoint(el) { return this.copy.contains(el) ? this.hold : null; }

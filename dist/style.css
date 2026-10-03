@@ -159,6 +159,9 @@ main { position: relative; }
 .reel-box picture { display: contents; }
 .reel-video { opacity: 0; }
 .reel.is-live .reel-video { opacity: 1; }
+/* o canvas da fusão entre quadros do scrub (js/scrub.js), logo acima do vídeo */
+.reel-box .reel-blend { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+.reel-box .reel-blend[hidden], .reel:not(.is-live) .reel-blend { display: none; }
 .act-hero .reel-still img { opacity: var(--still-a, 0); }
 /* a linha de luz como elemento de cena (lavagem → polimento, PPF, interior) */
 .trace, .seam, .ppf-edge { position: absolute; z-index: 4; left: 0; top: 50%; width: 2px; height: 200vmax; margin: -100vmax 0 0 -1px; background: #fff; box-shadow: 0 0 10px 2px var(--halo); pointer-events: none; }
@@ -323,7 +326,7 @@ input[type="range"]:focus-visible { outline: 2px solid var(--red-ink); outline-o
 
 /* ——— Resultado: foto inteira, parada (uma pausa) ——— */
 .result-figure { position: absolute; inset: 0; }
-.result-figure img, .act-final .reel-box img, .act-final .reel-box video { width: 100%; height: 100%; object-fit: cover; object-position: 50% 62%; }
+.result-figure img, .act-final .reel-box img, .act-final .reel-box video, .act-final .reel-box canvas { width: 100%; height: 100%; object-fit: cover; object-position: 50% 62%; }
 .result-scrim, .final-scrim { left: 0; bottom: 0; width: min(820px, 75vw); height: 60%; background: radial-gradient(110% 100% at 0% 100%, rgba(8, 8, 9, .78), rgba(8, 8, 9, .3) 50%, rgba(8, 8, 9, 0) 78%); }
 .result-copy { position: absolute; left: var(--pad); bottom: calc(var(--chrome) + 9vh); display: grid; justify-items: start; gap: var(--s5); }
 .result-copy h2 { font-size: clamp(48px, 6vw, 96px); max-width: 12ch; }

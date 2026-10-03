@@ -68,10 +68,16 @@ Ferramentas: `ffmpeg`, `cwebp` 1.4+ (`-sharp_yuv`), e o Python acima.
    no teste q88/q92/q95 da auditoria.
 6. **Os dois filmes (v6.2)**: `bash scripts/encode-open.sh <pasta> [quadros 2560 já ampliados]`
    grava `open/open.*` (f0 → f168: aproximação e jato), `final/final.*` (f84 → f0, invertido) e
-   `final/end-1920|2560.webp` (o quadro 0 como foto). H.264 e VP9, sem quadros B, GOP 8, BT.709,
-   1920×1082; a aproximação e o recuo com taxa um pouco menor que o jato.
+   `final/end-1920|2560.webp` (o quadro 0 como foto). Antes de codificar, um quadro calculado entre
+   cada dois (`scripts/frames/interp.sh`: ffmpeg minterpolate por compensação de movimento,
+   bidirecional, sem modelo; os originais ficam intactos) dá 48 quadros por segundo de filme:
+   337 na abertura, 169 no final. H.264 (nível 4.2) e VP9, sem quadros B, GOP 8, BT.709,
+   1920×1082; a aproximação e o recuo com taxa um pouco menor que o jato; os quadros dos cortes
+   com a foto em QP 13 no H.264 (com uma cópia do último depois do fim: o x264 não aplica zona ao
+   último quadro do fluxo).
    O jato do celular: `bash scripts/encode-wash.sh <pasta> [quadros 2560 já ampliados]`
-   (`wash/scrub-m.*`, 1080×1080, H.264 CRF 18 e VP9 CRF 20, GOP 4).
+   (`wash/scrub-m.*`, 1080×1080, três vezes os quadros: 72 por segundo, 127 quadros; H.264 CRF 18
+   e VP9 CRF 22, GOP 8).
 7. **PPF (v6.2)**: `python3 build_ppf.py ppf.png ppf_alpha.png` → `ppf/off-d|film-d` (farol e capô,
    1533×1555, o painel do desktop) e `ppf/off-m|film-m` (a frente em pé, 1946×2160). A versão
    "com película" é a mesma foto com o que a película muda de verdade, em luz linear e só sobre a

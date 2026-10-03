@@ -235,3 +235,26 @@ acelerado e travado" e "detalhes sutis, como referências ao automotivo e à Pra
   as coordenadas da loja no endereço e no rodapé, "Sol forte e maresia: perto da praia, a pintura
   sente primeiro." no silêncio, a faixa quadriculada de chegada no alto do rodapé, e "a poucas
   quadras da Praia de Boa Viagem" no endereço e nas dúvidas.
+
+Pedido seguinte: "o vídeo ainda parece vários frames separados, por isso não parece ser algo fluído
+e contínuo". Causa medida: poucos quadros para a distância de rolagem (no desktop ~16 px por
+quadro no jato e ~13 px no final; no celular ~18 px), e cada troca era um corte seco (a busca
+mostra um quadro de cada vez).
+
+- Mais quadros: um calculado entre cada dois no desktop (48 por segundo de filme: abertura com 337
+  quadros, final com 169) e dois no celular (72 por segundo, 127 quadros), por
+  `scripts/frames/interp.sh` (ffmpeg minterpolate, compensação de movimento bidirecional, sem
+  modelo). Os originais ficam intactos e os novos são posições intermediárias do que já existe
+  (conferido no jato e nas gotas: sem fantasma). Agora: ~3 px por quadro na aproximação, ~8 no
+  jato, ~6 no final e no celular. O ritmo não mudou: a aproximação continua com 55% do scrub e o
+  jato com 45%.
+- Fusão no player (`js/scrub.js`): um canvas logo acima do vídeo recebe cada quadro que a busca
+  entrega por cima do anterior em ~40 ms. Durante a rolagem a imagem anda contínua; parada, é o
+  quadro exato (diferença zero contra o vídeo no teste). Se o navegador não desenha o vídeo no
+  canvas, fica o vídeo puro.
+- Busca mais rápida: a página escolhe o formato que o aparelho decodifica por hardware
+  (`mediaCapabilities`: WebM onde o VP9 tem hardware, senão H.264), o H.264 foi para o nível 4.2
+  (1080p até 60 por segundo) e o playhead assenta em 40 ms.
+- Cortes com as fotos (medidos contra a foto): abertura 41,6 dB (H.264) e 42,0 dB (VP9); final
+  46,7 / 41,3 dB (H.264) e 46,7 / 44,2 dB (VP9); celular 40,2 dB (H.264, antes 38,4) e 39,1 dB (VP9).
+- Peso: abertura 8,3 MB (H.264) e 10,2 MB (VP9); final 3,9 / 4,9 MB; celular 2,1 / 2,5 MB.
