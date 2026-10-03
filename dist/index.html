@@ -77,9 +77,19 @@
 
 <main id="conteudo">
 
-  <!-- HERO · planos separados: galpão, piso, letreiro, carro, pilar. A luz encontra o carro. -->
-  <section class="act act-hero" id="inicio" data-act="hero" data-span="1.5" data-span-m="1.2" aria-labelledby="t-hero">
+  <!-- HERO · a abertura em planos (galpão, piso, letreiro, carro, pilar) vira o primeiro filme:
+       a câmera chega ao capô e a água bate. O último quadro fica como foto. -->
+  <section class="act act-hero" id="inicio" data-act="hero" data-span="2.4" data-span-m="1.4" aria-labelledby="t-hero">
     <div class="stage">
+      <div class="reel" aria-hidden="true">
+        <div class="reel-box">
+          <video class="reel-video" muted playsinline disablepictureinpicture preload="none" tabindex="-1"></video>
+          <picture class="reel-still">
+            <source media="(max-aspect-ratio: 9/10)" srcset="assets/wash/freeze-m.webp" width="1440" height="1440">
+            <img src="assets/wash/freeze-1920.webp" srcset="assets/wash/freeze-1920.webp 1920w, assets/wash/freeze-2560.webp 2560w" sizes="max(100vw, 178vh)" alt="" width="2560" height="1443" loading="lazy" decoding="async">
+          </picture>
+        </div>
+      </div>
       <div class="gl-slot" aria-hidden="true">
         <picture>
           <source media="(max-width: 760px)" srcset="assets/posters/hero-m.webp" width="1170" height="2532">
@@ -99,15 +109,27 @@
     </div>
   </section>
 
-  <!-- 01 · LAVAGEM: footage curto controlado pela rolagem, depois o tempo para e a água fica no espaço. -->
-  <section class="act bay bay-wash" id="lavagem" data-act="wash" data-span="2.6" data-span-m="2.2" data-hold="0.8" aria-labelledby="t-lavagem">
+  <!-- 01 · LAVAGEM: o filme parou. A mesma foto, nítida, e o card desliza do primeiro plano.
+       Na saída, a borda do jato acende e vira a linha de luz. -->
+  <section class="act bay bay-wash" id="lavagem" data-act="wash" data-span="1.3" data-span-m="1.1" data-hold="0.42" data-handoff="0" aria-labelledby="t-lavagem">
     <div class="stage">
-      <div class="gl-slot" aria-hidden="true">
-        <picture>
-          <source media="(max-width: 760px)" srcset="assets/posters/wash-m.webp" width="1170" height="2532">
-          <img class="poster" src="assets/posters/wash-d1440.webp" srcset="assets/posters/wash-d1440.webp 1440w, assets/posters/wash-d.webp 2880w" sizes="100vw" alt="" width="2880" height="1800" loading="lazy">
-        </picture>
+      <div class="wash-photo" aria-hidden="true">
+        <div class="reel-box">
+          <picture>
+            <source media="(max-aspect-ratio: 9/10)" srcset="assets/wash/freeze-m.webp" width="1440" height="1440">
+            <img class="wash-still" src="assets/wash/freeze-1920.webp" srcset="assets/wash/freeze-1920.webp 1920w, assets/wash/freeze-2560.webp 2560w" sizes="max(100vw, 178vh)" alt="" width="2560" height="1443" loading="lazy" decoding="async">
+          </picture>
+          <!-- o carro, separado do fundo por profundidade (máscara suave): chega um pouco mais perto que o galpão -->
+          <picture>
+            <source media="(max-aspect-ratio: 9/10)" srcset="assets/wash/freeze-m.webp" width="1440" height="1440">
+            <img class="wash-near" src="assets/wash/freeze-1920.webp" srcset="assets/wash/freeze-1920.webp 1920w, assets/wash/freeze-2560.webp 2560w" sizes="max(100vw, 178vh)" alt="" width="2560" height="1443" loading="lazy" decoding="async">
+          </picture>
+          <!-- "Ver de perto": as gotas no tamanho do intermediário (carrega no primeiro toque) -->
+          <img class="wash-detail" data-src="assets/wash/detail.webp" alt="" width="1532" height="972" decoding="async">
+        </div>
+        <i class="shade"></i>
       </div>
+      <i class="trace" aria-hidden="true"></i>
       <article class="card" data-card="wash">
         <svg class="card-trace" aria-hidden="true"><rect class="trace-dim" pathLength="1"/><rect class="trace-head" pathLength="1"/></svg>
         <p class="card-num">01<span>Exterior</span></p>
@@ -115,23 +137,45 @@
         <p class="card-lead">O primeiro toque.</p>
         <p class="card-text">Água, espuma e etapas pensadas para não agredir a pintura. Normalmente é o primeiro passo antes de qualquer outro serviço.</p>
         <div class="card-actions">
-          <a class="card-explore" href="#lavagem" data-explore="wash">Explorar<svg><use href="#i-arrow"/></svg></a>
+          <button class="card-explore" type="button" aria-pressed="false" data-explore="wash">Ver de perto<svg><use href="#i-arrow"/></svg></button>
           <button class="card-add" type="button" aria-pressed="false" data-want="lavagem">Incluir no pedido</button>
         </div>
-        <p class="card-hint" data-hint="wash">Arraste para olhar em volta da água.</p>
       </article>
     </div>
   </section>
 
-  <!-- 02 · POLIMENTO: escuro; a luz de inspeção revela as marcas e termina no card. -->
-  <section class="act bay bay-polish" id="polimento" data-act="polish" data-span="2.4" data-span-m="2.0" data-hold="0.88" aria-labelledby="t-polimento">
+  <!-- 02 · POLIMENTO: a mesma linha vira a luz de inspeção. Na ida ela mostra as marcas; na volta a
+       pintura fica limpa e o card aparece atrás dela. No fim, o reflexo perfeito. -->
+  <section class="act bay bay-polish" id="polimento" data-act="polish" data-span="1.7" data-span-m="1.5" data-hold="0.86" data-handoff="0" aria-labelledby="t-polimento">
     <div class="stage">
-      <div class="gl-slot" aria-hidden="true">
+      <div class="paint" aria-hidden="true">
         <picture>
-          <source media="(max-width: 760px)" srcset="assets/posters/polish-m.webp" width="1170" height="2532">
-          <img class="poster" src="assets/posters/polish-d1440.webp" srcset="assets/posters/polish-d1440.webp 1440w, assets/posters/polish-d.webp 2880w" sizes="100vw" alt="" width="2880" height="1800" loading="lazy">
+          <source media="(max-aspect-ratio: 9/10)" srcset="assets/polish/clean-m.webp" width="1170" height="2532">
+          <img class="paint-clean" src="assets/polish/clean-1920.webp" srcset="assets/polish/clean-1920.webp 1920w, assets/polish/clean-2560.webp 2560w, assets/polish/clean-3200.webp 3200w" sizes="max(100vw, 178vh)" alt="" width="3200" height="1800" loading="lazy" decoding="async">
         </picture>
+        <div class="win win-mid">
+          <picture>
+            <source media="(max-aspect-ratio: 9/10)" srcset="assets/polish/swirl-m.webp" width="1170" height="2532">
+            <img class="paint-swirl" src="assets/polish/swirl-1920.webp" srcset="assets/polish/swirl-1920.webp 1920w, assets/polish/swirl-2560.webp 2560w, assets/polish/swirl-3200.webp 3200w" sizes="max(100vw, 178vh)" alt="" width="3200" height="1800" loading="lazy" decoding="async">
+          </picture>
+        </div>
+        <div class="win win-band">
+          <picture>
+            <source media="(max-aspect-ratio: 9/10)" srcset="assets/polish/swirl-m.webp" width="1170" height="2532">
+            <img class="paint-swirl" src="assets/polish/swirl-1920.webp" srcset="assets/polish/swirl-1920.webp 1920w, assets/polish/swirl-2560.webp 2560w, assets/polish/swirl-3200.webp 3200w" sizes="max(100vw, 178vh)" alt="" width="3200" height="1800" loading="lazy" decoding="async">
+          </picture>
+        </div>
+        <picture>
+          <source media="(max-aspect-ratio: 9/10)" srcset="assets/polish/refl-m.webp" width="1170" height="2532">
+          <img class="paint-refl" src="assets/polish/refl-1920.webp" srcset="assets/polish/refl-1920.webp 1920w, assets/polish/refl-2560.webp 2560w, assets/polish/refl-3200.webp 3200w" sizes="max(100vw, 178vh)" alt="" width="3200" height="1800" loading="lazy" decoding="async">
+        </picture>
+        <picture>
+          <source media="(max-aspect-ratio: 9/10)" srcset="assets/polish/swirl-m.webp" width="1170" height="2532">
+          <img class="paint-before" src="assets/polish/swirl-1920.webp" srcset="assets/polish/swirl-1920.webp 1920w, assets/polish/swirl-2560.webp 2560w, assets/polish/swirl-3200.webp 3200w" sizes="max(100vw, 178vh)" alt="" width="3200" height="1800" loading="lazy" decoding="async">
+        </picture>
+        <i class="shade"></i>
       </div>
+      <i class="trace" aria-hidden="true"></i>
       <article class="card" data-card="polish">
         <svg class="card-trace" aria-hidden="true"><rect class="trace-dim" pathLength="1"/><rect class="trace-head" pathLength="1"/></svg>
         <p class="card-num">02<span>Pintura</span></p>
@@ -142,70 +186,99 @@
           <button class="card-explore" type="button" aria-pressed="false" data-explore="polish">Ver antes<svg><use href="#i-arrow"/></svg></button>
           <button class="card-add" type="button" aria-pressed="false" data-want="pintura">Incluir no pedido</button>
         </div>
-        <p class="card-hint" data-hint="polish"><span class="hint-fine">Mova o cursor para inclinar a luz.</span><span class="hint-touch">Arraste na cena para inclinar a luz.</span></p>
       </article>
     </div>
   </section>
 
-  <!-- 03 + 04 · PROTEÇÃO (o pico): camadas que você separa; depois a película atravessa a carroceria. -->
-  <section class="act bay bay-protect" id="ceramic" data-act="protect" data-span="4.4" data-span-m="3.6" data-hold="0.3" aria-labelledby="t-ceramic">
+  <!-- SILÊNCIO · tipografia, nada se mexe. O pico vem depois. -->
+  <div class="quiet">
+    <p class="quiet-type"><span>Proteção</span> <span>que você não vê.</span> <span class="quiet-last">Mas o carro sente.</span></p>
+  </div>
+
+  <!-- 03 · CERAMIC (o pico): a pintura se abre em cinco camadas de material físico. Você separa,
+       a luz passa entre elas e a água forma gotas no coating. O card fica enquanto tudo se abre. -->
+  <section class="act bay bay-ceramic" id="ceramic" data-act="ceramic" data-span="3.4" data-span-m="2.8" data-hold="0.38" aria-labelledby="t-ceramic">
     <div class="stage">
       <div class="gl-slot" aria-hidden="true">
         <picture>
-          <source media="(max-width: 760px)" srcset="assets/posters/protect-m.webp" width="1170" height="2532">
-          <img class="poster" src="assets/posters/protect-d1440.webp" srcset="assets/posters/protect-d1440.webp 1440w, assets/posters/protect-d.webp 2880w" sizes="100vw" alt="" width="2880" height="1800" loading="lazy">
+          <source media="(max-width: 760px)" srcset="assets/posters/ceramic-m.webp" width="1170" height="2532">
+          <img class="poster" src="assets/posters/ceramic-d1440.webp" srcset="assets/posters/ceramic-d1440.webp 1440w, assets/posters/ceramic-d.webp 2880w" sizes="100vw" alt="" width="2880" height="1800" loading="lazy">
         </picture>
       </div>
       <ol class="layer-labels" aria-label="Camadas da pintura, de cima para baixo">
-        <li data-layer="0"><b>Ceramic Coating</b><span>revestimento</span></li>
-        <li data-layer="1"><b>Verniz</b><span>camada transparente</span></li>
+        <li data-layer="0"><b>Coating</b><span>revestimento cerâmico</span></li>
+        <li data-layer="1"><b>Verniz</b><span>clear coat</span></li>
         <li data-layer="2"><b>Cor</b><span>a pintura</span></li>
         <li data-layer="3"><b>Primer</b><span>preparação</span></li>
-        <li data-layer="4"><b>Chapa</b><span>estrutura</span></li>
+        <li data-layer="4"><b>Chapa</b><span>substrato</span></li>
       </ol>
       <div class="separator">
         <label class="sr-only" for="sep">Separar as camadas da pintura</label>
         <input id="sep" type="range" min="0" max="100" value="0" step="1" aria-valuetext="Camadas juntas">
         <p class="separator-hint" aria-hidden="true">Arraste para separar</p>
       </div>
-      <div class="stack">
-        <article class="card" data-card="ceramic">
-          <svg class="card-trace" aria-hidden="true"><rect class="trace-dim" pathLength="1"/><rect class="trace-head" pathLength="1"/></svg>
-          <p class="card-num">03<span>Proteção</span></p>
-          <h2 class="card-title" id="t-ceramic"><span>Ceramic</span> <span>Coating</span></h2>
-          <p class="card-lead">Uma camada a mais.</p>
-          <p class="card-text">Revestimento cerâmico aplicado sobre o verniz depois da preparação da pintura. A equipe explica como fica a manutenção.</p>
-          <div class="card-actions">
-            <a class="card-explore" href="#ceramic" data-explore="ceramic">Separar camadas<svg><use href="#i-arrow"/></svg></a>
-            <button class="card-add" type="button" aria-pressed="false" data-want="ceramic">Incluir no pedido</button>
-          </div>
-        </article>
-        <article class="card" id="ppf" data-card="ppf" aria-labelledby="t-ppf">
-          <svg class="card-trace" aria-hidden="true"><rect class="trace-dim" pathLength="1"/><rect class="trace-head" pathLength="1"/></svg>
-          <p class="card-num">04<span>Proteção</span></p>
-          <h2 class="card-title" id="t-ppf"><span>PPF</span> <span>Película</span></h2>
-          <p class="card-lead">Transparente por cima de tudo.</p>
-          <p class="card-text">Paint Protection Film: uma película transparente aplicada sobre a pintura, nas áreas do carro que você combinar com a equipe.</p>
-          <div class="card-actions">
-            <a class="card-explore" href="#ppf" data-explore="ppf">Passar a película<svg><use href="#i-arrow"/></svg></a>
-            <button class="card-add" type="button" aria-pressed="false" data-want="ppf">Incluir no pedido</button>
-          </div>
-        </article>
-      </div>
-      <div class="film-labels" aria-hidden="true"><span class="fl-off">Sem proteção</span><span class="fl-on">Com PPF</span></div>
-      <div class="film-control">
-        <label class="sr-only" for="film">Posição da película</label>
-        <input id="film" type="range" min="0" max="100" value="0" step="1" aria-valuetext="Sem película">
-      </div>
+      <article class="card" data-card="ceramic">
+        <svg class="card-trace" aria-hidden="true"><rect class="trace-dim" pathLength="1"/><rect class="trace-head" pathLength="1"/></svg>
+        <p class="card-num">03<span>Proteção</span></p>
+        <h2 class="card-title" id="t-ceramic"><span>Ceramic</span> <span>Coating</span></h2>
+        <p class="card-lead">Proteção invisível.</p>
+        <p class="card-text">Revestimento cerâmico aplicado sobre o verniz depois da preparação da pintura. A equipe explica como fica a manutenção.</p>
+        <div class="card-actions">
+          <a class="card-explore" href="#ceramic" data-explore="ceramic">Separar camadas<svg><use href="#i-arrow"/></svg></a>
+          <button class="card-add" type="button" aria-pressed="false" data-want="ceramic">Incluir no pedido</button>
+        </div>
+        <p class="card-hint"><span class="hint-fine">Arraste na cena ou use o controle.</span><span class="hint-touch">Arraste para os lados na cena.</span></p>
+      </article>
+      <i class="seam" aria-hidden="true"></i>
     </div>
   </section>
 
-  <!-- 05 · INTERIOR: passagem pelo vidro e pela porta; depois a cena para e você explora. -->
-  <section class="act bay bay-interior" id="interior" data-act="interior" data-span="2.4" data-span-m="2.2" data-hold="0.7" aria-labelledby="t-interior">
+  <!-- 04 · PPF: a linha que fechou o Ceramic vira a borda da película. A macro à esquerda, o card ao
+       lado; no fim a película escurece em vidro. -->
+  <section class="act bay bay-ppf" id="ppf" data-act="ppf" data-span="1.5" data-span-m="1.3" data-hold="0.47" data-handoff="0" aria-labelledby="t-ppf">
+    <div class="stage">
+      <div class="ppf-photo" aria-hidden="true">
+        <picture>
+          <source media="(max-aspect-ratio: 9/10)" srcset="assets/ppf/off-m.webp" width="1946" height="2160">
+          <img class="ppf-off" src="assets/ppf/off-d.webp" alt="" width="1533" height="1555" loading="lazy" decoding="async">
+        </picture>
+        <div class="win win-film">
+          <picture>
+            <source media="(max-aspect-ratio: 9/10)" srcset="assets/ppf/film-m.webp" width="1946" height="2160">
+            <img class="ppf-on" src="assets/ppf/film-d.webp" alt="" width="1533" height="1555" loading="lazy" decoding="async">
+          </picture>
+        </div>
+        <span class="fl fl-off">Sem proteção</span><span class="fl fl-on">Com PPF</span>
+      </div>
+      <i class="ppf-cover" aria-hidden="true"></i>
+      <i class="ppf-edge" aria-hidden="true"></i>
+      <i class="seam" aria-hidden="true"></i>
+      <article class="card" data-card="ppf">
+        <svg class="card-trace" aria-hidden="true"><rect class="trace-dim" pathLength="1"/><rect class="trace-head" pathLength="1"/></svg>
+        <p class="card-num">04<span>Proteção</span></p>
+        <h2 class="card-title" id="t-ppf"><span>PPF</span> <span>Película</span></h2>
+        <p class="card-lead">Transparente por cima de tudo.</p>
+        <p class="card-text">Paint Protection Film: uma película transparente aplicada sobre a pintura, nas áreas do carro que você combinar com a equipe.</p>
+        <div class="card-actions">
+          <a class="card-explore" href="#ppf" data-explore="ppf">Passar a película<svg><use href="#i-arrow"/></svg></a>
+          <button class="card-add" type="button" aria-pressed="false" data-want="ppf">Incluir no pedido</button>
+        </div>
+        <div class="film-control">
+          <label class="sr-only" for="film">Posição da película</label>
+          <input id="film" type="range" min="0" max="100" value="0" step="1" aria-valuetext="Sem película">
+          <p class="separator-hint" aria-hidden="true">Arraste a película</p>
+        </div>
+      </article>
+      <i class="glass" aria-hidden="true"><i class="glass-sheet"></i></i>
+    </div>
+  </section>
+
+  <!-- 05 · INTERIOR: o vidro da película é o mesmo vidro do carro; a linha limpa e a cabine fica.
+       Pontos para tocar; o card nasce do primeiro deles. -->
+  <section class="act bay bay-interior" id="interior" data-act="interior" data-span="1.5" data-span-m="1.3" data-hold="0.74" data-handoff="0" aria-labelledby="t-interior">
     <div class="stage">
       <div class="cabin" aria-hidden="true">
-        <!-- em pé: recorte próprio (u 0,34…1 da foto, altura inteira); deitado: a foto inteira em dois níveis
-             (a parada mostra 54% da largura da foto na tela toda, por isso 185vw) -->
+        <!-- em pé: recorte próprio (u 0,34…1 da foto, altura inteira); deitado: a foto inteira em dois níveis -->
         <picture>
           <source media="(max-aspect-ratio: 9/10)" srcset="assets/interior/far-m.webp" width="2534" height="2560">
           <img class="cabin-far" src="assets/interior/far-3584.webp" srcset="assets/interior/far-3584.webp 3584w, assets/interior/far-4608.webp 4608w" sizes="185vw" alt="" width="3584" height="2389" loading="lazy" decoding="async">
@@ -214,20 +287,22 @@
           <source media="(max-aspect-ratio: 9/10)" srcset="assets/interior/near-m.webp" width="2534" height="2560">
           <img class="cabin-near" src="assets/interior/near-3584.webp" alt="" width="3584" height="2389" loading="lazy" decoding="async">
         </picture>
-        <i class="cabin-glass"></i>
       </div>
+      <i class="glass" aria-hidden="true"><i class="glass-sheet"></i></i>
+      <i class="trace" aria-hidden="true"></i>
       <div class="spots" role="group" aria-label="Detalhes do interior">
-        <button class="spot" type="button" data-spot="banco" aria-pressed="false"><i></i><span>Banco</span></button>
+        <button class="spot" type="button" data-spot="couro" aria-pressed="false"><i></i><span>Couro</span></button>
         <button class="spot" type="button" data-spot="acabamentos" aria-pressed="false"><i></i><span>Acabamentos</span></button>
         <button class="spot" type="button" data-spot="superficies" aria-pressed="false"><i></i><span>Superfícies</span></button>
-        <button class="spot" type="button" data-spot="volante" aria-pressed="false"><i></i><span>Volante</span></button>
+        <button class="spot" type="button" data-spot="detalhes" aria-pressed="false"><i></i><span>Detalhes</span></button>
       </div>
+      <div class="loupe" aria-hidden="true"><i></i></div>
       <article class="card" data-card="interior">
         <svg class="card-trace" aria-hidden="true"><rect class="trace-dim" pathLength="1"/><rect class="trace-head" pathLength="1"/></svg>
         <p class="card-num">05<span>Interior</span></p>
         <h2 class="card-title" id="t-interior"><span>Higienização</span> <span>interna</span></h2>
-        <p class="card-lead">Onde você passa o tempo.</p>
-        <p class="card-text" data-spot-text>Bancos, volante, acabamentos e superfícies. O tipo de revestimento muda o cuidado, então conte o que tem no seu.</p>
+        <p class="card-lead">O cuidado continua por dentro.</p>
+        <p class="card-text" data-spot-text aria-live="polite">Couro, acabamentos, superfícies e detalhes. O tipo de revestimento muda o cuidado, então conte o que tem no seu.</p>
         <div class="card-actions">
           <a class="card-explore" href="#interior" data-explore="interior">Explorar<svg><use href="#i-arrow"/></svg></a>
           <button class="card-add" type="button" aria-pressed="false" data-want="interior">Incluir no pedido</button>
@@ -236,20 +311,47 @@
     </div>
   </section>
 
-  <!-- RESULTADO · foto inteira, a luz passa uma última vez. -->
-  <section class="result" id="resultado" aria-labelledby="t-result">
-    <figure class="result-figure">
-      <picture>
-        <source media="(max-width: 760px) and (orientation: portrait)" srcset="assets/result-m.webp" width="1800" height="2160">
-        <img src="assets/result-1920.webp" srcset="assets/result-1920.webp 1920w, assets/result-2560.webp 2560w, assets/result-3200.webp 3200w" sizes="max(100vw, 178vh)" alt="Porsche 911 grafite pronto, brilhando no galpão escuro" width="3200" height="1804" loading="lazy" decoding="async">
-      </picture>
-      <i class="result-trace" aria-hidden="true"></i>
-    </figure>
-    <i class="scrim result-scrim" aria-hidden="true"></i>
-    <div class="result-copy">
-      <h2 id="t-result">Lavado, corrigido, protegido.</h2>
-      <p class="lead">E por dentro também. Cada etapa no lugar, do jeito que o seu carro pedir.</p>
-      <a class="btn" href="#agendar"><span>Agendar</span><svg><use href="#i-arrow"/></svg></a>
+  <!-- RESULTADO · a foto inteira, parada. Uma pausa antes do último filme. -->
+  <section class="act act-result" id="resultado" data-act="result" data-span="0.7" data-span-m="0.6" data-hold="0.3" aria-labelledby="t-result">
+    <div class="stage">
+      <figure class="result-figure">
+        <picture>
+          <source media="(max-width: 760px) and (orientation: portrait)" srcset="assets/result-m.webp" width="1800" height="2160">
+          <img src="assets/result-1920.webp" srcset="assets/result-1920.webp 1920w, assets/result-2560.webp 2560w, assets/result-3200.webp 3200w" sizes="max(100vw, 178vh)" alt="Porsche 911 grafite pronto, brilhando no galpão escuro" width="3200" height="1804" loading="lazy" decoding="async">
+        </picture>
+      </figure>
+      <i class="scrim result-scrim" aria-hidden="true"></i>
+      <div class="result-copy">
+        <h2 id="t-result">Lavado, corrigido, protegido.</h2>
+        <p class="lead">E por dentro também. Cada etapa no lugar, do jeito que o seu carro pedir.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL · o segundo filme: a câmera recua do carro pronto até o galpão do começo. -->
+  <section class="act act-final" id="final" data-act="final" data-span="1.8" data-span-m="0.8" data-hold="1" data-handoff="0" aria-labelledby="t-final">
+    <div class="stage">
+      <div class="reel" aria-hidden="true">
+        <div class="reel-box">
+          <picture class="reel-start">
+            <source media="(max-width: 760px) and (orientation: portrait)" srcset="assets/result-m.webp" width="1800" height="2160">
+            <img src="assets/result-1920.webp" srcset="assets/result-1920.webp 1920w, assets/result-2560.webp 2560w, assets/result-3200.webp 3200w" sizes="max(100vw, 178vh)" alt="" width="3200" height="1804" loading="lazy" decoding="async">
+          </picture>
+          <video class="reel-video" muted playsinline disablepictureinpicture preload="none" tabindex="-1"></video>
+          <picture class="reel-end">
+            <source media="(max-width: 760px) and (orientation: portrait)" srcset="assets/result-m.webp" width="1800" height="2160">
+            <img src="assets/final/end-1920.webp" srcset="assets/final/end-1920.webp 1920w, assets/final/end-2560.webp 2560w" sizes="max(100vw, 178vh)" alt="" width="2560" height="1443" loading="lazy" decoding="async">
+          </picture>
+        </div>
+      </div>
+      <i class="scrim final-scrim" aria-hidden="true"></i>
+      <div class="final-copy">
+        <h2 id="t-final"><img class="final-logo" src="assets/jetcar-logo.svg" alt="JETCAR" width="1354" height="652"> <span>Seu carro.</span> <span>Em outro nível.</span></h2>
+        <div class="actions">
+          <a class="btn" href="#agendar"><span>Agendar</span><svg><use href="#i-arrow"/></svg></a>
+          <a class="link" href="#endereco">Como chegar</a>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -257,7 +359,7 @@
   <section class="order" id="agendar" aria-labelledby="t-order">
     <div class="order-head">
       <h2 id="t-order">Monte o seu pedido</h2>
-      <p class="lead">Duas respostas e a mensagem fica pronta para o Direct. Preço e prazo a equipe passa depois de ver o carro.</p>
+      <p class="lead">O carro, o que você quer melhorar e os serviços. A mensagem fica pronta para o Direct. Preço e prazo a equipe passa depois de ver o carro.</p>
     </div>
     <form class="config" id="config" novalidate>
       <fieldset class="step">
@@ -268,16 +370,28 @@
       <fieldset class="step">
         <legend><b>02</b>O que você quer melhorar?</legend>
         <div class="opts">
-          <label class="opt"><input type="checkbox" name="want" value="lavagem"><span><b>Lavagem</b><small>Lavagem técnica</small></span></label>
-          <label class="opt"><input type="checkbox" name="want" value="pintura"><span><b>Pintura</b><small>Polimento e correção</small></span></label>
-          <label class="opt"><input type="checkbox" name="want" value="ceramic"><span><b>Ceramic</b><small>Ceramic Coating</small></span></label>
-          <label class="opt"><input type="checkbox" name="want" value="ppf"><span><b>PPF</b><small>Película de proteção</small></span></label>
-          <label class="opt"><input type="checkbox" name="want" value="interior"><span><b>Interior</b><small>Higienização interna</small></span></label>
-          <label class="opt"><input type="checkbox" name="want" value="avaliacao"><span><b>Avaliação</b><small>Ainda não sei</small></span></label>
+          <label class="opt"><input type="checkbox" name="aim" value="brilho"><span><b>Brilho</b><small>A pintura está opaca</small></span></label>
+          <label class="opt"><input type="checkbox" name="aim" value="marcas"><span><b>Marcas</b><small>Riscos finos, marcas de lavagem</small></span></label>
+          <label class="opt"><input type="checkbox" name="aim" value="protecao"><span><b>Proteção</b><small>Proteger a pintura</small></span></label>
+          <label class="opt"><input type="checkbox" name="aim" value="limpeza"><span><b>Limpeza</b><small>Por fora, com cuidado</small></span></label>
+          <label class="opt"><input type="checkbox" name="aim" value="cabine"><span><b>Interior</b><small>Bancos, couro, acabamentos</small></span></label>
+          <label class="opt"><input type="checkbox" name="aim" value="naosei"><span><b>Não sei</b><small>Quero uma avaliação</small></span></label>
+        </div>
+      </fieldset>
+      <fieldset class="step">
+        <legend><b>03</b>Serviços</legend>
+        <p class="fine step-note" id="aim-note">Marque o que quer melhorar e as sugestões aparecem aqui. Você pode mudar.</p>
+        <div class="opts opts-list">
+          <label class="opt"><input type="checkbox" name="want" value="lavagem"><span><b>Lavagem técnica</b></span></label>
+          <label class="opt"><input type="checkbox" name="want" value="pintura"><span><b>Polimento e correção</b></span></label>
+          <label class="opt"><input type="checkbox" name="want" value="ceramic"><span><b>Ceramic Coating</b></span></label>
+          <label class="opt"><input type="checkbox" name="want" value="ppf"><span><b>PPF</b></span></label>
+          <label class="opt"><input type="checkbox" name="want" value="interior"><span><b>Higienização interna</b></span></label>
+          <label class="opt"><input type="checkbox" name="want" value="avaliacao"><span><b>Avaliação</b></span></label>
         </div>
       </fieldset>
       <div class="step step-send">
-        <p class="legend"><b>03</b>Agendar</p>
+        <p class="legend"><b>04</b>Contato</p>
         <p class="message" id="message-text"></p>
         <div class="step-actions">
           <a class="btn" id="send-message" href="https://ig.me/m/jetcarbv" target="_blank" rel="noopener noreferrer"><span>Agendar pelo Direct</span><svg><use href="#i-arrow-ur"/></svg></a>
@@ -290,7 +404,7 @@
   </section>
 
   <!-- ENDEREÇO · a linha vira a rota até a porta. -->
-  <section class="act act-route" id="endereco" data-act="route" data-span="1.6" data-span-m="1.4" data-hold="1" aria-labelledby="t-route">
+  <section class="act act-route" id="endereco" data-act="route" data-span="1.0" data-span-m="0.8" data-hold="1" aria-labelledby="t-route">
     <div class="stage">
       <div class="route-map" aria-hidden="true"><img class="route-static" src="assets/route.svg" alt="" width="1600" height="1000" loading="lazy"></div>
       <i class="scrim route-scrim" aria-hidden="true"></i>

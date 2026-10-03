@@ -16,8 +16,8 @@ for (const file of scripts) {
 const sources = [path.join(dist, 'index.html'), path.join(dist, 'style.css'), path.join(dist, 'app.js'), ...walk(path.join(dist, 'js'))];
 const text = sources.map(f => fs.readFileSync(f, 'utf8')).join('\n');
 const refs = new Set([...text.matchAll(/(?:assets|vendor)\/[\w./-]+\.(?:webp|png|jpg|svg|mp4|webm|woff2|json|js)/g)].map(m => m[0]));
-// os vídeos do scrub são escolhidos no código (base + extensão): as quatro variantes precisam existir
-for (const v of ['scrub', 'scrub-m']) for (const ext of ['mp4', 'webm']) refs.add(`assets/wash/${v}.${ext}`);
+// os vídeos dos dois scrubs são escolhidos no código (MP4 ou WebM): as duas variantes precisam existir
+for (const v of ['wash/scrub-m', 'open/open', 'final/final']) for (const ext of ['mp4', 'webm']) refs.add(`assets/${v}.${ext}`);
 for (const ref of refs) if (!fs.existsSync(path.join(dist, ref))) { failed = true; console.error(`✗ arquivo ausente: ${ref}`); }
 if (failed) process.exit(1);
 console.log(`✓ ${scripts.length} scripts e ${refs.size} arquivos referenciados`);

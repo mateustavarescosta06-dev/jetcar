@@ -1,19 +1,22 @@
-// HERO · planos reais. A foto do galpão é projetada a partir da câmera original sobre uma
-// geometria simples (parede, piso); o carro é outro plano, recortado com alfa real, apoiado no
-// piso (pneus na linha de contato), com reflexo e sombra de contato gerados a partir do recorte.
-// O letreiro JETCAR fica entre a parede e o carro (o teto do carro cobre a base das letras).
-// Um pilar do galpão passa perto da câmera. A câmera virtual anda de verdade, então cada plano
-// se move conforme a própria distância.
-// A linha de luz: uma barra vertical entre a câmera e o carro varre o galpão uma vez ao abrir;
-// o reflexo corre pela carroceria (normais do recorte) e o carro fica aceso. Na saída, a linha
-// deita no piso e desce até a borda da tela, onde vira a borda da moldura da lavagem.
+// HERO · a abertura do primeiro scrub (v6.2).
+// A primeira tela é uma composição em planos reais: a foto do galpão projetada a partir da câmera
+// original sobre uma geometria simples (parede, piso), o carro recortado com alfa real apoiado no
+// piso, o letreiro JETCAR entre a parede e o carro, um pilar perto da câmera e a atmosfera. A linha
+// de luz varre o galpão uma vez ao abrir e deixa o carro aceso.
+// Rolando, a câmera volta ao enquadramento original da foto (que é o quadro 0 do filme): o pilar, o
+// letreiro, a atmosfera e o título saem, e o vídeo assume no mesmo quadro. A partir daí é o filme sob
+// a mão: a aproximação até o capô e o jato. O último quadro troca pela foto 4K do mesmo quadro, e o
+// ato da lavagem, preso por baixo com essa mesma foto, continua dali (passagem no lugar). Depois da
+// troca o WebGL para: o resto do ato é vídeo e foto.
+// Celular: a composição em pé, um mergulho no escuro e o recorte quadrado do jato (clipe curto).
 import * as THREE from '../../vendor/three.min.js';
-import { $, view, pointer, state, clamp, lerp, span, smooth, smoother, env, glWidth } from '../core.js';
+import { $, view, pointer, state, clamp, lerp, span, smooth, smoother, env, glWidth, css } from '../core.js';
 import { post } from '../gl/engine.js';
 import { BARS, COLOR, NOISE } from '../gl/glsl.js';
 import { StudioLights } from '../gl/studio.js';
 import { LOGO } from '../logo-data.js';
 import { Act } from './act.js';
+import { Scrub } from '../scrub.js';
 
 // câmera original da foto (estimada pelo horizonte, pela linha parede/piso e pelo contato dos pneus)
 const SRC = { w: 1672, h: 941, fov: 30, y: 1.2 };
@@ -26,6 +29,20 @@ const ZM = -11.5;  // letreiro
 const ZP = -2.4;   // pilar perto da câmera
 // celular (retrato): plate-m.webp é o miolo da placa em 2× (a câmera em pé vê u 0,17…0,87)
 const PLATE_M = [0.14, 0, 0.9, 1];
+
+// Fases (p do ato). settle: a câmera volta ao quadro 0 e o que não está no filme sai; xf: o canvas
+// apaga sobre o vídeo parado no quadro 0 (desktop) ou mergulha no escuro (celular); scrub: o
+// filme; freeze: o vídeo troca pela foto 4K do último quadro.
+const PH = {
+  d: { copy: [0.03, 0.12], settle: [0.02, 0.13], xf: [0.13, 0.17], scrub: [0.17, 0.9], freeze: [0.9, 0.95] },
+  m: { copy: [0.04, 0.13], settle: [0.04, 0.14], xf: [0.14, 0.22], scrub: [0.22, 0.88], freeze: [0.88, 0.94] },
+};
+// clipes (scripts/encode-open.sh): desktop f0→f168 do master (aproximação 0–125, jato 126–168);
+// celular: o recorte quadrado do jato f126→f168 (scripts/encode-wash.sh)
+const CLIP = {
+  d: { mp4: 'assets/open/open.mp4', webm: 'assets/open/open.webm', frames: 169, split: [125 / 168, 0.55] },
+  m: { mp4: 'assets/wash/scrub-m.mp4', webm: 'assets/wash/scrub-m.webm', frames: 43, split: null },
+};
 
 const PROJ = /* glsl */ `
 uniform mat4 uPV;
@@ -44,11 +61,32 @@ export class HeroAct extends Act {
     super(el);
     this.gl = !!engine;
     this.copy = $('.hero-copy', el);
+    this.reel = $('.reel', el);
+    this.video = $('.reel-video', el);
     this.ready = !engine;
     this.t0 = null;
     this.quality = quality;
     if (engine) this.build(quality);
   }
+
+  /** O filme: baixado depois que a primeira tela está pronta (start), na versão da tela atual. */
+  makeScrub() {
+    const kind = view.portrait ? 'm' : 'd';
+    if (this.scrub && this.scrubKind === kind) return;
+    this.scrub?.release();
+    this.scrubKind = kind;
+    this.scrub = new Scrub(this.video, CLIP[kind]);
+    this.scrub.onFrame = () => { this.dirty = true; };
+    this.reel.classList.toggle('is-square', kind === 'm');
+  }
+
+  /** O WebGL só trabalha até entregar ao vídeo (ou o tempo todo, se o vídeo não carregou). */
+  get glNeeded() {
+    if (!this.gl) return false;
+    const ph = PH[view.portrait ? 'm' : 'd'];
+    return this.p < ph.xf[1] + 0.005 || !this.videoOn;
+  }
+  get videoOn() { return !!this.scrub && this.scrub.state === 'ready' && !state.flat; }
 
   build() {
     this.scene = new THREE.Scene();
@@ -216,16 +254,17 @@ export class HeroAct extends Act {
     this.pillar = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 9), new THREE.ShaderMaterial({
       vertexShader: VERT,
       fragmentShader: /* glsl */ `
-        varying vec2 vUv;
+        uniform float uA; varying vec2 vUv;
         void main() {
           // borda desfocada (degradê largo) e a tira de LED fora de foco perto da quina
           float body = smoothstep(0.98, 0.62, vUv.x);
           float sx = (vUv.x - 0.74) / 0.05;
           float strip = exp(-sx * sx) * smoothstep(0.02, 0.2, vUv.y) * smoothstep(0.98, 0.8, vUv.y);
           vec3 c = vec3(0.006, 0.0062, 0.0066) * (0.6 + 0.4 * vUv.y) + vec3(1.0, 0.86, 0.66) * strip * 0.9;
-          float a = max(body, strip);
+          float a = max(body, strip) * uA;
           gl_FragColor = vec4(c * a, a);
         }`,
+      uniforms: { uA: { value: 1 } },
       transparent: true, depthWrite: false,
       blending: THREE.CustomBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneMinusSrcAlphaFactor,
     }));
@@ -255,79 +294,149 @@ export class HeroAct extends Act {
     });
   }
 
-  start() { this.t0 = performance.now(); }
+  start() {
+    this.t0 = performance.now();
+    if (state.flat) return;
+    this.started = true;
+    this.makeScrub();
+    this.scrub.load();
+  }
+
+  track(y, dt) {
+    super.track(y, dt);
+    if (!this.started || !this.scrub) return;
+    // longe (duas telas depois do fim do ato): solta o filme e o decodificador; de volta, baixa de novo
+    const far = y > this.top + this.height + 2 * view.svh;
+    if (far && this.scrub.state !== 'idle') this.scrub.release();
+    else if (!far && this.scrub.state === 'idle') this.scrub.load();
+  }
 
   resize(w, h) {
     if (!this.camera) return;
     // girou o aparelho: a placa do celular é um recorte, troca pela versão certa
     if (this.ready && this.loadedFor != null && this.loadedFor !== view.portrait) this.load();
+    // a orientação mudou: o filme também (paisagem inteira ou recorte quadrado)
+    if (this.scrub && this.scrubKind !== (view.portrait ? 'm' : 'd')) { this.makeScrub(); this.scrub.load(); }
     const cam = this.camera;
     cam.aspect = w / h;
+    this.size = [w, h];
     if (view.portrait) {
       // celular: o carro inteiro ocupa a largura, no meio da tela; o letreiro acima, o texto abaixo
       const hfov = 35;
-      cam.fov = clamp((2 * Math.atan(Math.tan((hfov * Math.PI) / 360) / cam.aspect) * 180) / Math.PI, 30, 80);
-      cam.setViewOffset(w, h, 0, h * 0.16, w, h);
+      this.fovA = clamp((2 * Math.atan(Math.tan((hfov * Math.PI) / 360) / cam.aspect) * 180) / Math.PI, 30, 80);
+      this.fovB = this.fovA;
+      this.offA = [0, 0.16];
     } else {
-      cam.fov = SRC.fov * (cam.aspect < SRC.w / SRC.h ? (SRC.w / SRC.h) / cam.aspect * 0.92 : 1);
-      // o carro à direita (o texto fica à esquerda, embaixo, sem passar por cima da traseira)
-      cam.setViewOffset(w, h, -w * 0.1, h * 0.05, w, h);
+      // composição: o carro à direita (o texto fica à esquerda, embaixo)
+      this.fovA = SRC.fov * (cam.aspect < SRC.w / SRC.h ? (SRC.w / SRC.h) / cam.aspect * 0.92 : 1);
+      this.offA = [-0.1, 0.05];
+      // quadro 0 do filme em "cover": a foto cobre a tela inteira, sem deslocamento
+      const sa = SRC.w / SRC.h;
+      this.fovB = cam.aspect >= sa ? (2 * Math.atan(Math.tan((SRC.fov * Math.PI) / 360) * sa / cam.aspect) * 180) / Math.PI : SRC.fov;
     }
+    this.setLens(0);
+  }
+
+  /** Lente entre a composição (k = 0) e o quadro 0 do filme (k = 1). */
+  setLens(k) {
+    const cam = this.camera, [w, h] = this.size || [1, 1];
+    const fov = lerp(this.fovA, this.fovB, k);
+    const ox = lerp(this.offA[0], 0, k), oy = lerp(this.offA[1], 0, k);
+    if (this.lens && this.lens[0] === fov && this.lens[1] === ox && this.lens[2] === oy) return;
+    this.lens = [fov, ox, oy];
+    cam.fov = fov;
+    if (ox || oy) cam.setViewOffset(w, h, w * ox, h * oy, w, h); else cam.clearViewOffset();
     cam.updateProjectionMatrix();
   }
 
-  get animating() { return this.t0 != null && performance.now() - this.t0 < 2600; }
+  get animating() { return this.dirty || (this.t0 != null && performance.now() - this.t0 < 2600); }
   key() { return `${Math.round(this.p * 2000)}|${this.t0 != null && performance.now() - this.t0 < 2600 ? performance.now() : 0}`; }
 
-  update() {
-    const p = this.p;
-    // o texto sobe e some antes da saída
-    const a = state.reduce ? 1 : 1 - smooth(span(p, 0.45, 0.8));
-    this.copy.style.setProperty('--a', a.toFixed(3));
+  /** Testes: leva o vídeo ao quadro do alvo e espera ele aparecer. */
+  settle() {
+    this.update(16);
+    if (this.scrub) this.scrub.t = this.scrub.target;
+    this.update(16);
+    return new Promise(r => { const v = this.video; if (!v || !v.seeking) return r(); v.addEventListener('seeked', () => r(), { once: true }); });
+  }
+
+  update(dt) {
+    const p = this.p, ph = PH[view.portrait ? 'm' : 'd'];
+    // o título sai quando a cena começa a virar filme
+    const a = state.flat ? 1 : 1 - smooth(span(p, ph.copy[0], ph.copy[1]));
+    css(this.copy, '--a', a.toFixed(3));
     // apagado só na opacidade (o título continua na árvore de acessibilidade e os botões no Tab)
-    this.copy.style.pointerEvents = a < 0.5 ? 'none' : '';
+    css(this.copy, 'pointerEvents', a < 0.5 ? 'none' : '');
+    if (state.flat) return;
+    // o canvas apaga sobre o vídeo (desktop: o vídeo já está no quadro 0 por baixo; celular: mergulho
+    // no escuro e o quadrado do jato aparece). Sem vídeo, o WebGL segue até a foto final.
+    const on = this.videoOn;
+    const xf = smooth(span(p, ph.xf[0], ph.xf[1]));
+    const frz = smooth(span(p, ph.freeze[0], ph.freeze[1]));
+    const st = this.stage;
+    const glA = on ? (view.portrait ? 1 - smooth(span(p, ph.xf[0], lerp(ph.xf[0], ph.xf[1], 0.5))) : 1 - xf) : 1 - frz;
+    const reelA = on ? (view.portrait ? smooth(span(p, lerp(ph.xf[0], ph.xf[1], 0.5), ph.xf[1])) : 1) : frz;
+    css(st, '--gl-a', glA.toFixed(3));
+    css(st, '--reel-a', reelA.toFixed(3));
+    css(st, '--still-a', frz.toFixed(3));
+    this.reel.classList.toggle('is-live', on && p > ph.xf[0] - 0.02);
+    // o filme: o quadro pela rolagem dentro do scrub (desktop: a aproximação anda mais depressa e o
+    // jato ganha mais rolagem)
+    if (on && this.visible) {
+      let s = span(p, ph.scrub[0], ph.scrub[1]);
+      const sp = CLIP[this.scrubKind].split;
+      if (sp) s = s < sp[1] ? (s / sp[1]) * sp[0] : sp[0] + ((s - sp[1]) / (1 - sp[1])) * (1 - sp[0]);
+      this.scrub.seek(s * this.scrub.dur, dt);
+    }
   }
 
   // o foco do teclado num botão do hero volta a rolagem para o começo, onde o texto aparece
   focusPoint(el) { return this.copy.contains(el) ? 0 : null; }
 
   render(engine, now) {
+    this.dirty = false;
     const p = this.p, cam = this.camera, U = this.U, L = this.lights;
-    // ——— Câmera: avança pelo galpão (perspectiva real: cada plano anda conforme a distância) ———
-    const dolly = smoother(span(p, 0, 1));
-    const px = state.reduce ? 0 : pointer.sx, py = state.reduce ? 0 : pointer.sy;
+    const ph = PH[view.portrait ? 'm' : 'd'];
+    const on = this.videoOn;
+    // ——— Câmera ———
+    // com o vídeo: da composição de abertura ao quadro 0 do filme (lente, posição e ponteiro);
+    // sem vídeo (não carregou): o avanço da v6.1 pelo galpão até a foto do jato
+    const k = view.portrait || !on ? 0 : smoother(span(p, ph.settle[0], ph.settle[1]));
+    const dolly = on ? 0 : smoother(span(p, ph.scrub[0], ph.scrub[1]));
+    const pk = (state.reduce ? 0 : 1) * (1 - k);
+    const px = pointer.sx * pk, py = pointer.sy * pk;
     const z = lerp(0, -2.6, dolly), y = lerp(SRC.y, 1.0, dolly) + (view.portrait ? 0.15 : 0);
     cam.position.set(px * 0.05, y - py * 0.03, z);
     this.tmp.set(px * 0.02 + lerp(0, 0.35, dolly), lerp(SRC.y, 0.75, dolly), ZC);
+    // no quadro 0 a câmera olha reto para a frente, como a original
+    this.tmp.lerp(new THREE.Vector3(0, SRC.y, ZC), k);
     cam.lookAt(this.tmp);
+    this.setLens(k);
     U.uCam.value.copy(cam.position);
     U.uTime.value = now / 1000;
 
-    // ——— A linha de luz ———
-    // abertura: varre da esquerda para a direita em 1,8 s (uma vez); depois volta devagar com a rolagem
+    // ——— A linha de luz: varre da esquerda para a direita em 1,8 s, uma vez, e deixa o carro aceso ———
     const t = this.t0 == null ? 0 : (now - this.t0) / 1000;
     const intro = state.reduce ? 1 : smoother(clamp((t - 0.25) / 1.8));
-    let tx = lerp(-5.5, 6.5, intro), ti = (intro > 0 && intro < 1 ? 1 : 0) * 1;
-    const back = smoother(span(p, 0.25, 0.7));
-    if (back > 0 && back < 1) { tx = lerp(6.5, -5.5, back); ti = 1; }
+    const tx = lerp(-5.5, 6.5, intro), ti = intro > 0 && intro < 1 ? 1 : 0;
     const bar = view.portrait ? 0.008 : 0.006;
     L.set(0, [tx, 1.6, -3.6], [0, 1, 0], bar, 3.2, [11 * ti, 10.9 * ti, 10.7 * ti], 0.004, ti > 0.01, 0.28);
     L.count(1);
-    // a primeira passada acende o carro; depois ele fica aceso
     U.uTraceX.value = intro < 1 ? lerp(-5.5, 6.5, intro) - 0.6 : 9;
     this.car.material.uniforms.uDark.value = state.reduce ? 1 : 0.22;
     this.refl.material.uniforms.uDark.value = this.car.material.uniforms.uDark.value;
-    // saída: a linha deita no piso atrás do carro e vem na direção da câmera até a borda da tela
-    const lay = span(p, 0.72, 1.0);
-    U.uFloorLine.value = lerp(ZC - 1.2, cam.position.z - 0.9, smoother(lay));
-    U.uFloorLineI.value = lay > 0 ? smooth(span(lay, 0, 0.15)) : 0;
+    U.uFloorLineI.value = 0;
 
-    // atmosfera (feixe e névoa): um dos últimos degraus da escada de qualidade
-    this.atmo.uniforms.uK.value = this.quality.atmosphere ? 1 : 0;
+    // o que não está no filme sai antes da troca: letreiro, pilar, atmosfera e vinheta
+    const keep = 1 - k;
+    this.mast.material.uniforms.uA.value = keep;
+    this.pillar.material.uniforms.uA.value = keep;
+    this.pillar.visible = keep > 0.002;
+    this.atmo.uniforms.uK.value = (this.quality.atmosphere ? 1 : 0) * keep;
     post.exposure = state.reduce ? 1 : lerp(0.0, 1, smooth(clamp(t / 0.6)));
-    // foto: o branco chega a 255; bloom só na barra de luz e na linha do piso (acima de 4)
+    // foto: o branco chega a 255; bloom só na barra de luz (acima de 4)
     post.tone = 'photo';
-    post.vignette = 0.25;
+    post.vignette = 0.25 * keep;
     post.dof = 0;
     engine.render(this.scene, cam);
   }

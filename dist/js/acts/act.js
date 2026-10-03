@@ -1,7 +1,7 @@
 // Um ato: uma seção alta com um palco preso. A rolagem dentro da seção vira o progresso p (0…1)
 // do ato; cada ato decide o que p significa na sua cena. Atos com WebGL compartilham uma única
 // tela (o app move o canvas para o palco do ato mais visível).
-import { $, view, state, clamp } from '../core.js';
+import { $, $$, view, state, clamp, css } from '../core.js';
 
 export class Act {
   constructor(el) {
@@ -24,8 +24,15 @@ export class Act {
     this.leave = 0;         // 0 enquanto preso, 1 quando o palco saiu por cima
     this.snap = null;       // cópia 2D do último quadro (quando outro ato usa o canvas)
     this.snapKey = null;
-    this.lag = 70;          // suavização do progresso (ms)
+    this.lag = 30;          // suavização do progresso (ms): o Lenis já suaviza a roda, isto só tira degraus
+    // passagem no lugar: o ato seguinte começa preso por baixo deste (data-handoff = quantas telas
+    // antes do fim), com o mesmo quadro; quando este termina, some, e o corte não aparece
+    this.handoff = el.dataset.handoff != null ? Number(el.dataset.handoff) : null;
+    this.handsOff = false;  // o próximo ato é uma passagem no lugar (o app marca)
   }
+
+  /** Precisa do WebGL agora (o app só dá o canvas para quem precisa). */
+  get glNeeded() { return this.gl; }
 
   get span() { return state.flat ? 0 : (view.mobile ? this.spanM : this.spanD); }
 
@@ -39,6 +46,9 @@ export class Act {
     this.top = this.el.getBoundingClientRect().top + scrollY;
     this.travel = this.span * view.svh;
     this.height = this.el.offsetHeight;
+    // altura do palco medida aqui, no layout: ler offsetHeight a cada quadro, depois de outro ato
+    // ter escrito estilos, forçava um layout por ato por quadro
+    this.stageH = this.stage ? this.stage.offsetHeight || view.h : view.h;
   }
 
   /** Progresso alvo para uma posição de rolagem. */
@@ -57,13 +67,18 @@ export class Act {
     let top;
     if (state.flat || this.travel <= 0) top = this.top - y;
     else top = y < this.top ? this.top - y : y > this.top + this.travel ? this.top + this.travel - y : 0;
-    const stageH = this.stage ? this.stage.offsetHeight || vh : vh;
+    const stageH = this.stageH || vh;
     const a = Math.max(0, top), b = Math.min(vh, top + stageH);
     this.vis = clamp((b - a) / vh);
     this.visible = b > a + 1;
     this.enter = clamp(1 - (this.top - y) / vh);
     this.leave = this.travel > 0 ? clamp((y - this.top - this.travel) / vh) : clamp((y - this.top) / vh);
     this.raw = this.progressAt(y);
+    // terminou e o próximo já está por baixo com o mesmo quadro: sai da frente
+    if (this.handsOff && this.stage) {
+      const gone = !state.flat && this.travel > 0 && y > this.top + this.travel + 0.5;
+      if (gone !== this.gone) { this.gone = gone; this.stage.classList.toggle('is-gone', gone); }
+    }
     if (state.flat || state.jumping) this.p = this.raw;
     else {
       this.p += (this.raw - this.p) * (1 - Math.exp(-dt / this.lag));
@@ -74,7 +89,13 @@ export class Act {
   /** Estado que define o quadro (para saber se a cópia 2D ainda vale). */
   key() { return Math.round(this.p * 2000); }
 
-  load() { return Promise.resolve(); }
+  /** Atos em HTML: as fotos do palco carregam em sequência (na ordem da página) e já decodificadas,
+   *  para a passagem no lugar não mostrar uma foto pela metade. */
+  load() {
+    if (this.gl || !this.stage) return Promise.resolve();
+    const imgs = $$('img', this.stage).filter(i => !i.dataset.src);
+    return Promise.all(imgs.map(i => { i.loading = 'eager'; return i.decode?.().catch(() => {}); }));
+  }
   layout() {}
   /** DOM do ato (cards, rótulos). Chamado enquanto visível. */
   update() {}
@@ -93,9 +114,9 @@ export function cardState(el, p, [a, b, c = 2, d = 3], drawSpan = 0.12) {
   const alpha = ease(v);
   // a borda é desenhada pela luz logo depois de o card chegar
   const draw = clamp((p - b + drawSpan * 0.35) / drawSpan);
-  el.style.setProperty('--a', alpha.toFixed(3));
-  el.style.setProperty('--pe', alpha > 0.5 ? 'auto' : 'none');
-  el.style.setProperty('--draw', ease(draw).toFixed(3));
-  el.style.setProperty('--head', Math.sin(Math.PI * Math.min(1, draw * 1.02)).toFixed(3));
+  css(el, '--a', alpha.toFixed(3));
+  css(el, '--pe', alpha > 0.5 ? 'auto' : 'none');
+  css(el, '--draw', ease(draw).toFixed(3));
+  css(el, '--head', Math.sin(Math.PI * Math.min(1, draw * 1.02)).toFixed(3));
   return alpha;
 }

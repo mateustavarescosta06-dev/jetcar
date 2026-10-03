@@ -1,16 +1,21 @@
-// JETCAR v6 · Baias de serviço.
+// JETCAR v6.2 · Baias de serviço.
 // A página é um site em fluxo normal. Algumas seções são atos: seções altas com um palco preso,
-// em que a rolagem vira o progresso da cena. Cada baia usa uma mídia e um dispositivo próprios.
-// Os atos com 3D compartilham um único WebGL: o canvas vai para o palco do ato mais visível e o
-// ato que perde o canvas fica com uma cópia 2D do último quadro (ele está parado na borda).
+// em que a rolagem vira o progresso da cena. Cada baia usa uma mídia e um dispositivo próprios:
+// dois filmes (a abertura e o final), fotos, um 3D (o Ceramic) e HTML. Onde uma cena termina no
+// mesmo quadro em que a próxima começa, a próxima fica presa por baixo da anterior (passagem no
+// lugar, data-handoff). O WebGL é um só: o canvas vai para o palco do ato que precisa dele agora
+// (o hero até entregar ao vídeo, e o Ceramic); o ato que perde o canvas fica com uma cópia 2D.
 import Lenis from './vendor/lenis.min.js';
 import { $, $$, view, pointer, state, clamp } from './js/core.js';
 import { Engine, pickQuality, resetPost, applyLevel, EFFECTS, SCALES } from './js/gl/engine.js';
 import { HeroAct } from './js/acts/hero.js';
 import { WashAct } from './js/acts/wash.js';
 import { PolishAct } from './js/acts/polish.js';
-import { ProtectAct } from './js/acts/protect.js';
+import { CeramicAct } from './js/acts/ceramic.js';
+import { PpfAct } from './js/acts/ppf.js';
 import { InteriorAct } from './js/acts/interior.js';
+import { ResultAct } from './js/acts/result.js';
+import { FinalAct } from './js/acts/final.js';
 import { RouteAct } from './js/acts/route.js';
 import { initUi, renderUi, setReduce, savedMotion, setMenu, cancelFreeze, ready } from './js/ui.js';
 import { setSound, renderSound } from './js/audio.js';
@@ -52,7 +57,7 @@ try {
 // sem WebGL a página fica parada como no movimento reduzido (pôsteres, conteúdo empilhado)
 state.flat = state.reduce || !engine;
 
-const KINDS = { hero: HeroAct, wash: WashAct, polish: PolishAct, protect: ProtectAct, interior: InteriorAct, route: RouteAct };
+const KINDS = { hero: HeroAct, wash: WashAct, polish: PolishAct, ceramic: CeramicAct, ppf: PpfAct, interior: InteriorAct, result: ResultAct, final: FinalAct, route: RouteAct };
 const acts = $$('[data-act]').map(el => new (KINDS[el.dataset.act])(el, { engine, quality }));
 const byId = Object.fromEntries(acts.map(a => [a.id, a]));
 const glActs = engine ? acts.filter(a => a.gl) : [];
@@ -85,6 +90,14 @@ function layout(force = false) {
   // a janela foi para outra tela ou o zoom mudou: o teto da escala segue o DPR novo
   if (quality.dpr !== view.dpr) { quality.dpr = view.dpr; applyLevel(quality); }
   for (const a of acts) a.setHeight();
+  // passagens no lugar: o ato seguinte sobe uma tela (mais o trecho da passagem) por baixo do
+  // anterior; cada ato fica acima do seguinte (abaixo da barra e do menu)
+  acts.forEach((a, i) => {
+    a.el.style.zIndex = String(20 - i);
+    const next = acts[i + 1];
+    a.handsOff = !!(next && next.handoff != null && !state.flat);
+    if (a.handoff != null) a.el.style.marginTop = state.flat ? '' : `${-Math.round(view.h + a.handoff * view.svh)}px`;
+  });
   const y = scrollY;
   for (const a of acts) { a.measure(y); a.layout(); }
   // movimento reduzido: palco mais alto que a tela (o canvas fica com a altura da tela e esfuma embaixo)
@@ -92,7 +105,7 @@ function layout(force = false) {
   view.scrollMax = Math.max(1, html.scrollHeight - innerHeight);
   view.pageY = $('#resultado').getBoundingClientRect().top + y;
   // trechos em fluxo com fundo chapado (a barra fica sólida por cima deles)
-  view.flat = $$('.order, .faq, .footer').map(el => { const r = el.getBoundingClientRect(); return [r.top + y, r.bottom + y]; });
+  view.flat = $$('.quiet, .order, .faq, .footer').map(el => { const r = el.getBoundingClientRect(); return [r.top + y, r.bottom + y]; });
   // no celular a barra do navegador muda a altura o tempo todo: só redimensiona em mudanças grandes
   if (engine && (force || view.w !== lastW || Math.abs(view.h - lastH) > (view.mobile ? 120 : 0) || quality.scale !== lastScale)) {
     lastW = view.w; lastH = view.h; lastScale = quality.scale;
@@ -156,7 +169,9 @@ function govern(dt, now) {
 
 // ——— Rolagem suave na roda do mouse; no toque, a nativa ———
 let lenis = null;
-if (!state.reduce) lenis = new Lenis({ autoRaf: false, lerp: 0.09, wheelMultiplier: 0.9, smoothWheel: true, syncTouch: false });
+// suavização sutil: a roda responde já no quadro seguinte e assenta em ~0,2 s (0,09 deixava a cena
+// atrás do dedo); o toque fica nativo
+if (!state.reduce) lenis = new Lenis({ autoRaf: false, lerp: 0.15, wheelMultiplier: 1, smoothWheel: true, syncTouch: false });
 
 // ——— Âncoras: cada ato tem um ponto de leitura; saltos longos cortam no preto ———
 const curtain = Object.assign(document.createElement('div'), { className: 'curtain' });
@@ -266,9 +281,9 @@ function copyTo(a) {
 let owner = null;
 function pickOwner() {
   let best = null;
-  for (const a of glActs) if (a.visible && a.ready && (!best || a.vis > best.vis)) best = a;
+  for (const a of glActs) if (a.visible && a.ready && a.glNeeded && (!best || a.vis > best.vis)) best = a;
   // histerese: o dono atual só perde o canvas quando o outro ocupa claramente mais tela
-  if (best && owner && owner !== best && owner.visible && owner.ready && owner.vis >= best.vis - 0.04) return owner;
+  if (best && owner && owner !== best && owner.visible && owner.ready && owner.glNeeded && owner.vis >= best.vis - 0.04) return owner;
   return best;
 }
 
@@ -312,6 +327,7 @@ function tick(now) {
     for (const a of glActs) {
       if (a === owner) continue;
       if (!a.visible) { if (a.snap) dropSnap(a); continue; }
+      if (!a.glNeeded) continue;   // a cena dele saiu (o hero entregou ao vídeo): nada a copiar
       if (a.ready && a.snapKey !== a.key()) { drawAct(a, now); copyTo(a); extra = true; }
     }
     const active = moved || settling || extra || needDraw || now - pointer.at < 400 || (owner && owner.animating);
@@ -374,7 +390,7 @@ document.fonts?.ready.then(() => layout(true));
 // ?debug: estado para os testes; settle() leva tudo ao alvo sem esperar a suavização
 if (/[?&]debug\b/.test(location.search)) window.__jetcar = {
   state, view, pointer, acts: byId, engine, quality, layout, owner: () => owner?.id,
-  settle() { for (const a of acts) { a.track(scrollY, 16); a.p = a.raw; a.settle?.(); } },
+  settle() { const w = []; for (const a of acts) { a.track(scrollY, 16); a.p = a.raw; w.push(a.settle?.()); } return Promise.all(w); },
 };
 
 requestAnimationFrame(tick);

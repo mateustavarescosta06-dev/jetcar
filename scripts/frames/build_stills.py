@@ -85,6 +85,8 @@ if want('wash'):
     webp(lanczos(fr, (1920, 1082)), 'wash/freeze-1920.webp', 95)
     # celular: o mesmo recorte quadrado do scrub do celular (x 480…1560 no master de 1916)
     webp(lanczos(fr.crop((960, 0, 3120, 2160)), (1440, 1440)), 'wash/freeze-m.webp', 95)
+    # "Ver de perto" (v6.2): as gotas no capô no tamanho do intermediário (u 0,55…0,95, v 0,30…0,75)
+    webp(crop_frac(fr, 0.55, 0.30, 0.95, 0.75), 'wash/detail.webp', 95)
 
 # ——— PPF: a frente do carro e a máscara da carroceria ———
 if want('ppf'):

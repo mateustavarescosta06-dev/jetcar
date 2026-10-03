@@ -1,6 +1,7 @@
 // Interface: barra e trilho de luz, menu, movimento reduzido, som opcional, o pedido
-// (configurador: monta a mensagem para o Direct; nada é enviado pelo site) e os botões
-// "Incluir no pedido" dos cards, que marcam o mesmo serviço no pedido.
+// (configurador em quatro passos: carro, o que melhorar, serviços e contato; monta a mensagem para
+// o Direct, nada é enviado pelo site) e os botões "Incluir no pedido" dos cards, que marcam o mesmo
+// serviço no pedido.
 import { $, $$, view, state, css, f, clamp } from './core.js';
 import { setSound } from './audio.js';
 
@@ -56,7 +57,27 @@ const WANTS = {
   ppf: 'PPF (película de proteção)',
   interior: 'higienização interna',
 };
+const AIMS = {
+  brilho: { say: 'recuperar o brilho da pintura', want: ['pintura'] },
+  marcas: { say: 'tirar riscos finos e marcas de lavagem', want: ['pintura'] },
+  protecao: { say: 'proteger a pintura', want: ['ceramic', 'ppf'] },
+  limpeza: { say: 'uma limpeza cuidadosa por fora', want: ['lavagem'] },
+  cabine: { say: 'cuidar do interior', want: ['interior'] },
+  naosei: { say: '', want: ['avaliacao'] },
+};
 const picked = () => $$('input[name="want"]:checked', form).map(i => i.value);
+const aims = () => $$('input[name="aim"]:checked', form).map(i => i.value);
+// serviços marcados pela sugestão (e não pela pessoa): desmarcar o objetivo desmarca a sugestão
+const suggested = new Set();
+function suggest(aim, on) {
+  for (const v of AIMS[aim].want) {
+    const box = $(`input[name="want"][value="${v}"]`, form);
+    if (!box) continue;
+    if (on && !box.checked) { box.checked = true; suggested.add(v); }
+    // só desmarca o que a sugestão marcou e que nenhum outro objetivo marcado ainda pede
+    if (!on && suggested.has(v) && !aims().some(a => AIMS[a].want.includes(v))) { box.checked = false; suggested.delete(v); }
+  }
+}
 const list = items => (items.length > 1 ? `${items.slice(0, -1).join(', ')} e ${items[items.length - 1]}` : items[0]);
 function buildMessage() {
   const car = carInput.value.trim();
@@ -64,6 +85,8 @@ function buildMessage() {
   const services = wants.filter(v => WANTS[v]).map(v => WANTS[v]);
   const parts = ['Olá, JETCAR!'];
   if (car) parts.push(`Meu carro é um ${car}.`);
+  const goals = aims().map(a => AIMS[a].say).filter(Boolean);
+  if (goals.length) parts.push(`Quero ${list(goals)}.`);
   if (services.length) parts.push(`Tenho interesse em ${list(services)}.`);
   if (wants.includes('avaliacao') || !services.length) parts.push('Gostaria de uma avaliação para saber o que o carro precisa.');
   parts.push('Podem me passar o orçamento e a disponibilidade?');
@@ -122,7 +145,12 @@ export function initUi({ jump, lenis }) {
   });
 
   form.addEventListener('input', refresh);
-  form.addEventListener('change', refresh);
+  form.addEventListener('change', e => {
+    if (e.target.name === 'aim') suggest(e.target.value, e.target.checked);
+    // a pessoa mexeu no serviço: a escolha passa a ser dela
+    if (e.target.name === 'want') suggested.delete(e.target.value);
+    refresh();
+  });
   form.addEventListener('submit', e => e.preventDefault());
   carInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('input[name="want"]', form)?.focus(); } });
   $('#send-message').addEventListener('click', () => {
@@ -139,16 +167,10 @@ export function initUi({ jump, lenis }) {
     const box = $(`input[name="want"][value="${b.dataset.want}"]`, form);
     if (!box) return;
     box.checked = !box.checked;
+    suggested.delete(b.dataset.want);
     refresh();
   });
   refresh();
-
-  // resultado: a linha passa uma vez quando a foto aparece
-  const result = $('.result');
-  if (result && 'IntersectionObserver' in window) {
-    const io = new IntersectionObserver(es => { for (const e of es) if (e.isIntersecting) { result.classList.add('is-in'); io.disconnect(); } }, { threshold: 0.45 });
-    io.observe(result);
-  } else result?.classList.add('is-in');
 
   // teclado do celular: ao focar um campo, o iOS rola a página; ignoramos por um instante
   const touchOnly = matchMedia('(hover: none)');
@@ -175,13 +197,11 @@ export function renderUi(y, acts, byId) {
   const isPage = (view.flat || []).some(([a, b]) => line >= a && line < b);
   if (isPage !== page) { page = isPage; bar.classList.toggle('is-page', isPage); }
   let J = 0;
-  const w = byId.wash, po = byId.polish, pr = byId.protect, it = byId.interior;
+  const w = byId.wash, it = byId.interior;
   // os topos têm fração de pixel (alturas em svh) e a rolagem para em pixel inteiro: 1 px de folga
   const yy = y + 1;
-  if (w && yy >= w.top - view.svh * 0.5) J = w.raw;
-  if (po && yy >= po.top) J = 1 + po.raw;
-  if (pr && yy >= pr.top) J = pr.raw < pr.split ? 2 + pr.raw / pr.split : 3 + (pr.raw - pr.split) / (1 - pr.split);
-  if (it && yy >= it.top) J = 4 + it.raw;
+  ORDER.forEach((id, i) => { const a = byId[id]; if (a && yy >= a.top - (i === 0 ? view.svh * 0.5 : 0)) J = i + a.raw; });
+  // o silêncio entre o Polimento e o Ceramic fica com o Polimento aceso
   if (it && y > it.top + it.height - view.svh + 1) J = 5;
   const lit = f(clamp(J / 5), 4);
   css(laneLit, 'transform', `scaleX(${lit})`);
