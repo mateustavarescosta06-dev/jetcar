@@ -318,3 +318,13 @@ informações, mais depoimentos, mais da história do negócio e dos fundadores"
 - Fundadores, história, ano e mais depoimentos: não existem no site antigo e o Instagram não deu
   para ler (429). Ficaram de fora; entram quando a JETCAR mandar (nomes e papéis, como e quando
   começou, depoimentos com nome, carro e serviço, fotos reais com autorização).
+
+Segunda passada na página Quem somos ("o site antigo tem isso tudo, procure bem"): o sitemap do
+site antigo tem onze páginas; a inicial era só uma delas. De `/about-us`, `/contact-us`,
+`/services` e das duas páginas de serviço com conteúdo vieram: 5+ anos, 10 profissionais, a frase
+do fundador (sem nome), a equipe nomeada com cargos, a estrutura do box, o fluxo em cinco etapas
+com "sem surpresa em preço ou prazo" e "horário marcado, sem fila", o e-mail, o sexto serviço
+(remoção de odores), o selante como alternativa e as oito perguntas respondidas (prazos e
+frequência). A página ganhou os números, "Como começou", "Quem faz a JETCAR", os seis serviços
+com os textos longos e "Perguntas sobre os serviços"; o resumo da principal ganhou experiência e
+equipe, e o rodapé o e-mail. Continua sendo um depoimento só: é o que existe na fonte.

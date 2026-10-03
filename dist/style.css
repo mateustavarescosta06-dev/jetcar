@@ -692,3 +692,22 @@ input[type="range"]:focus-visible { outline: 2px solid var(--red-ink); outline-o
   .place { grid-template-columns: minmax(0, 1fr); gap: var(--s6); }
   .cta { grid-template-columns: minmax(0, 1fr); padding-bottom: var(--s10); }
 }
+/* Quem somos: números, a frase do fundador, a equipe e as perguntas dos serviços */
+.numbers { max-width: 1240px; margin: 0 auto; padding: 0 var(--pad) var(--s9); list-style: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s6); }
+.numbers li { padding-top: var(--s4); border-top: 1px solid var(--rule-2); }
+.numbers b { display: block; font: 800 clamp(44px, 4.6vw, 72px)/1 var(--cond); letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+.numbers span { display: block; margin-top: var(--s2); font: 600 13px/1.4 var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-mute); }
+.story-quote { margin: 0 0 var(--s6); padding-left: var(--s6); }
+.story-quote p { font-size: clamp(21px, 1.9vw, 28px); }
+.team { margin: var(--s8) 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s7); }
+.team li { padding: var(--s5) 0 0; border-top: 1px solid var(--rule-2); }
+.team b { display: block; font: 800 clamp(28px, 2.6vw, 40px)/1 var(--cond); text-transform: uppercase; }
+.team span { display: block; margin-top: var(--s2); font: 600 13px/1.4 var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-mute); }
+.page-faq { margin-top: var(--s8); }
+.page-faq details:first-child { border-top: 1px solid var(--rule-2); }
+@media (max-width: 1080px) { .numbers { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 760px) {
+  .numbers { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s5); padding-bottom: var(--s8); }
+  .team { grid-template-columns: minmax(0, 1fr); gap: var(--s5); }
+  .faq-list.page-faq summary { font-size: 18px; }
+}
