@@ -113,6 +113,9 @@ export class ProtectAct extends Act {
     this.filmWrap = $('.film-control', el);
     this.filmInput = $('#film', el);
     this.filmLabels = $('.film-labels', el);
+    this.flOff = $('.fl-off', el); this.flOn = $('.fl-on', el);
+    this.flW = 0;
+    document.fonts?.ready.then(() => { this.flW = 0; });
     this.s = 0; this.f = 0;
     this.userS = null; this.userF = null;
     this.quality = quality;
@@ -326,6 +329,11 @@ export class ProtectAct extends Act {
     this.filmWrap.style.setProperty('--pe', fA > 0.5 ? 'auto' : 'none');
     this.filmLabels.style.setProperty('--a', (fA * (this.f > 0.02 && this.f < 0.98 ? 1 : 0.0)).toFixed(3));
     this.filmLabels.style.setProperty('--fx', `${Math.round(edgePx)}px`);
+    // cada rótulo só aparece se cabe inteiro do seu lado da linha (no celular a borda chega perto
+    // das laterais e "Sem proteção" saía cortado); larguras medidas uma vez por largura de tela
+    if (this.flW !== view.w) { this.flW = view.w; this.flOffW = this.flOff.offsetWidth; this.flOnW = this.flOn.offsetWidth; }
+    this.flOff.style.opacity = edgePx - 18 - this.flOffW >= pad ? '' : '0';
+    this.flOn.style.opacity = view.w - edgePx - 18 - this.flOnW >= pad ? '' : '0';
     this.renderLabels(ceramic);
   }
 

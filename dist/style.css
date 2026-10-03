@@ -213,7 +213,7 @@ input[type="range"]::-moz-range-thumb { width: 4px; height: 26px; background: #f
 input[type="range"]:focus-visible { outline: 2px solid var(--red-ink); outline-offset: 2px; }
 .separator-hint { margin-top: 2px; text-align: center; font: 600 11.5px/1 var(--sans); letter-spacing: .16em; text-transform: uppercase; color: var(--ink-mute); }
 .film-labels { position: absolute; inset: 0; pointer-events: none; opacity: var(--a, 0); }
-.film-labels span { position: absolute; top: calc(var(--bar) + 4vh); font: 600 11.5px/1 var(--sans); letter-spacing: .18em; text-transform: uppercase; color: var(--ink-soft); white-space: nowrap; }
+.film-labels span { position: absolute; top: calc(var(--bar) + 4vh); font: 600 11.5px/1 var(--sans); letter-spacing: .18em; text-transform: uppercase; color: var(--ink-soft); white-space: nowrap; transition: opacity .2s var(--ease); }
 .fl-off { right: calc(100% - var(--fx, 50%) + 18px); }
 .fl-on { left: calc(var(--fx, 50%) + 18px); }
 .stack { position: absolute; left: var(--pad); top: 50%; width: min(408px, calc(100vw - 2 * var(--pad))); height: 0; z-index: 3; }
