@@ -24,7 +24,7 @@ export class Act {
     this.leave = 0;         // 0 enquanto preso, 1 quando o palco saiu por cima
     this.snap = null;       // cópia 2D do último quadro (quando outro ato usa o canvas)
     this.snapKey = null;
-    this.lag = 30;          // suavização do progresso (ms): o Lenis já suaviza a roda, isto só tira degraus
+    this.lag = 45;          // suavização do progresso (ms): o Lenis já suaviza a roda, isto assenta os degraus da rolagem
     // passagem no lugar: o ato seguinte começa preso por baixo deste (data-handoff = quantas telas
     // antes do fim), com o mesmo quadro; quando este termina, some, e o corte não aparece
     this.handoff = el.dataset.handoff != null ? Number(el.dataset.handoff) : null;

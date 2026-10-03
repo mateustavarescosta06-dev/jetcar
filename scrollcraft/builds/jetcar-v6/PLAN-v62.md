@@ -220,3 +220,18 @@ final, que é a mesma imagem de propósito (o corte invisível), agora mais curt
 Mídia por tempo de tela no desktop (aproximado, ~17 telas): vídeo ~15% (os dois filmes), foto
 ~35%, 3D ~20% (o Ceramic, o pico com o maior espaço, e a abertura antes do filme), HTML e
 tipografia ~30%. O 3D passou um pouco do alvo (10–15%) porque o pico precisa do maior trecho.
+
+## 11. Refino depois da publicação
+
+Pedido: "a rolagem pode ficar um pouco mais fluída, ainda dá um pouco a impressão que tá meio
+acelerado e travado" e "detalhes sutis, como referências ao automotivo e à Praia de Boa Viagem".
+
+- Rolagem: Lenis com `lerp` 0,10 (antes 0,15: a roda parava de repente e cada giro parecia um
+  tranco) e `wheelMultiplier` 0,9 (menos distância por giro); progresso dos atos assentado em 45 ms
+  (antes 30); ~8% mais rolagem nos atos com movimento (14,1 telas presas no desktop, 10,8 no
+  celular); as janelas móveis e o vidro com 200vmax de lado em vez de 300vmax (um terço da área
+  nas camadas da GPU; cobrem a tela até ~0,5 rad de inclinação).
+- Detalhes: "Praia de Boa Viagem" ao longo da orla no mapa (gerador `scripts/data/build_route_svg.py`),
+  as coordenadas da loja no endereço e no rodapé, "Sol forte e maresia: perto da praia, a pintura
+  sente primeiro." no silêncio, a faixa quadriculada de chegada no alto do rodapé, e "a poucas
+  quadras da Praia de Boa Viagem" no endereço e nas dúvidas.

@@ -60,6 +60,14 @@ style = 'font-family="Barlow, Helvetica, Arial, sans-serif" font-weight="600" le
 out.append(f'<text class="route-name" x="{sx + 26}" y="{sy - 140}" font-size="17" {style} transform="rotate(-62 {sx + 26} {sy - 140})">AV. BOA VIAGEM</text>')
 out.append(f'<text class="route-name" x="{ex - 30}" y="{ey + 64}" font-size="17" {style} text-anchor="end">R. JOSÉ TRAJANO</text>')
 out.append(f'<text class="route-name" x="{X0 + W - 150}" y="{Y0 + 120}" font-size="15" {style}>OCEANO ATLÂNTICO</text>')
+# a praia: o nome corre ao longo da faixa de areia, do lado do mar, na altura do nome da avenida
+cx, cy = m['coast'][0::2], m['coast'][1::2]
+ly = sy - 120
+for i in range(len(cy) - 1):
+    if (cy[i] - ly) * (cy[i + 1] - ly) <= 0 and cy[i] != cy[i + 1]:
+        lx = cx[i] + (ly - cy[i]) / (cy[i + 1] - cy[i]) * (cx[i + 1] - cx[i]) + 30
+        out.append(f'<text class="route-name route-beach" x="{lx:.1f}" y="{ly:.1f}" font-size="14" {style} font-style="italic" transform="rotate(-62 {lx:.1f} {ly:.1f})">PRAIA DE BOA VIAGEM</text>')
+        break
 out.append('</svg>')
 open(os.path.join(ROOT, 'dist/assets/route.svg'), 'w').write('\n'.join(out))
 print('ok', sum(len(s) for s in out) // 1024, 'KB')

@@ -169,9 +169,9 @@ function govern(dt, now) {
 
 // ——— Rolagem suave na roda do mouse; no toque, a nativa ———
 let lenis = null;
-// suavização sutil: a roda responde já no quadro seguinte e assenta em ~0,2 s (0,09 deixava a cena
-// atrás do dedo); o toque fica nativo
-if (!state.reduce) lenis = new Lenis({ autoRaf: false, lerp: 0.15, wheelMultiplier: 1, smoothWheel: true, syncTouch: false });
+// suavização: a roda desliza e assenta em ~0,35 s (0,15 parava de repente e cada giro parecia um
+// tranco); um pouco menos de distância por giro, para a cena não parecer acelerada. O toque fica nativo
+if (!state.reduce) lenis = new Lenis({ autoRaf: false, lerp: 0.1, wheelMultiplier: 0.9, smoothWheel: true, syncTouch: false });
 
 // ——— Âncoras: cada ato tem um ponto de leitura; saltos longos cortam no preto ———
 const curtain = Object.assign(document.createElement('div'), { className: 'curtain' });
