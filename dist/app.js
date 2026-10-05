@@ -19,6 +19,7 @@ import { FinalAct } from './js/acts/final.js';
 import { RouteAct } from './js/acts/route.js';
 import { initUi, renderUi, setReduce, savedMotion, setMenu, cancelFreeze, ready } from './js/ui.js';
 import { setSound, renderSound } from './js/audio.js';
+import { initUpdate, offer, withdraw } from './js/update.js';
 
 const html = document.documentElement;
 const svhProbe = $('.svh-probe'), lvhProbe = $('.lvh-probe');
@@ -358,18 +359,48 @@ const watchDpr = () => matchMedia(`(resolution: ${devicePixelRatio}dppx)`).addEv
 watchDpr();
 addEventListener('orientationchange', () => setTimeout(() => layout(true), 250));
 if ('ResizeObserver' in window) new ResizeObserver(() => layout()).observe(document.body);
-reduceQ.addEventListener?.('change', ev => { if (!savedMotion()) { setReduce(ev.matches); location.reload(); } });
+// o aparelho mudou o movimento: a estrutura da página muda junto (atos presos ou não), o que só vale
+// depois de recarregar, e quem escolhe a hora é a pessoa (o aviso de js/update.js)
+reduceQ.addEventListener?.('change', ev => {
+  if (savedMotion()) return;
+  withdraw('reduce', 'full');
+  if (ev.matches !== state.reduce) offer(ev.matches ? 'reduce' : 'full');
+});
 // trocar o movimento muda a estrutura da página (atos presos ou não): recarrega e volta ao botão
 $('.motion').addEventListener('click', () => {
   try { sessionStorage.setItem('jetcar-return', 'motion'); } catch {}
   setTimeout(() => location.reload(), 60);
 });
 
+// ——— Atualizar (versão nova ou movimento do aparelho): só quando a pessoa escolhe, e a página volta
+// ao mesmo ponto. Num ato, o progresso dele; no conteúdo em fluxo, a seção e quanto já se rolou nela ———
+function spotNow() {
+  const hit = document.elementFromPoint(view.w / 2, view.svh / 2);
+  const act = hit && actOf(hit);
+  if (act) return { act: act.id, p: Number(act.raw.toFixed(4)) };
+  const mid = scrollY + view.svh / 2;
+  let spot = null;
+  for (const el of $$('main > [id]')) {
+    const top = el.getBoundingClientRect().top + scrollY;
+    if (top <= mid) spot = { id: el.id, dy: Math.round(scrollY - top) };
+  }
+  return spot;
+}
+function spotY(spot) {
+  const act = spot.act && byId[spot.act];
+  if (act) return act.scrollFor(spot.p);
+  const el = spot.id && document.getElementById(spot.id);
+  return el ? Math.round(el.getBoundingClientRect().top + scrollY + spot.dy) : 0;
+}
+initUpdate({ onReload: () => { const spot = spotNow(); if (spot) sessionStorage.setItem('jetcar-return', JSON.stringify(spot)); } });
+
 const hashTarget = location.hash.length > 1 && document.getElementById(decodeURIComponent(location.hash.slice(1)));
 let back = null;
 try { back = sessionStorage.getItem('jetcar-return'); sessionStorage.removeItem('jetcar-return'); } catch {}
+let backSpot = null;
+if (back?.startsWith('{')) try { backSpot = JSON.parse(back); } catch {}
 if (back === 'motion') { scrollTo(0, html.scrollHeight); $('.motion').focus({ preventScroll: true }); }
-else scrollTo(0, hashTarget ? targetY(hashTarget) : 0);
+else scrollTo(0, backSpot ? spotY(backSpot) : hashTarget ? targetY(hashTarget) : 0);
 state.jumping = true;
 requestAnimationFrame(() => { state.jumping = false; });
 

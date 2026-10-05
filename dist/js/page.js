@@ -4,8 +4,11 @@
 // - As cinco etapas: abas com a linha de luz embaixo da etapa escolhida.
 // - Os depoimentos: trilho com rolagem presa, setas, contador e teclado.
 // - O mapa da rota entra inline e a rota se desenha ao aparecer.
+// - Versão nova do site: o aviso com "Atualizar" (js/update.js); nada recarrega sozinho.
 // Com movimento reduzido (preferência do sistema ou o botão do rodapé, lembrado como na principal)
 // nada anima: tudo aparece pronto.
+import { initUpdate } from './update.js';
+
 const html = document.documentElement;
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
@@ -24,6 +27,9 @@ function setReduce(flag, remember) {
 }
 setReduce(reduce, false);
 motionButton?.addEventListener('click', () => setReduce(!reduce, true));
+
+// ——— Versão nova: o aviso com "Atualizar" (js/update.js); ao recarregar, o navegador devolve a rolagem ———
+initUpdate();
 
 // ——— Revelação ———
 const seen = new IntersectionObserver(entries => {

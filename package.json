@@ -7,7 +7,8 @@
   "scripts": {
     "start": "node scripts/serve.cjs",
     "dev": "node scripts/serve.cjs",
-    "check": "node scripts/check.cjs"
+    "check": "node scripts/check.cjs",
+    "stamp": "node scripts/stamp.cjs"
   },
   "engines": {
     "node": ">=18"

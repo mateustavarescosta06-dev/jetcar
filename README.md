@@ -36,10 +36,11 @@ Localização: https://maps.apple/p/uRv~vCQ0G1zNn4 (Rua José Trajano, Boa Viage
 ## Validação
 
 ```bash
+npm run stamp   # depois de mudar qualquer arquivo em dist/
 npm run check
 ```
 
-Verifica a sintaxe dos scripts e os arquivos referenciados. Antes de publicar, conferir em celular real e desktop: fluidez ao rolar, o trecho da lavagem (busca de quadros), o arrastar das camadas e da película, o pedido com o teclado aberto e o movimento reduzido (botão no rodapé).
+`npm run stamp` grava a versão do site (`dist/js/version.js`, o hash de tudo o que é publicado): é ela que faz aparecer, para quem está com o site aberto, o aviso de versão nova com o botão "Atualizar" (o site nunca recarrega sozinho). `npm run check` verifica a sintaxe dos scripts, os arquivos referenciados e se a versão está em dia. Antes de publicar, conferir em celular real e desktop: fluidez ao rolar, o trecho da lavagem (busca de quadros), o arrastar das camadas e da película, o pedido com o teclado aberto e o movimento reduzido (botão no rodapé).
 
 ## Publicação
 

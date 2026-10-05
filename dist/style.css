@@ -468,6 +468,21 @@ input[type="range"]:focus-visible { outline: 2px solid var(--red-ink); outline-o
 .curtain { position: fixed; z-index: 45; inset: 0; background: var(--canvas); opacity: 0; pointer-events: none; transition: opacity .3s var(--ease); }
 .curtain.is-on { opacity: 1; }
 
+/* Atualizar: o site nunca recarrega sozinho. Versão nova (ou o movimento do aparelho mudou): o aviso
+   sobe no canto, a luz corre pelo fio de cima, e a pessoa escolhe a hora. Fica acima da barra e do menu. */
+.update { position: fixed; z-index: 60; right: var(--pad); bottom: calc(var(--s5) + env(safe-area-inset-bottom)); width: min(392px, calc(100vw - 2 * var(--pad))); padding: var(--s6) var(--s6) var(--s4); background: var(--surface); color: var(--ink); outline: 1px solid var(--rule-2); outline-offset: -1px; opacity: 0; transform: translate3d(0, 16px, 0); transition: opacity .3s var(--ease), transform .45s var(--ease); }
+.update.is-on { opacity: 1; transform: none; }
+.update::before { content: ""; position: absolute; left: 0; top: -1px; width: 100%; height: 2px; background: #fff; box-shadow: 0 0 10px 1px var(--halo); transform: scaleX(0); transform-origin: 0 50%; transition: transform .8s var(--ease) .15s; pointer-events: none; }
+.update.is-on::before { transform: scaleX(1); }
+.update .kicker { margin-bottom: var(--s2); }
+.update-text { font-size: 15px; line-height: 1.5; color: var(--ink-soft); text-wrap: pretty; }
+.update-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2) var(--s6); margin-top: var(--s4); }
+.update-later { min-height: 44px; font: 500 14px/1.2 var(--sans); color: var(--ink-soft); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 5px; text-decoration-color: rgba(255, 255, 255, .4); transition: color .16s var(--ease); }
+.update-later:hover { color: var(--ink); }
+@media (max-width: 760px) { .update { left: var(--pad); width: auto; padding: var(--s5) var(--s5) var(--s3); } .update-text { font-size: 14px; } .update-actions { margin-top: var(--s3); } }
+@media (prefers-reduced-motion: reduce) { .update, .update::before { transition: none; } }
+.reduced .update, .reduced .update::before { transition: none; }
+
 /* ——— Responsivo ——— */
 @media (max-width: 1180px) { :root { --seam: 52%; } }
 @media (max-width: 1080px) {

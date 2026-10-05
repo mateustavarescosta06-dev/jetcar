@@ -78,6 +78,18 @@
   </div>
 </div>
 
+<!-- Atualizar: o site nunca recarrega sozinho (js/update.js). Versão nova (ou o movimento do
+     aparelho mudou): o aviso aparece e a pessoa escolhe a hora. -->
+<div class="update" role="group" aria-labelledby="update-title" hidden>
+  <p class="kicker" id="update-title" data-update-title>Versão nova do site</p>
+  <p class="update-text" data-update-text>Atualize quando for melhor. Você volta para o mesmo ponto da página.</p>
+  <div class="update-actions">
+    <button type="button" class="btn btn-sm" data-update-go><span>Atualizar</span></button>
+    <button type="button" class="update-later" data-update-later>Agora não</button>
+  </div>
+</div>
+<p class="sr-only" role="status" data-update-say></p>
+
 <main id="conteudo">
 
   <!-- HERO · a abertura em planos (galpão, piso, letreiro, carro, pilar) vira o primeiro filme:
