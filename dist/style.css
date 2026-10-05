@@ -736,6 +736,12 @@ input[type="range"]:focus-visible { outline: 2px solid var(--red-ink); outline-o
    contam, etapas em abas, serviços que abrem com a foto da cena, depoimentos em trilho e a rota que
    se desenha. Com movimento reduzido (html.reduced) tudo aparece pronto. */
 .page-bar { grid-template-columns: auto 1fr; }
+/* 404: o galpão vazio (a placa do hero), o mesmo fundo do site (sem JavaScript) */
+.notfound { display: grid; align-content: center; min-height: calc(100svh - var(--bar) - env(safe-area-inset-top)); }
+.notfound .band-inner { width: 100%; }
+.notfound h1 { max-width: 12ch; margin-bottom: var(--s5); font-size: clamp(52px, 7.4vw, 116px); }
+.notfound .actions { margin-top: var(--s7); }
+.notfound-foot { padding: var(--s7) var(--pad) calc(var(--s7) + env(safe-area-inset-bottom)); font-size: 13.5px; color: var(--ink-mute); }
 .page-progress { position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: #fff; box-shadow: 0 0 8px 1px var(--halo); transform-origin: 0 50%; transform: scaleX(0); pointer-events: none; }
 .page-main { padding-top: calc(var(--bar) + env(safe-area-inset-top)); overflow: hidden; }
 .js [data-reveal] { opacity: 0; transform: translate3d(0, 14px, 0); transition: opacity .7s var(--ease), transform .7s var(--ease); }

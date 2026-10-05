@@ -388,8 +388,9 @@ Promise.race([Promise.all([fontsReady, first]), new Promise(r => setTimeout(r, 7
 });
 document.fonts?.ready.then(() => layout(true));
 
-// ?debug: estado para os testes; settle() leva tudo ao alvo sem esperar a suavização
-if (/[?&]debug\b/.test(location.search)) window.__jetcar = {
+// ?debug: estado para os testes; settle() leva tudo ao alvo sem esperar a suavização. Só no
+// servidor local: no site publicado, ?debug não faz nada
+if (/[?&]debug\b/.test(location.search) && /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) window.__jetcar = {
   state, view, pointer, acts: byId, engine, quality, layout, owner: () => owner?.id,
   settle() { const w = []; for (const a of acts) { a.track(scrollY, 16); a.p = a.raw; w.push(a.settle?.()); } return Promise.all(w); },
 };
