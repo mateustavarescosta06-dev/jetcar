@@ -12,7 +12,7 @@ Com Node.js 18 ou superior:
 npm start
 ```
 
-Abra http://localhost:3000. Não há dependências para instalar (as bibliotecas já estão em `dist/vendor`). `?debug` expõe `window.__jetcar` para os testes.
+Abra http://localhost:3000. Não há dependências para instalar (as bibliotecas já estão em `dist/vendor`). `?debug` expõe `window.__jetcar` para os testes (só em localhost). O servidor local aplica os cabeçalhos do `vercel.json` (a CSP inclusive) e serve a `404.html`, como a Vercel.
 
 ## Estrutura
 
