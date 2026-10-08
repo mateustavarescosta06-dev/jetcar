@@ -57,6 +57,7 @@ const WANTS = {
   ceramic: 'Ceramic Coating',
   ppf: 'PPF (película de proteção)',
   interior: 'higienização interna',
+  motor: 'lavagem de motor e chassis',
 };
 const AIMS = {
   brilho: { say: 'recuperar o brilho da pintura', want: ['pintura'] },

@@ -810,7 +810,7 @@ input[type="range"]:focus-visible { outline: 2px solid var(--red-ink); outline-o
 .vcard h3 { margin-top: var(--s4); font: 800 clamp(22px, 2vw, 28px)/1.05 var(--cond); text-transform: uppercase; }
 .vcard p { margin-top: var(--s3); font-size: 15.5px; line-height: 1.55; color: var(--ink-soft); }
 /* equipe (na faixa vermelha) */
-.team { margin: var(--s8) 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s7); }
+.team { margin: var(--s8) 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s7); }
 .team li { position: relative; padding: var(--s5) 0 0; border-top: 1px solid rgba(255, 255, 255, .4); }
 .team li::after { content: ""; position: absolute; left: 0; top: -1px; height: 1px; width: 100%; background: #fff; box-shadow: 0 0 8px 1px rgba(255, 255, 255, .5); transform: scaleX(0); transform-origin: 0 50%; transition: transform .5s var(--ease); }
 .team li:hover::after { transform: scaleX(1); }
